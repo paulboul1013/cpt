@@ -1,5 +1,7 @@
 #include "reader.h"
 #include "lexer.h"
+#include "parser.h"
+#include "object.h"
 
 #include <stdio.h>
 
@@ -20,22 +22,26 @@ int main(int argc,char *argv[]) {
     printf("file size: %zu bytes\n",reader.size);
 
     pdf_lexer lexer;
-    
     lexer_init(&lexer,&reader);
 
-    while(1) {
-        pdf_token token= lexer_next(&lexer);
+    pdf_parser parser;
+    parser_init(&parser,&lexer);
 
-        if (token.type==PDF_TOKEN_EOF) {
+    while(!reader_eof(&reader)) {
+        pdf_object *obj = parser_parse_object(&parser);
+
+        if (!obj) {
             break;
         }
 
-        if (token.type==PDF_TOKEN_INT) {
-            printf("INT: %ld\n",token.integer);
+        if (obj->type==PDF_OBJECT_INT) {
+            printf("INT: %ld\n",obj->value.integer);
         }
         else {
             printf("INVALID\n");
         }
+
+        pdf_object_free(obj);
     }
 
 
