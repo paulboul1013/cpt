@@ -1,4 +1,5 @@
 #include "reader.h"
+#include "lexer.h"
 
 #include <stdio.h>
 
@@ -18,20 +19,25 @@ int main(int argc,char *argv[]) {
 
     printf("file size: %zu bytes\n",reader.size);
 
-    printf("first bytes: ");
+    pdf_lexer lexer;
+    
+    lexer_init(&lexer,&reader);
 
-    for(int i=0;i<8;i++) {
-        int c=reader_get(&reader);
+    while(1) {
+        pdf_token token= lexer_next(&lexer);
 
-        if (c==-1){
+        if (token.type==PDF_TOKEN_EOF) {
             break;
         }
-        
-        putchar(c);
-    }
-    reader_seek(&reader, 0);
 
-    putchar('\n');
+        if (token.type==PDF_TOKEN_INT) {
+            printf("INT: %ld\n",token.integer);
+        }
+        else {
+            printf("INVALID\n");
+        }
+    }
+
 
     reader_close(&reader);
 

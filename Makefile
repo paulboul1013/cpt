@@ -5,7 +5,8 @@ TARGET = main
 
 SRC = \
 	src/main.c \
-	src/reader.c
+	src/reader.c \
+	src/lexer.c
 
 $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) $(SRC) -o $(TARGET)
