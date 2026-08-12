@@ -70,6 +70,7 @@ pdf_token lexer_next(pdf_lexer *lexer) {
 
     pdf_reader *reader = lexer->reader;
 
+    //EOF
     if (reader_eof(reader)) {
         pdf_token token = {
             .type = PDF_TOKEN_EOF
@@ -80,9 +81,33 @@ pdf_token lexer_next(pdf_lexer *lexer) {
 
     int c = reader_peek(reader);
 
+    //integer
     if (isdigit((unsigned char)c) || c=='-' || c=='+') {
         return lex_integer(lexer);
     }
+
+    //array begin
+    if (c=='[') {
+        reader_get(reader);
+
+        pdf_token token = {
+            .type = PDF_TOKEN_ARRAY_BEGIN
+        };
+
+        return token;
+    }
+
+    //array end
+    if (c==']') {
+        reader_get(reader);
+
+        pdf_token token = {
+            .type = PDF_TOKEN_ARRAY_END
+        };
+
+        return token;
+    }
+    
 
     //unkown byte
     reader_get(reader);

@@ -84,10 +84,13 @@ struct pdf_object {
 };
 
 pdf_object *pdf_object_new_int(long value);
+pdf_object *pdf_object_new_array(void);
+
+int pdf_array_push(pdf_object *array,pdf_object *item);
 
 void pdf_object_free(pdf_object *obj);
 
-
+void pdf_object_dump(const pdf_object *obj,int depth);
 
 
 #endif

@@ -34,12 +34,7 @@ int main(int argc,char *argv[]) {
             break;
         }
 
-        if (obj->type==PDF_OBJECT_INT) {
-            printf("INT: %ld\n",obj->value.integer);
-        }
-        else {
-            printf("INVALID\n");
-        }
+        pdf_object_dump(obj,0);
 
         pdf_object_free(obj);
     }
