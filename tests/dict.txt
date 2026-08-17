@@ -1,0 +1,7 @@
+<<
+    /Type /Page
+    /MediaBox [0 0 612 792]
+    /Resources <<
+        /Font /F1
+    >>
+>>

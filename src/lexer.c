@@ -146,6 +146,49 @@ pdf_token lexer_next(pdf_lexer *lexer) {
 
     int c = reader_peek(reader);
 
+    if (c=='<') {
+        reader_get(reader);
+
+        if (reader_peek(reader)=='<') {
+            reader_get(reader);
+
+            pdf_token token = {
+                .type=PDF_TOKEN_DICT_BEGIN
+            };
+
+            return token;
+        }
+
+
+        pdf_token token = {
+            .type = PDF_TOKEN_INVALID
+        };
+
+        return token;
+    }
+
+    if (c == '>') {
+
+        reader_get(reader);
+
+        if (reader_peek(reader) == '>') {
+
+            reader_get(reader);
+
+            pdf_token token = {
+                .type = PDF_TOKEN_DICT_END
+            };
+
+            return token;
+        }
+
+        pdf_token token = {
+            .type = PDF_TOKEN_INVALID
+        };
+
+        return token;
+    }
+
     if (c=='/') {
         return lex_name(lexer);
     }

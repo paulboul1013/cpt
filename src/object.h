@@ -52,23 +52,28 @@ typedef struct {
 } pdf_array;
 
 
+typedef struct {
+    char *key;
+    pdf_object *value;
+} pdf_dict_entry;
+
+typedef struct {
+    pdf_dict_entry *entries;
+
+    size_t len;
+    size_t cap;
+} pdf_dict;
+
 /*
-
-pdf_object
+PdfObject
 │
-├── type
+├── INT
+├── NAME
+├── ARRAY
 │
-└── value
-     ┌─────────────┐
-     │ integer     │
-     │ real        │
-     │ name        │
-     │ array       │
-     └─────────────┘
-          ↑
-     only use one
-
+└── DICT
 */
+
 struct pdf_object {
     pdf_object_type type;
 
@@ -80,16 +85,22 @@ struct pdf_object {
         char *name;
         
         pdf_array array;
+
+        pdf_dict dict;
     } value;
 };
+
 
 pdf_object *pdf_object_new_int(long value);
 pdf_object *pdf_object_new_array(void);
 pdf_object *pdf_object_new_name(const char *name);
+pdf_object *pdf_object_new_dict(void);
 
 int pdf_array_push(pdf_object *array,pdf_object *item);
 
 void pdf_object_free(pdf_object *obj);
+
+int pdf_dict_push(pdf_object *dict,const char *key,pdf_object *value);
 
 void pdf_object_dump(const pdf_object *obj,int depth);
 

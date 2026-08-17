@@ -63,6 +63,20 @@ void pdf_object_free(pdf_object *obj) {
             break;
         }
 
+        case PDF_OBJECT_DICT:{
+
+            for (size_t i = 0;i < obj->value.dict.len;i++) {
+
+                free(obj->value.dict.entries[i].key);
+
+                pdf_object_free(obj->value.dict.entries[i].value);
+            }
+
+            free(obj->value.dict.entries);
+
+            break;
+        }
+
         default:
             break;
     }
@@ -112,7 +126,7 @@ int pdf_array_push(pdf_object *array,pdf_object *item) {
     return 1;
 }
 
-static void print_ident(int depth) {
+static void print_indent(int depth) {
     for(int i=0;i<depth;i++) {
         printf(" ");
     }
@@ -123,7 +137,7 @@ void pdf_object_dump(const pdf_object *obj,int depth) {
         return;
     }
 
-    print_ident(depth);
+    print_indent(depth);
 
     switch(obj->type) {
         case PDF_OBJECT_INT: {
@@ -138,6 +152,23 @@ void pdf_object_dump(const pdf_object *obj,int depth) {
                 pdf_object_dump(obj->value.array.items[i],depth+1);
             }
             break;
+        }
+
+        case PDF_OBJECT_DICT:{
+
+            printf("DICT\n");
+
+            for (size_t i = 0;i < obj->value.dict.len;i++) {
+
+                print_indent(depth + 1);
+
+                printf("%s:\n",obj->value.dict.entries[i].key);
+
+                pdf_object_dump(obj->value.dict.entries[i].value,depth+2);
+            }
+
+            break;
+
         }
 
         case PDF_OBJECT_NAME: {
@@ -173,4 +204,56 @@ pdf_object *pdf_object_new_name(const char *name) {
     obj->value.name = copy;
 
     return obj;
+}
+
+pdf_object *pdf_object_new_dict(void)
+{
+    pdf_object *obj = malloc(sizeof(pdf_object));
+
+    if (obj == NULL) {
+        return NULL;
+    }
+
+    obj->type = PDF_OBJECT_DICT;
+
+    obj->value.dict.entries = NULL;
+    obj->value.dict.len = 0;
+    obj->value.dict.cap = 0;
+
+    return obj;
+}
+
+int pdf_dict_push(pdf_object *dict,const char *key,pdf_object *value) {
+    if (dict==NULL || dict->type!=PDF_OBJECT_DICT) {
+        return 0;
+    }
+
+    pdf_dict *d = &dict->value.dict;
+
+    if (d->len >= d->cap) {
+        size_t new_cap = d->cap == 0 ? 4 : d->cap * 2;
+
+        pdf_dict_entry *new_entries = realloc(d->entries,sizeof(pdf_dict_entry) * new_cap);
+
+        if (new_entries == NULL) {
+            return 0;
+        }
+
+        d->entries = new_entries;
+        d->cap = new_cap;
+    }
+
+
+    char *key_copy = pdf_strdup(key);
+
+    if (key_copy == NULL) {
+        return 0;
+    }
+
+    d->entries[d->len].key = key_copy;
+    d->entries[d->len].value = value;
+
+    d->len++;
+
+    return 1;
 }

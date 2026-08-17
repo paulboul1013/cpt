@@ -4,6 +4,7 @@
 static pdf_token parser_next_token(pdf_parser *parser);
 static pdf_token parser_peek_token(pdf_parser *parser);
 static pdf_object *parse_array(pdf_parser *parser);
+static pdf_object *parse_dict(pdf_parser *parser);
 
 void parser_init(pdf_parser *parser, pdf_lexer *lexer) {
     parser->lexer = lexer;
@@ -34,6 +35,9 @@ pdf_object *parser_parse_object(pdf_parser *parser) {
 
             return obj;
         }
+
+        case PDF_TOKEN_DICT_BEGIN:
+            return parse_dict(parser);
 
         case PDF_TOKEN_ARRAY_BEGIN:
             return parse_array(parser);
@@ -91,4 +95,68 @@ static pdf_object *parse_array(pdf_parser *parser) {
     }
 
     return array;
+}
+
+static pdf_object *parse_dict(pdf_parser *parser) {
+    pdf_object *dict = pdf_object_new_dict();
+
+    if (dict == NULL) {
+        return NULL;
+    }
+
+    while (1) {
+
+        pdf_token token = parser_peek_token(parser);
+
+        if (token.type == PDF_TOKEN_DICT_END) {
+
+            parser_next_token(parser);
+
+            break;
+        }
+
+
+        if (token.type == PDF_TOKEN_EOF) {
+
+            pdf_object_free(dict);
+
+            return NULL;
+        }
+
+
+        pdf_token key = parser_next_token(parser);
+
+        if (key.type != PDF_TOKEN_NAME) {
+
+            pdf_object_free(dict);
+
+            return NULL;
+        }
+
+
+        pdf_object *value = parser_parse_object(parser);
+
+        if (value == NULL) {
+
+            free(key.text);
+
+            pdf_object_free(dict);
+
+            return NULL;
+        }
+
+        if (!pdf_dict_push(dict,key.text,value)) {
+
+            free(key.text);
+
+            pdf_object_free(value);
+            pdf_object_free(dict);
+
+            return NULL;
+        }
+
+        free(key.text);
+    }
+
+    return dict;
 }
