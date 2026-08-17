@@ -1,4 +1,5 @@
 #include "parser.h"
+#include <stdlib.h>
 
 static pdf_token parser_next_token(pdf_parser *parser);
 static pdf_token parser_peek_token(pdf_parser *parser);
@@ -25,6 +26,14 @@ pdf_object *parser_parse_object(pdf_parser *parser) {
     switch(token.type) {
         case PDF_TOKEN_INT:
             return pdf_object_new_int(token.integer);
+
+        case PDF_TOKEN_NAME:{
+            pdf_object *obj = pdf_object_new_name(token.text);
+
+            free(token.text);
+
+            return obj;
+        }
 
         case PDF_TOKEN_ARRAY_BEGIN:
             return parse_array(parser);

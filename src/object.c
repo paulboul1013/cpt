@@ -1,6 +1,23 @@
 #include "object.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+
+static char *pdf_strdup(const char *s)
+{
+    size_t len = strlen(s);
+
+    char *copy = malloc(len + 1);
+
+    if (copy == NULL) {
+        return NULL;
+    }
+
+    memcpy(copy, s, len + 1);
+
+    return copy;
+}
+
 
 /*
 obj
@@ -31,6 +48,11 @@ void pdf_object_free(pdf_object *obj) {
     }
 
     switch(obj->type) {
+        case PDF_OBJECT_NAME: {
+            free(obj->value.name);
+            break;
+        }
+
         case PDF_OBJECT_ARRAY:{
             for(size_t i=0;i<obj->value.array.len;i++){
                 pdf_object_free(obj->value.array.items[i]);
@@ -118,8 +140,37 @@ void pdf_object_dump(const pdf_object *obj,int depth) {
             break;
         }
 
+        case PDF_OBJECT_NAME: {
+            printf(
+                "NAME %s\n",
+                obj->value.name
+            );
+
+            break;
+        }
+
         default:
             printf("UNKNOWN\n");
             break;
     }
+}
+
+pdf_object *pdf_object_new_name(const char *name) {
+    pdf_object *obj = malloc(sizeof(pdf_object));
+
+    if (obj == NULL) {
+        return NULL;
+    }
+
+    char *copy = pdf_strdup(name);
+
+    if (copy == NULL) {
+        free(obj);
+        return NULL;
+    }
+
+    obj->type = PDF_OBJECT_NAME;
+    obj->value.name = copy;
+
+    return obj;
 }

@@ -85,6 +85,7 @@ struct pdf_object {
 
 pdf_object *pdf_object_new_int(long value);
 pdf_object *pdf_object_new_array(void);
+pdf_object *pdf_object_new_name(const char *name);
 
 int pdf_array_push(pdf_object *array,pdf_object *item);
 

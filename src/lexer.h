@@ -22,6 +22,7 @@ typedef enum {
     PDF_TOKEN_EOF,
 
     PDF_TOKEN_INT,
+    PDF_TOKEN_NAME,
 
     PDF_TOKEN_ARRAY_BEGIN,
     PDF_TOKEN_ARRAY_END,
@@ -33,6 +34,8 @@ typedef struct {
     pdf_token_type type;
 
     long integer;
+    char *text;
+    
 } pdf_token;
 
 typedef struct {

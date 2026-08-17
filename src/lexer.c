@@ -1,4 +1,5 @@
 #include "lexer.h"
+#include <stdlib.h>
 
 #include <ctype.h>
 
@@ -14,6 +15,70 @@ static int is_whitespace(int c) {
            c == '\f' ||
            c == '\r' ||
            c == ' ';
+}
+
+static int is_pdf_delimiter(int c) {
+    return c == '(' ||
+           c == ')' ||
+           c == '<' ||
+           c == '>' ||
+           c == '[' ||
+           c == ']' ||
+           c == '{' ||
+           c == '}' ||
+           c == '/' ||
+           c == '%';
+}
+
+static int is_name_end(int c) {
+    return is_pdf_delimiter(c) || is_whitespace(c);
+}
+
+static pdf_token lex_name(pdf_lexer *lexer) {
+    pdf_reader *reader = lexer->reader;
+
+    //first parse '/'
+    reader_get(reader);
+
+    size_t start = reader_tell(reader);
+
+    //find end of name
+    while(!reader_eof(reader)) {
+        int c= reader_peek(reader);
+
+        if (is_name_end(c)) {
+            break;
+        }
+
+        reader_get(reader);
+    }
+
+    size_t end = reader_tell(reader);
+
+    size_t len = end - start;
+
+    char *name=malloc(len+1);
+
+    if (name==NULL) {
+        pdf_token token = {
+            .type=PDF_TOKEN_INVALID
+        };
+
+        return token;
+    }
+
+    for(size_t i=0;i<len;i++){
+        name[i]=(char)reader->data[start+i];
+    }
+
+    name[len]='\0';
+
+    pdf_token token = {
+        .type = PDF_TOKEN_NAME,
+        .text = name
+    };
+
+    return token;
 }
 
 static void skip_whitespace(pdf_lexer *lexer) {
@@ -80,6 +145,10 @@ pdf_token lexer_next(pdf_lexer *lexer) {
     }
 
     int c = reader_peek(reader);
+
+    if (c=='/') {
+        return lex_name(lexer);
+    }
 
     //integer
     if (isdigit((unsigned char)c) || c=='-' || c=='+') {
