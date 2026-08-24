@@ -96,10 +96,12 @@ pdf_object *pdf_object_new_array(void);
 pdf_object *pdf_object_new_name(const char *name);
 pdf_object *pdf_object_new_dict(void);
 
+/* On success, the array owns item. On failure, the caller retains item. */
 int pdf_array_push(pdf_object *array,pdf_object *item);
 
 void pdf_object_free(pdf_object *obj);
 
+/* On success, the dictionary owns value and copies key. On failure, the caller retains value. */
 int pdf_dict_push(pdf_object *dict,const char *key,pdf_object *value);
 
 void pdf_object_dump(const pdf_object *obj,int depth);

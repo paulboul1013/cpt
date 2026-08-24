@@ -1,7 +1,9 @@
 # name|result kind|input|exit code|stdout golden|stderr golden
+# The malformed cleanup row records the current pre-error-model behavior; #4 will add diagnostics.
 numbers|success|tests/numbers.txt|0|tests/golden/numbers.stdout|-
 names|success|tests/names.txt|0|tests/golden/names.stdout|-
 name-array|success|tests/name_array.txt|0|tests/golden/name_array.stdout|-
 array|success|tests/array.txt|0|tests/golden/array.stdout|-
 dictionary|success|tests/dict.txt|0|tests/golden/dict.stdout|-
 missing-input|io|tests/fixtures/does-not-exist.pdf|1|-|tests/golden/missing-input.stderr
+unclosed-array-cleanup|malformed|tests/fixtures/unclosed-array.txt|0|tests/golden/unclosed-array.stdout|-

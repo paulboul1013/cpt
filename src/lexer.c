@@ -3,6 +3,44 @@
 
 #include <ctype.h>
 
+void pdf_token_init(pdf_token *token) {
+    if (token == NULL) {
+        return;
+    }
+
+    token->type = PDF_TOKEN_EOF;
+    token->integer = 0;
+    token->text = NULL;
+}
+
+void pdf_token_destroy(pdf_token *token) {
+    if (token == NULL) {
+        return;
+    }
+
+    free(token->text);
+    pdf_token_init(token);
+}
+
+void pdf_token_move(pdf_token *destination, pdf_token *source) {
+    if (destination == NULL || source == NULL || destination == source) {
+        return;
+    }
+
+    pdf_token_destroy(destination);
+    *destination = *source;
+    pdf_token_init(source);
+}
+
+static pdf_token token_with_type(pdf_token_type type) {
+    pdf_token token;
+
+    pdf_token_init(&token);
+    token.type = type;
+
+    return token;
+}
+
 //for reader readed bytes
 void lexer_init(pdf_lexer *lexer, pdf_reader *reader) {
     lexer->reader = reader; 
@@ -60,11 +98,7 @@ static pdf_token lex_name(pdf_lexer *lexer) {
     char *name=malloc(len+1);
 
     if (name==NULL) {
-        pdf_token token = {
-            .type=PDF_TOKEN_INVALID
-        };
-
-        return token;
+        return token_with_type(PDF_TOKEN_INVALID);
     }
 
     for(size_t i=0;i<len;i++){
@@ -73,10 +107,8 @@ static pdf_token lex_name(pdf_lexer *lexer) {
 
     name[len]='\0';
 
-    pdf_token token = {
-        .type = PDF_TOKEN_NAME,
-        .text = name
-    };
+    pdf_token token = token_with_type(PDF_TOKEN_NAME);
+    token.text = name;
 
     return token;
 }
@@ -124,6 +156,8 @@ static pdf_token lex_integer(pdf_lexer *lexer) {
     }
 
     pdf_token token;
+
+    pdf_token_init(&token);
     token.type = PDF_TOKEN_INT;
     token.integer = sign * value;
 
@@ -137,11 +171,7 @@ pdf_token lexer_next(pdf_lexer *lexer) {
 
     //EOF
     if (reader_eof(reader)) {
-        pdf_token token = {
-            .type = PDF_TOKEN_EOF
-        };
-
-        return token;
+        return token_with_type(PDF_TOKEN_EOF);
     }
 
     int c = reader_peek(reader);
@@ -152,19 +182,11 @@ pdf_token lexer_next(pdf_lexer *lexer) {
         if (reader_peek(reader)=='<') {
             reader_get(reader);
 
-            pdf_token token = {
-                .type=PDF_TOKEN_DICT_BEGIN
-            };
-
-            return token;
+            return token_with_type(PDF_TOKEN_DICT_BEGIN);
         }
 
 
-        pdf_token token = {
-            .type = PDF_TOKEN_INVALID
-        };
-
-        return token;
+        return token_with_type(PDF_TOKEN_INVALID);
     }
 
     if (c == '>') {
@@ -175,18 +197,10 @@ pdf_token lexer_next(pdf_lexer *lexer) {
 
             reader_get(reader);
 
-            pdf_token token = {
-                .type = PDF_TOKEN_DICT_END
-            };
-
-            return token;
+            return token_with_type(PDF_TOKEN_DICT_END);
         }
 
-        pdf_token token = {
-            .type = PDF_TOKEN_INVALID
-        };
-
-        return token;
+        return token_with_type(PDF_TOKEN_INVALID);
     }
 
     if (c=='/') {
@@ -202,31 +216,19 @@ pdf_token lexer_next(pdf_lexer *lexer) {
     if (c=='[') {
         reader_get(reader);
 
-        pdf_token token = {
-            .type = PDF_TOKEN_ARRAY_BEGIN
-        };
-
-        return token;
+        return token_with_type(PDF_TOKEN_ARRAY_BEGIN);
     }
 
     //array end
     if (c==']') {
         reader_get(reader);
 
-        pdf_token token = {
-            .type = PDF_TOKEN_ARRAY_END
-        };
-
-        return token;
+        return token_with_type(PDF_TOKEN_ARRAY_END);
     }
     
 
     //unkown byte
     reader_get(reader);
 
-    pdf_token token = {
-        .type = PDF_TOKEN_INVALID
-    };
-
-    return token;
+    return token_with_type(PDF_TOKEN_INVALID);
 }

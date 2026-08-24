@@ -1,63 +1,93 @@
 #include "parser.h"
 #include <stdlib.h>
 
-static pdf_token parser_next_token(pdf_parser *parser);
-static pdf_token parser_peek_token(pdf_parser *parser);
 static pdf_object *parse_array(pdf_parser *parser);
 static pdf_object *parse_dict(pdf_parser *parser);
 
 void parser_init(pdf_parser *parser, pdf_lexer *lexer) {
     parser->lexer = lexer;
+    pdf_token_init(&parser->lookahead);
     parser->has_lookahead = 0;
 }
 
+int parser_next(pdf_parser *parser, pdf_token *token) {
+    if (parser == NULL || token == NULL) {
+        return 0;
+    }
 
-static pdf_token parser_next_token(pdf_parser *parser) {
     if (parser->has_lookahead) {
+        pdf_token_move(token, &parser->lookahead);
         parser->has_lookahead = 0;
-        return parser->lookahead;
+        return 1;
     }
 
-    return lexer_next(parser->lexer);
+    pdf_token_destroy(token);
+    *token = lexer_next(parser->lexer);
+    return 1;
 }
 
-pdf_object *parser_parse_object(pdf_parser *parser) {
-    pdf_token token = parser_next_token(parser);
-
-    switch(token.type) {
-        case PDF_TOKEN_INT:
-            return pdf_object_new_int(token.integer);
-
-        case PDF_TOKEN_NAME:{
-            pdf_object *obj = pdf_object_new_name(token.text);
-
-            free(token.text);
-
-            return obj;
-        }
-
-        case PDF_TOKEN_DICT_BEGIN:
-            return parse_dict(parser);
-
-        case PDF_TOKEN_ARRAY_BEGIN:
-            return parse_array(parser);
-
-        default:
-            return NULL;
+const pdf_token *parser_peek(pdf_parser *parser) {
+    if (parser == NULL) {
+        return NULL;
     }
-}
 
-
-
-static pdf_token parser_peek_token(pdf_parser *parser) {
     if (!parser->has_lookahead) {
         parser->lookahead = lexer_next(parser->lexer);
         parser->has_lookahead=1;
     }
 
-    return parser->lookahead;
+    return &parser->lookahead;
 }
 
+void parser_destroy(pdf_parser *parser) {
+    if (parser == NULL) {
+        return;
+    }
+
+    if (parser->has_lookahead) {
+        pdf_token_destroy(&parser->lookahead);
+        parser->has_lookahead = 0;
+    }
+
+    parser->lexer = NULL;
+}
+
+pdf_object *parser_parse_object(pdf_parser *parser) {
+    pdf_token token;
+    pdf_token_init(&token);
+
+    if (!parser_next(parser, &token)) {
+        return NULL;
+    }
+
+    switch(token.type) {
+        case PDF_TOKEN_INT: {
+            pdf_object *object = pdf_object_new_int(token.integer);
+            pdf_token_destroy(&token);
+
+            return object;
+        }
+
+        case PDF_TOKEN_NAME:{
+            pdf_object *obj = pdf_object_new_name(token.text);
+            pdf_token_destroy(&token);
+
+            return obj;
+        }
+
+        case PDF_TOKEN_DICT_BEGIN:
+            pdf_token_destroy(&token);
+            return parse_dict(parser);
+
+        case PDF_TOKEN_ARRAY_BEGIN:
+            pdf_token_destroy(&token);
+            return parse_array(parser);
+
+        default:
+            pdf_token_destroy(&token);
+            return NULL;
+    }
+}
 
 static pdf_object *parse_array(pdf_parser *parser) {
     pdf_object *array = pdf_object_new_array();
@@ -67,15 +97,23 @@ static pdf_object *parse_array(pdf_parser *parser) {
     }
 
     while(1) {
-        pdf_token token = parser_peek_token(parser);
+        const pdf_token *token = parser_peek(parser);
+
+        if (token == NULL) {
+            pdf_object_free(array);
+            return NULL;
+        }
 
         //watch current token is ']' end of array
-        if (token.type==PDF_TOKEN_ARRAY_END) {
-            parser_next_token(parser);
+        if (token->type==PDF_TOKEN_ARRAY_END) {
+            pdf_token end;
+            pdf_token_init(&end);
+            parser_next(parser, &end);
+            pdf_token_destroy(&end);
             break;
         }
 
-        if (token.type==PDF_TOKEN_EOF) {
+        if (token->type==PDF_TOKEN_EOF) {
             pdf_object_free(array);
             return NULL;
         }
@@ -106,17 +144,25 @@ static pdf_object *parse_dict(pdf_parser *parser) {
 
     while (1) {
 
-        pdf_token token = parser_peek_token(parser);
+        const pdf_token *token = parser_peek(parser);
 
-        if (token.type == PDF_TOKEN_DICT_END) {
+        if (token == NULL) {
+            pdf_object_free(dict);
+            return NULL;
+        }
 
-            parser_next_token(parser);
+        if (token->type == PDF_TOKEN_DICT_END) {
+
+            pdf_token end;
+            pdf_token_init(&end);
+            parser_next(parser, &end);
+            pdf_token_destroy(&end);
 
             break;
         }
 
 
-        if (token.type == PDF_TOKEN_EOF) {
+        if (token->type == PDF_TOKEN_EOF) {
 
             pdf_object_free(dict);
 
@@ -124,10 +170,13 @@ static pdf_object *parse_dict(pdf_parser *parser) {
         }
 
 
-        pdf_token key = parser_next_token(parser);
+        pdf_token key;
+        pdf_token_init(&key);
+        parser_next(parser, &key);
 
         if (key.type != PDF_TOKEN_NAME) {
 
+            pdf_token_destroy(&key);
             pdf_object_free(dict);
 
             return NULL;
@@ -138,7 +187,7 @@ static pdf_object *parse_dict(pdf_parser *parser) {
 
         if (value == NULL) {
 
-            free(key.text);
+            pdf_token_destroy(&key);
 
             pdf_object_free(dict);
 
@@ -147,7 +196,7 @@ static pdf_object *parse_dict(pdf_parser *parser) {
 
         if (!pdf_dict_push(dict,key.text,value)) {
 
-            free(key.text);
+            pdf_token_destroy(&key);
 
             pdf_object_free(value);
             pdf_object_free(dict);
@@ -155,7 +204,7 @@ static pdf_object *parse_dict(pdf_parser *parser) {
             return NULL;
         }
 
-        free(key.text);
+        pdf_token_destroy(&key);
     }
 
     return dict;

@@ -41,6 +41,12 @@ typedef struct {
 
 } pdf_token;
 
+/* A token owns text when text is not NULL; destroy is safe on an empty token. */
+void pdf_token_init(pdf_token *token);
+void pdf_token_destroy(pdf_token *token);
+/* destination must be initialized; source ownership is transferred and reset. */
+void pdf_token_move(pdf_token *destination, pdf_token *source);
+
 typedef struct {
     pdf_reader *reader;
 } pdf_lexer;

@@ -14,6 +14,15 @@ typedef struct {
 
 void parser_init(pdf_parser *parser, pdf_lexer *lexer);
 
+/* parser_peek returns a borrowed token owned by parser. */
+const pdf_token *parser_peek(pdf_parser *parser);
+
+/* parser_next moves token ownership into an initialized destination. */
+int parser_next(pdf_parser *parser, pdf_token *token);
+
+/* Releases an unconsumed lookahead token. */
+void parser_destroy(pdf_parser *parser);
+
 pdf_object *parser_parse_object(pdf_parser *parser);
 
 

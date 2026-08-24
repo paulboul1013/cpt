@@ -39,6 +39,7 @@ int main(int argc,char *argv[]) {
         pdf_object_free(obj);
     }
 
+    parser_destroy(&parser);
 
     reader_close(&reader);
 
