@@ -1,0 +1,8 @@
+file size: 13 bytes
+ARRAY
+ INT 1
+ INT 2
+ ARRAY
+  INT 3
+  INT 4
+ INT 5

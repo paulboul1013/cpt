@@ -41,9 +41,11 @@ $(TARGET): $(SRC) $(HDR)
 
 test: $(TARGET)
 	$(call CHECK_NUMBERS_OUTPUT,$(TARGET))
+	./tests/run-fixtures.sh ./$(TARGET)
 
 asan: $(ASAN_TARGET)
 	$(call CHECK_NUMBERS_OUTPUT,$(ASAN_TARGET))
+	./tests/run-fixtures.sh ./$(ASAN_TARGET)
 
 $(ASAN_TARGET): $(SRC) $(HDR)
 	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $(SRC) $(LDLIBS) -o $@

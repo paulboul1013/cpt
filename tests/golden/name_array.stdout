@@ -1,0 +1,12 @@
+file size: 47 bytes
+ARRAY
+ NAME Type
+ NAME Page
+ NAME Parent
+ INT 2
+ NAME MediaBox
+ ARRAY
+  INT 0
+  INT 0
+  INT 612
+  INT 792
