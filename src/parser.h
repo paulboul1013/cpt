@@ -26,6 +26,9 @@ void parser_destroy(pdf_parser *parser);
 
 pdf_object *parser_parse_object(pdf_parser *parser);
 
+/* Validates that the next token is EOF after a standalone object. */
+int parser_expect_eof(pdf_parser *parser);
+
 
 
 #endif

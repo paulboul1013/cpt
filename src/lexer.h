@@ -4,6 +4,8 @@
 #include "bytes.h"
 #include "reader.h"
 
+#include <stdint.h>
+
 /*
 PDF file
    │
@@ -44,7 +46,7 @@ typedef struct {
     pdf_token_type type;
 
     size_t offset;
-    long integer;
+    int64_t integer;
     double real;
     int boolean;
     pdf_bytes bytes;

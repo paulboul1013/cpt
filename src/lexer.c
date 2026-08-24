@@ -300,10 +300,9 @@ static pdf_token lex_number(pdf_lexer *lexer) {
         }
     } else {
         char *parse_end = NULL;
-        long value = strtol(lexeme, &parse_end, 10);
+        long long value = strtoll(lexeme, &parse_end, 10);
 
-        if (errno == ERANGE || parse_end == NULL || *parse_end != '\0' ||
-            value > LONG_MAX || value < LONG_MIN) {
+        if (errno == ERANGE || parse_end == NULL || *parse_end != '\0') {
             pdf_error_set(lexer->error, PDF_ERROR_MALFORMED, offset, "lexer",
                           "integer value is out of range or malformed");
             pdf_token_destroy(&token);
@@ -311,7 +310,7 @@ static pdf_token lex_number(pdf_lexer *lexer) {
             return token_with_type(PDF_TOKEN_INVALID, offset);
         }
 
-        token.integer = value;
+        token.integer = (int64_t)value;
     }
 
     free(lexeme);

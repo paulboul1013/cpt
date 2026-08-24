@@ -30,7 +30,13 @@ int main(int argc,char *argv[]) {
     pdf_parser parser;
     parser_init(&parser,&lexer,&error);
 
-    while(!reader_eof(&reader)) {
+    while (1) {
+        const pdf_token *next = parser_peek(&parser);
+
+        if (next == NULL || next->type == PDF_TOKEN_EOF) {
+            break;
+        }
+
         pdf_object *obj = parser_parse_object(&parser);
 
         if (!obj) {

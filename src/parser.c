@@ -83,6 +83,28 @@ pdf_object *parser_parse_object(pdf_parser *parser) {
     }
 
     switch(token.type) {
+        case PDF_TOKEN_NULL: {
+            pdf_object *object = pdf_object_new_null();
+
+            if (object == NULL) {
+                pdf_error_set(parser->error, PDF_ERROR_OUT_OF_MEMORY, token.offset,
+                              "parser", "could not allocate null object");
+            }
+            pdf_token_destroy(&token);
+            return object;
+        }
+
+        case PDF_TOKEN_BOOL: {
+            pdf_object *object = pdf_object_new_bool(token.boolean);
+
+            if (object == NULL) {
+                pdf_error_set(parser->error, PDF_ERROR_OUT_OF_MEMORY, token.offset,
+                              "parser", "could not allocate boolean object");
+            }
+            pdf_token_destroy(&token);
+            return object;
+        }
+
         case PDF_TOKEN_INT: {
             pdf_object *object = pdf_object_new_int(token.integer);
 
@@ -96,6 +118,17 @@ pdf_object *parser_parse_object(pdf_parser *parser) {
             return object;
         }
 
+        case PDF_TOKEN_REAL: {
+            pdf_object *object = pdf_object_new_real(token.real);
+
+            if (object == NULL) {
+                pdf_error_set(parser->error, PDF_ERROR_OUT_OF_MEMORY, token.offset,
+                              "parser", "could not allocate real object");
+            }
+            pdf_token_destroy(&token);
+            return object;
+        }
+
         case PDF_TOKEN_NAME:{
             pdf_object *obj = pdf_object_new_name_bytes(token.bytes.data, token.bytes.len);
 
@@ -106,6 +139,30 @@ pdf_object *parser_parse_object(pdf_parser *parser) {
 
             pdf_token_destroy(&token);
 
+            return obj;
+        }
+
+        case PDF_TOKEN_STRING: {
+            pdf_object *obj = pdf_object_new_string_bytes(token.bytes.data,
+                                                            token.bytes.len);
+
+            if (obj == NULL) {
+                pdf_error_set(parser->error, PDF_ERROR_OUT_OF_MEMORY, token.offset,
+                              "parser", "could not allocate string object");
+            }
+            pdf_token_destroy(&token);
+            return obj;
+        }
+
+        case PDF_TOKEN_HEX_STRING: {
+            pdf_object *obj = pdf_object_new_hex_string_bytes(token.bytes.data,
+                                                               token.bytes.len);
+
+            if (obj == NULL) {
+                pdf_error_set(parser->error, PDF_ERROR_OUT_OF_MEMORY, token.offset,
+                              "parser", "could not allocate hex string object");
+            }
+            pdf_token_destroy(&token);
             return obj;
         }
 
@@ -266,4 +323,29 @@ static pdf_object *parse_dict(pdf_parser *parser) {
     }
 
     return dict;
+}
+
+int parser_expect_eof(pdf_parser *parser) {
+    const pdf_token *token = parser_peek(parser);
+
+    if (token == NULL) {
+        return 0;
+    }
+
+    if (token->type == PDF_TOKEN_EOF) {
+        pdf_token end;
+        pdf_token_init(&end);
+        (void)parser_next(parser, &end);
+        pdf_token_destroy(&end);
+        return 1;
+    }
+
+    pdf_error_set(parser->error, PDF_ERROR_MALFORMED, token->offset, "parser",
+                  "trailing token after standalone object");
+
+    pdf_token trailing;
+    pdf_token_init(&trailing);
+    (void)parser_next(parser, &trailing);
+    pdf_token_destroy(&trailing);
+    return 0;
 }

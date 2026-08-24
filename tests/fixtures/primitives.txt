@@ -1,0 +1,9 @@
+null
+true
+false
+123
+-42
+1.5
+/Name
+(Hi)
+<4869>

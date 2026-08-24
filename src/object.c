@@ -1,4 +1,5 @@
 #include "object.h"
+#include <inttypes.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -33,16 +34,52 @@ obj
 | value.integer = 123  |
 +----------------------+
 */
-pdf_object *pdf_object_new_int(long value) {
+static pdf_object *pdf_object_alloc(pdf_object_type type) {
     pdf_object *obj = malloc(sizeof(*obj));
 
     if (!obj) {
         return NULL;
     }
 
-    obj->type = PDF_OBJECT_INT;
+    obj->type = type;
+    return obj;
+}
+
+pdf_object *pdf_object_new_null(void) {
+    return pdf_object_alloc(PDF_OBJECT_NULL);
+}
+
+pdf_object *pdf_object_new_bool(int value) {
+    pdf_object *obj = pdf_object_alloc(PDF_OBJECT_BOOL);
+
+    if (obj == NULL) {
+        return NULL;
+    }
+
+    obj->value.boolean = value != 0;
+    return obj;
+}
+
+pdf_object *pdf_object_new_int(int64_t value) {
+    pdf_object *obj = pdf_object_alloc(PDF_OBJECT_INT);
+
+    if (obj == NULL) {
+        return NULL;
+    }
+
     obj->value.integer = value;
 
+    return obj;
+}
+
+pdf_object *pdf_object_new_real(double value) {
+    pdf_object *obj = pdf_object_alloc(PDF_OBJECT_REAL);
+
+    if (obj == NULL) {
+        return NULL;
+    }
+
+    obj->value.real = value;
     return obj;
 }
 
@@ -56,6 +93,14 @@ void pdf_object_free(pdf_object *obj) {
             free(obj->value.name.data);
             break;
         }
+
+        case PDF_OBJECT_STRING:
+            free(obj->value.string.data);
+            break;
+
+        case PDF_OBJECT_HEX_STRING:
+            free(obj->value.hex_string.data);
+            break;
 
         case PDF_OBJECT_ARRAY:{
             for(size_t i=0;i<obj->value.array.len;i++){
@@ -136,6 +181,12 @@ static void print_indent(int depth) {
     }
 }
 
+static void print_bytes_hex(const pdf_bytes *bytes) {
+    for (size_t i = 0; i < bytes->len; i++) {
+        printf("%02X", bytes->data[i]);
+    }
+}
+
 void pdf_object_dump(const pdf_object *obj,int depth) {
     if (obj==NULL) {
         return;
@@ -145,9 +196,33 @@ void pdf_object_dump(const pdf_object *obj,int depth) {
 
     switch(obj->type) {
         case PDF_OBJECT_INT: {
-            printf("INT %ld\n",obj->value.integer);
+            printf("INT %" PRId64 "\n", obj->value.integer);
             break;
         }
+
+        case PDF_OBJECT_NULL:
+            printf("NULL\n");
+            break;
+
+        case PDF_OBJECT_BOOL:
+            printf("BOOL %s\n", obj->value.boolean ? "true" : "false");
+            break;
+
+        case PDF_OBJECT_REAL:
+            printf("REAL %.17g\n", obj->value.real);
+            break;
+
+        case PDF_OBJECT_STRING:
+            printf("STRING HEX ");
+            print_bytes_hex(&obj->value.string);
+            putchar('\n');
+            break;
+
+        case PDF_OBJECT_HEX_STRING:
+            printf("HEX STRING HEX ");
+            print_bytes_hex(&obj->value.hex_string);
+            putchar('\n');
+            break;
 
         case PDF_OBJECT_ARRAY: {
             printf("ARRAY\n");
@@ -200,7 +275,7 @@ pdf_object *pdf_object_new_name(const char *name) {
 }
 
 pdf_object *pdf_object_new_name_bytes(const unsigned char *data, size_t len) {
-    pdf_object *obj = malloc(sizeof(pdf_object));
+    pdf_object *obj = pdf_object_alloc(PDF_OBJECT_NAME);
 
     if (obj == NULL) {
         return NULL;
@@ -211,13 +286,45 @@ pdf_object *pdf_object_new_name_bytes(const unsigned char *data, size_t len) {
         return NULL;
     }
 
-    obj->type = PDF_OBJECT_NAME;
     if (!pdf_bytes_copy(&obj->value.name, data, len)) {
         free(obj);
         return NULL;
     }
 
     return obj;
+}
+
+static pdf_object *pdf_object_new_bytes(pdf_object_type type,
+                                         const unsigned char *data, size_t len) {
+    pdf_object *obj = pdf_object_alloc(type);
+
+    if (obj == NULL) {
+        return NULL;
+    }
+
+    if (len > 0 && data == NULL) {
+        free(obj);
+        return NULL;
+    }
+
+    pdf_bytes *destination = type == PDF_OBJECT_STRING
+                                 ? &obj->value.string
+                                 : &obj->value.hex_string;
+
+    if (!pdf_bytes_copy(destination, data, len)) {
+        free(obj);
+        return NULL;
+    }
+
+    return obj;
+}
+
+pdf_object *pdf_object_new_string_bytes(const unsigned char *data, size_t len) {
+    return pdf_object_new_bytes(PDF_OBJECT_STRING, data, len);
+}
+
+pdf_object *pdf_object_new_hex_string_bytes(const unsigned char *data, size_t len) {
+    return pdf_object_new_bytes(PDF_OBJECT_HEX_STRING, data, len);
 }
 
 pdf_object *pdf_object_new_dict(void)

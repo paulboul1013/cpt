@@ -2,6 +2,7 @@
 #define PDF_OBJECT_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 #include "bytes.h"
 
@@ -40,6 +41,7 @@ typedef enum {
     PDF_OBJECT_REAL,
     PDF_OBJECT_NAME,
     PDF_OBJECT_STRING,
+    PDF_OBJECT_HEX_STRING,
     PDF_OBJECT_ARRAY,
     PDF_OBJECT_DICT,
     PDF_OBJECT_REF
@@ -81,10 +83,12 @@ struct pdf_object {
 
     union {
         int boolean;
-        long integer;
+        int64_t integer;
         double real;
 
         pdf_bytes name;
+        pdf_bytes string;
+        pdf_bytes hex_string;
         
         pdf_array array;
 
@@ -93,10 +97,15 @@ struct pdf_object {
 };
 
 
-pdf_object *pdf_object_new_int(long value);
+pdf_object *pdf_object_new_null(void);
+pdf_object *pdf_object_new_bool(int value);
+pdf_object *pdf_object_new_int(int64_t value);
+pdf_object *pdf_object_new_real(double value);
 pdf_object *pdf_object_new_array(void);
 pdf_object *pdf_object_new_name(const char *name);
 pdf_object *pdf_object_new_name_bytes(const unsigned char *data, size_t len);
+pdf_object *pdf_object_new_string_bytes(const unsigned char *data, size_t len);
+pdf_object *pdf_object_new_hex_string_bytes(const unsigned char *data, size_t len);
 pdf_object *pdf_object_new_dict(void);
 
 /* On success, the array owns item. On failure, the caller retains item. */

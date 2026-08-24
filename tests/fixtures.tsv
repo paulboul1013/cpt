@@ -9,3 +9,4 @@ missing-input|io|tests/fixtures/does-not-exist.pdf|2|-|tests/golden/missing-inpu
 unclosed-array-cleanup|malformed|tests/fixtures/unclosed-array.txt|3|tests/golden/unclosed-array.stdout|tests/golden/unclosed-array.stderr
 invalid-byte|malformed|tests/fixtures/invalid-byte.txt|3|tests/golden/invalid-byte.stdout|tests/golden/invalid-byte.stderr
 unclosed-dictionary|malformed|tests/fixtures/unclosed-dictionary.txt|3|tests/golden/unclosed-dictionary.stdout|tests/golden/unclosed-dictionary.stderr
+primitives|success|tests/fixtures/primitives.txt|0|tests/golden/primitives.stdout|-

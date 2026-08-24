@@ -1,0 +1,10 @@
+file size: 46 bytes
+NULL
+BOOL true
+BOOL false
+INT 123
+INT -42
+REAL 1.5
+NAME Name
+STRING HEX 4869
+HEX STRING HEX 4869
