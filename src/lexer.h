@@ -1,6 +1,7 @@
 #ifndef PDF_LEXER_H
 #define PDF_LEXER_H
 
+#include "bytes.h"
 #include "reader.h"
 
 /*
@@ -27,6 +28,8 @@ typedef enum {
     PDF_TOKEN_NULL,
     PDF_TOKEN_NAME,
     PDF_TOKEN_KEYWORD,
+    PDF_TOKEN_STRING,
+    PDF_TOKEN_HEX_STRING,
 
     PDF_TOKEN_ARRAY_BEGIN,
     PDF_TOKEN_ARRAY_END,
@@ -44,11 +47,12 @@ typedef struct {
     long integer;
     double real;
     int boolean;
+    pdf_bytes bytes;
     char *text;
 
 } pdf_token;
 
-/* A token owns text when text is not NULL; destroy is safe on an empty token. */
+/* A token owns bytes.data and text when they are not NULL. */
 void pdf_token_init(pdf_token *token);
 void pdf_token_destroy(pdf_token *token);
 /* destination must be initialized; source ownership is transferred and reset. */

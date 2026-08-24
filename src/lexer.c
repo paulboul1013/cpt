@@ -16,6 +16,8 @@ void pdf_token_init(pdf_token *token) {
     token->integer = 0;
     token->real = 0.0;
     token->boolean = 0;
+    token->bytes.data = NULL;
+    token->bytes.len = 0;
     token->text = NULL;
 }
 
@@ -24,6 +26,7 @@ void pdf_token_destroy(pdf_token *token) {
         return;
     }
 
+    free(token->bytes.data);
     free(token->text);
     pdf_token_init(token);
 }
@@ -46,6 +49,52 @@ static pdf_token token_with_type(pdf_token_type type, size_t offset) {
     token.offset = offset;
 
     return token;
+}
+
+typedef struct {
+    unsigned char *data;
+    size_t len;
+    size_t cap;
+} byte_buffer;
+
+static int byte_buffer_append(pdf_lexer *lexer, byte_buffer *buffer,
+                              unsigned char byte, size_t offset) {
+    if (buffer->len == buffer->cap) {
+        size_t new_cap = buffer->cap == 0 ? 16 : buffer->cap * 2;
+
+        if (new_cap < buffer->cap) {
+            pdf_error_set(lexer->error, PDF_ERROR_RESOURCE_LIMIT, offset, "lexer",
+                          "byte buffer capacity overflow");
+            return 0;
+        }
+
+        unsigned char *new_data = realloc(buffer->data, new_cap);
+
+        if (new_data == NULL) {
+            pdf_error_set(lexer->error, PDF_ERROR_OUT_OF_MEMORY, offset, "lexer",
+                          "could not grow byte buffer");
+            return 0;
+        }
+
+        buffer->data = new_data;
+        buffer->cap = new_cap;
+    }
+
+    buffer->data[buffer->len++] = byte;
+    return 1;
+}
+
+static int hex_value(int c) {
+    if (c >= '0' && c <= '9') {
+        return c - '0';
+    }
+    if (c >= 'a' && c <= 'f') {
+        return c - 'a' + 10;
+    }
+    if (c >= 'A' && c <= 'F') {
+        return c - 'A' + 10;
+    }
+    return -1;
 }
 
 //for reader readed bytes
@@ -86,44 +135,57 @@ static int is_token_end(int c) {
 
 static pdf_token lex_name(pdf_lexer *lexer) {
     pdf_reader *reader = lexer->reader;
-	 size_t offset = reader_tell(reader);
+	size_t offset = reader_tell(reader);
+	byte_buffer buffer = {0};
 
     //first parse '/'
     reader_get(reader);
 
-    size_t start = reader_tell(reader);
-
-    //find end of name
     while(!reader_eof(reader)) {
-        int c= reader_peek(reader);
+        int c = reader_peek(reader);
 
         if (is_name_end(c)) {
             break;
         }
 
+        if (c != '#') {
+            reader_get(reader);
+            if (!byte_buffer_append(lexer, &buffer, (unsigned char)c, offset)) {
+                free(buffer.data);
+                return token_with_type(PDF_TOKEN_INVALID, offset);
+            }
+            continue;
+        }
+
+        size_t escape_offset = reader_tell(reader);
         reader_get(reader);
+        int high = -1;
+        int low = -1;
+
+        if (!reader_eof(reader) && !is_name_end(reader_peek(reader))) {
+            high = hex_value(reader_get(reader));
+        }
+        if (!reader_eof(reader) && !is_name_end(reader_peek(reader))) {
+            low = hex_value(reader_get(reader));
+        }
+
+        if (high < 0 || low < 0) {
+            pdf_error_set(lexer->error, PDF_ERROR_MALFORMED, escape_offset, "lexer",
+                          "name escape must contain two hexadecimal digits");
+            free(buffer.data);
+            return token_with_type(PDF_TOKEN_INVALID, offset);
+        }
+
+        if (!byte_buffer_append(lexer, &buffer,
+                                (unsigned char)((high << 4) | low), escape_offset)) {
+            free(buffer.data);
+            return token_with_type(PDF_TOKEN_INVALID, offset);
+        }
     }
-
-    size_t end = reader_tell(reader);
-
-    size_t len = end - start;
-
-    char *name=malloc(len+1);
-
-    if (name==NULL) {
-        pdf_error_set(lexer->error, PDF_ERROR_OUT_OF_MEMORY, offset, "lexer",
-                      "could not allocate name token");
-        return token_with_type(PDF_TOKEN_INVALID, offset);
-    }
-
-    for(size_t i=0;i<len;i++){
-        name[i]=(char)reader->data[start+i];
-    }
-
-    name[len]='\0';
 
     pdf_token token = token_with_type(PDF_TOKEN_NAME, offset);
-    token.text = name;
+    token.bytes.data = buffer.data;
+    token.bytes.len = buffer.len;
 
     return token;
 }
@@ -294,6 +356,153 @@ static pdf_token lex_keyword(pdf_lexer *lexer) {
     return token;
 }
 
+static pdf_token lex_literal_string(pdf_lexer *lexer, size_t offset) {
+    pdf_reader *reader = lexer->reader;
+    byte_buffer buffer = {0};
+    int depth = 1;
+
+    reader_get(reader);
+
+    while (!reader_eof(reader)) {
+        size_t byte_offset = reader_tell(reader);
+        int c = reader_get(reader);
+
+        if (c == '(') {
+            depth++;
+            if (!byte_buffer_append(lexer, &buffer, (unsigned char)c, byte_offset)) {
+                free(buffer.data);
+                return token_with_type(PDF_TOKEN_INVALID, offset);
+            }
+            continue;
+        }
+
+        if (c == ')') {
+            depth--;
+            if (depth == 0) {
+                pdf_token token = token_with_type(PDF_TOKEN_STRING, offset);
+                token.bytes.data = buffer.data;
+                token.bytes.len = buffer.len;
+                return token;
+            }
+
+            if (!byte_buffer_append(lexer, &buffer, (unsigned char)c, byte_offset)) {
+                free(buffer.data);
+                return token_with_type(PDF_TOKEN_INVALID, offset);
+            }
+            continue;
+        }
+
+        if (c != '\\') {
+            if (!byte_buffer_append(lexer, &buffer, (unsigned char)c, byte_offset)) {
+                free(buffer.data);
+                return token_with_type(PDF_TOKEN_INVALID, offset);
+            }
+            continue;
+        }
+
+        if (reader_eof(reader)) {
+            pdf_error_set(lexer->error, PDF_ERROR_MALFORMED, byte_offset, "lexer",
+                          "literal string has truncated escape");
+            free(buffer.data);
+            return token_with_type(PDF_TOKEN_INVALID, offset);
+        }
+
+        int escaped = reader_get(reader);
+        switch (escaped) {
+            case 'n': escaped = '\n'; break;
+            case 'r': escaped = '\r'; break;
+            case 't': escaped = '\t'; break;
+            case 'b': escaped = '\b'; break;
+            case 'f': escaped = '\f'; break;
+            case '\r':
+                if (!reader_eof(reader) && reader_peek(reader) == '\n') {
+                    reader_get(reader);
+                }
+                continue;
+            case '\n':
+                continue;
+            default:
+                if (escaped >= '0' && escaped <= '7') {
+                    int value = escaped - '0';
+
+                    for (int count = 1; count < 3 && !reader_eof(reader); count++) {
+                        int octal = reader_peek(reader);
+                        if (octal < '0' || octal > '7') {
+                            break;
+                        }
+                        value = value * 8 + (reader_get(reader) - '0');
+                    }
+                    escaped = value & 0xff;
+                }
+                break;
+        }
+
+        if (!byte_buffer_append(lexer, &buffer, (unsigned char)escaped, byte_offset)) {
+            free(buffer.data);
+            return token_with_type(PDF_TOKEN_INVALID, offset);
+        }
+    }
+
+    pdf_error_set(lexer->error, PDF_ERROR_MALFORMED, offset, "lexer",
+                  "literal string is not terminated");
+    free(buffer.data);
+    return token_with_type(PDF_TOKEN_INVALID, offset);
+}
+
+static pdf_token lex_hex_string(pdf_lexer *lexer, size_t offset) {
+    pdf_reader *reader = lexer->reader;
+    byte_buffer buffer = {0};
+    int high = -1;
+
+    while (!reader_eof(reader)) {
+        size_t byte_offset = reader_tell(reader);
+        int c = reader_get(reader);
+
+        if (c == '>') {
+            if (high >= 0 && !byte_buffer_append(lexer, &buffer,
+                                                   (unsigned char)(high << 4), byte_offset)) {
+                free(buffer.data);
+                return token_with_type(PDF_TOKEN_INVALID, offset);
+            }
+
+            pdf_token token = token_with_type(PDF_TOKEN_HEX_STRING, offset);
+            token.bytes.data = buffer.data;
+            token.bytes.len = buffer.len;
+            return token;
+        }
+
+        if (is_whitespace(c)) {
+            continue;
+        }
+
+        int value = hex_value(c);
+        if (value < 0) {
+            pdf_error_set(lexer->error, PDF_ERROR_MALFORMED, byte_offset, "lexer",
+                          "hex string contains a non-hexadecimal byte");
+            while (!reader_eof(reader) && reader_get(reader) != '>') {
+            }
+            free(buffer.data);
+            return token_with_type(PDF_TOKEN_INVALID, offset);
+        }
+
+        if (high < 0) {
+            high = value;
+        } else {
+            if (!byte_buffer_append(lexer, &buffer,
+                                    (unsigned char)((high << 4) | value), byte_offset)) {
+                free(buffer.data);
+                return token_with_type(PDF_TOKEN_INVALID, offset);
+            }
+            high = -1;
+        }
+    }
+
+    pdf_error_set(lexer->error, PDF_ERROR_MALFORMED, offset,
+                  "lexer", "hex string is not terminated");
+    free(buffer.data);
+    return token_with_type(PDF_TOKEN_INVALID, offset);
+}
+
 pdf_token lexer_next(pdf_lexer *lexer) {
     skip_ignored(lexer);
 
@@ -317,9 +526,7 @@ pdf_token lexer_next(pdf_lexer *lexer) {
         }
 
 
-        pdf_error_set(lexer->error, PDF_ERROR_MALFORMED, offset, "lexer",
-                      "single '<' is not a dictionary delimiter");
-        return token_with_type(PDF_TOKEN_INVALID, offset);
+        return lex_hex_string(lexer, offset);
     }
 
     if (c == '>') {
@@ -340,6 +547,10 @@ pdf_token lexer_next(pdf_lexer *lexer) {
 
     if (c=='/') {
         return lex_name(lexer);
+    }
+
+    if (c=='(') {
+        return lex_literal_string(lexer, offset);
     }
 
     //integer

@@ -3,6 +3,8 @@
 
 #include <stddef.h>
 
+#include "bytes.h"
+
 /*
 pdf data format
 <<
@@ -53,7 +55,7 @@ typedef struct {
 
 
 typedef struct {
-    char *key;
+    pdf_bytes key;
     pdf_object *value;
 } pdf_dict_entry;
 
@@ -82,7 +84,7 @@ struct pdf_object {
         long integer;
         double real;
 
-        char *name;
+        pdf_bytes name;
         
         pdf_array array;
 
@@ -94,6 +96,7 @@ struct pdf_object {
 pdf_object *pdf_object_new_int(long value);
 pdf_object *pdf_object_new_array(void);
 pdf_object *pdf_object_new_name(const char *name);
+pdf_object *pdf_object_new_name_bytes(const unsigned char *data, size_t len);
 pdf_object *pdf_object_new_dict(void);
 
 /* On success, the array owns item. On failure, the caller retains item. */
@@ -103,6 +106,8 @@ void pdf_object_free(pdf_object *obj);
 
 /* On success, the dictionary owns value and copies key. On failure, the caller retains value. */
 int pdf_dict_push(pdf_object *dict,const char *key,pdf_object *value);
+int pdf_dict_push_bytes(pdf_object *dict, const unsigned char *key, size_t len,
+                        pdf_object *value);
 
 void pdf_object_dump(const pdf_object *obj,int depth);
 

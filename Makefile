@@ -27,7 +27,8 @@ HDR = \
 	src/lexer.h \
 	src/parser.h \
 	src/object.h \
-	src/error.h
+	src/error.h \
+	src/bytes.h
 TEST_INPUT = tests/numbers.txt
 OWNERSHIP_SRC = tests/ownership_test.c
 ERROR_SRC = tests/error_test.c

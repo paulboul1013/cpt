@@ -97,7 +97,7 @@ pdf_object *parser_parse_object(pdf_parser *parser) {
         }
 
         case PDF_TOKEN_NAME:{
-            pdf_object *obj = pdf_object_new_name(token.text);
+            pdf_object *obj = pdf_object_new_name_bytes(token.bytes.data, token.bytes.len);
 
             if (obj == NULL) {
                 pdf_error_set(parser->error, PDF_ERROR_OUT_OF_MEMORY, token.offset,
@@ -249,7 +249,7 @@ static pdf_object *parse_dict(pdf_parser *parser) {
             return NULL;
         }
 
-        if (!pdf_dict_push(dict,key.text,value)) {
+        if (!pdf_dict_push_bytes(dict, key.bytes.data, key.bytes.len, value)) {
 
             pdf_error_set(parser->error, PDF_ERROR_OUT_OF_MEMORY, key.offset,
                           "parser", "could not grow dictionary object");

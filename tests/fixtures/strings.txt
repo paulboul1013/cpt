@@ -1,0 +1,4 @@
+/Name#20With#23Escape
+(outer (nested) \(escaped\) \n\101)
+<48656c6c6f 21>
+<F>

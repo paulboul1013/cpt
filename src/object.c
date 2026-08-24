@@ -3,19 +3,23 @@
 #include <stdio.h>
 #include <string.h>
 
-static char *pdf_strdup(const char *s)
-{
-    size_t len = strlen(s);
-
-    char *copy = malloc(len + 1);
-
-    if (copy == NULL) {
-        return NULL;
+static int pdf_bytes_copy(pdf_bytes *destination, const unsigned char *data, size_t len) {
+    if (len == 0) {
+        destination->data = NULL;
+        destination->len = 0;
+        return 1;
     }
 
-    memcpy(copy, s, len + 1);
+    destination->data = malloc(len);
 
-    return copy;
+    if (destination->data == NULL) {
+        destination->len = 0;
+        return 0;
+    }
+
+    memcpy(destination->data, data, len);
+    destination->len = len;
+    return 1;
 }
 
 
@@ -49,7 +53,7 @@ void pdf_object_free(pdf_object *obj) {
 
     switch(obj->type) {
         case PDF_OBJECT_NAME: {
-            free(obj->value.name);
+            free(obj->value.name.data);
             break;
         }
 
@@ -67,7 +71,7 @@ void pdf_object_free(pdf_object *obj) {
 
             for (size_t i = 0;i < obj->value.dict.len;i++) {
 
-                free(obj->value.dict.entries[i].key);
+                free(obj->value.dict.entries[i].key.data);
 
                 pdf_object_free(obj->value.dict.entries[i].value);
             }
@@ -162,7 +166,9 @@ void pdf_object_dump(const pdf_object *obj,int depth) {
 
                 print_indent(depth + 1);
 
-                printf("%s:\n",obj->value.dict.entries[i].key);
+                (void)fwrite(obj->value.dict.entries[i].key.data, 1,
+                             obj->value.dict.entries[i].key.len, stdout);
+                printf(":\n");
 
                 pdf_object_dump(obj->value.dict.entries[i].value,depth+2);
             }
@@ -172,10 +178,9 @@ void pdf_object_dump(const pdf_object *obj,int depth) {
         }
 
         case PDF_OBJECT_NAME: {
-            printf(
-                "NAME %s\n",
-                obj->value.name
-            );
+            printf("NAME ");
+            (void)fwrite(obj->value.name.data, 1, obj->value.name.len, stdout);
+            putchar('\n');
 
             break;
         }
@@ -187,21 +192,30 @@ void pdf_object_dump(const pdf_object *obj,int depth) {
 }
 
 pdf_object *pdf_object_new_name(const char *name) {
+    if (name == NULL) {
+        return NULL;
+    }
+
+    return pdf_object_new_name_bytes((const unsigned char *)name, strlen(name));
+}
+
+pdf_object *pdf_object_new_name_bytes(const unsigned char *data, size_t len) {
     pdf_object *obj = malloc(sizeof(pdf_object));
 
     if (obj == NULL) {
         return NULL;
     }
 
-    char *copy = pdf_strdup(name);
-
-    if (copy == NULL) {
+    if (len > 0 && data == NULL) {
         free(obj);
         return NULL;
     }
 
     obj->type = PDF_OBJECT_NAME;
-    obj->value.name = copy;
+    if (!pdf_bytes_copy(&obj->value.name, data, len)) {
+        free(obj);
+        return NULL;
+    }
 
     return obj;
 }
@@ -224,6 +238,15 @@ pdf_object *pdf_object_new_dict(void)
 }
 
 int pdf_dict_push(pdf_object *dict,const char *key,pdf_object *value) {
+    if (key == NULL) {
+        return 0;
+    }
+
+    return pdf_dict_push_bytes(dict, (const unsigned char *)key, strlen(key), value);
+}
+
+int pdf_dict_push_bytes(pdf_object *dict, const unsigned char *key, size_t len,
+                        pdf_object *value) {
     if (dict==NULL || dict->type!=PDF_OBJECT_DICT) {
         return 0;
     }
@@ -244,9 +267,13 @@ int pdf_dict_push(pdf_object *dict,const char *key,pdf_object *value) {
     }
 
 
-    char *key_copy = pdf_strdup(key);
+    pdf_bytes key_copy = {0};
 
-    if (key_copy == NULL) {
+    if (len > 0 && key == NULL) {
+        return 0;
+    }
+
+    if (!pdf_bytes_copy(&key_copy, key, len)) {
         return 0;
     }
 

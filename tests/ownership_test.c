@@ -24,13 +24,15 @@ int main(void) {
     pdf_token_init(&source);
     source = lexer_next(&lexer);
     assert(source.type == PDF_TOKEN_NAME);
-    assert(strcmp(source.text, "Type") == 0);
+    assert(source.bytes.len == 4);
+    assert(memcmp(source.bytes.data, "Type", 4) == 0);
 
     pdf_token_init(&destination);
     pdf_token_move(&destination, &source);
-    assert(source.text == NULL);
+    assert(source.bytes.data == NULL);
     assert(destination.type == PDF_TOKEN_NAME);
-    assert(strcmp(destination.text, "Type") == 0);
+    assert(destination.bytes.len == 4);
+    assert(memcmp(destination.bytes.data, "Type", 4) == 0);
     pdf_token_destroy(&source);
     pdf_token_destroy(&destination);
 
@@ -39,7 +41,8 @@ int main(void) {
     const pdf_token *borrowed = parser_peek(&parser);
     assert(borrowed != NULL);
     assert(borrowed->type == PDF_TOKEN_NAME);
-    assert(strcmp(borrowed->text, "Type") == 0);
+    assert(borrowed->bytes.len == 4);
+    assert(memcmp(borrowed->bytes.data, "Type", 4) == 0);
     parser_destroy(&parser);
     reader_close(&reader);
 
