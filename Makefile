@@ -20,6 +20,17 @@ HDR = \
 	src/lexer.h \
 	src/parser.h \
 	src/object.h
+TEST_INPUT = tests/numbers.txt
+
+define CHECK_NUMBERS_OUTPUT
+	@expected=$$(printf '%s\n' 'file size: 20 bytes' 'INT 123' 'INT 456' 'INT -42' 'INT 88' 'INT 999'); \
+	actual=$$(./$(1) $(TEST_INPUT)); \
+	if [ "$$actual" != "$$expected" ]; then \
+		printf 'build gate output mismatch for %s\n' "$(1)" >&2; \
+		printf '%s\n' "$$actual" >&2; \
+		exit 1; \
+	fi
+endef
 
 .PHONY: all clean test asan $(TARGET) $(ASAN_TARGET)
 
@@ -29,10 +40,10 @@ $(TARGET): $(SRC) $(HDR)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(SRC) $(LDLIBS) -o $@
 
 test: $(TARGET)
-	@./$(TARGET) tests/numbers.txt >/dev/null
+	$(call CHECK_NUMBERS_OUTPUT,$(TARGET))
 
 asan: $(ASAN_TARGET)
-	@./$(ASAN_TARGET) tests/numbers.txt >/dev/null
+	$(call CHECK_NUMBERS_OUTPUT,$(ASAN_TARGET))
 
 $(ASAN_TARGET): $(SRC) $(HDR)
 	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $(SRC) $(LDLIBS) -o $@
