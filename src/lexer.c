@@ -59,12 +59,28 @@ typedef struct {
 
 static int byte_buffer_append(pdf_lexer *lexer, byte_buffer *buffer,
                               unsigned char byte, size_t offset) {
+    if (lexer->limits != NULL && buffer->len >= lexer->limits->max_token_size) {
+        pdf_error_set(lexer->error, PDF_ERROR_RESOURCE_LIMIT, offset, "lexer",
+                      "token exceeds configured size limit");
+        return 0;
+    }
+
     if (buffer->len == buffer->cap) {
         size_t new_cap = buffer->cap == 0 ? 16 : buffer->cap * 2;
 
         if (new_cap < buffer->cap) {
             pdf_error_set(lexer->error, PDF_ERROR_RESOURCE_LIMIT, offset, "lexer",
                           "byte buffer capacity overflow");
+            return 0;
+        }
+
+        if (lexer->limits != NULL && new_cap > lexer->limits->max_token_size) {
+            new_cap = lexer->limits->max_token_size;
+        }
+
+        if (new_cap <= buffer->len) {
+            pdf_error_set(lexer->error, PDF_ERROR_RESOURCE_LIMIT, offset, "lexer",
+                          "token exceeds configured size limit");
             return 0;
         }
 
@@ -101,6 +117,7 @@ static int hex_value(int c) {
 void lexer_init(pdf_lexer *lexer, pdf_reader *reader, pdf_error *error) {
     lexer->reader = reader; 
     lexer->error = error;
+    lexer->limits = reader == NULL ? NULL : &reader->limits;
 }
 
 static int is_whitespace(int c) {
@@ -262,6 +279,14 @@ static pdf_token lex_number(pdf_lexer *lexer) {
 
     size_t end = reader_tell(reader);
     size_t length = end - start;
+
+    if (length == SIZE_MAX ||
+        (lexer->limits != NULL && length > lexer->limits->max_token_size)) {
+        pdf_error_set(lexer->error, PDF_ERROR_RESOURCE_LIMIT, offset, "lexer",
+                      "numeric token exceeds configured size limit");
+        return token_with_type(PDF_TOKEN_INVALID, offset);
+    }
+
     char *lexeme = malloc(length + 1);
 
     if (lexeme == NULL) {
@@ -327,6 +352,14 @@ static pdf_token lex_keyword(pdf_lexer *lexer) {
     }
 
     size_t length = reader_tell(reader) - start;
+
+    if (length == SIZE_MAX ||
+        (lexer->limits != NULL && length > lexer->limits->max_token_size)) {
+        pdf_error_set(lexer->error, PDF_ERROR_RESOURCE_LIMIT, offset, "lexer",
+                      "keyword exceeds configured size limit");
+        return token_with_type(PDF_TOKEN_INVALID, offset);
+    }
+
     char *text = malloc(length + 1);
 
     if (text == NULL) {

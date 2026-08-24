@@ -1,9 +1,17 @@
 #include "reader.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-int reader_open(pdf_reader *reader,const char *filename,pdf_error *error){
+int reader_open(pdf_reader *reader,const char *filename,pdf_error *error) {
+    pdf_limits limits;
+    pdf_limits_default(&limits);
+    return reader_open_with_limits(reader, filename, error, &limits);
+}
+
+int reader_open_with_limits(pdf_reader *reader, const char *filename,
+                            pdf_error *error, const pdf_limits *limits) {
     if (reader == NULL || filename == NULL) {
         pdf_error_set(error, PDF_ERROR_IO, 0, "reader",
                       "input reader or filename is null");
@@ -13,6 +21,12 @@ int reader_open(pdf_reader *reader,const char *filename,pdf_error *error){
     reader->data = NULL;
     reader->size = 0;
     reader->pos = 0;
+
+    if (limits == NULL) {
+        pdf_limits_default(&reader->limits);
+    } else {
+        reader->limits = *limits;
+    }
 
     FILE *fp = fopen(filename,"rb");
 
@@ -34,6 +48,13 @@ int reader_open(pdf_reader *reader,const char *filename,pdf_error *error){
     if (file_size < 0 ){
         pdf_error_set(error, PDF_ERROR_IO, 0, "reader",
                       "could not determine input size");
+        fclose(fp);
+        return 0;
+    }
+
+    if ((uintmax_t)file_size > (uintmax_t)reader->limits.max_input_size) {
+        pdf_error_set(error, PDF_ERROR_RESOURCE_LIMIT, 0, "reader",
+                      "input exceeds configured size limit");
         fclose(fp);
         return 0;
     }

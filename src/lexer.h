@@ -63,6 +63,7 @@ void pdf_token_move(pdf_token *destination, pdf_token *source);
 typedef struct {
     pdf_reader *reader;
     pdf_error *error;
+    const pdf_limits *limits;
 } pdf_lexer;
 
 void lexer_init(pdf_lexer *lexer, pdf_reader *reader, pdf_error *error);

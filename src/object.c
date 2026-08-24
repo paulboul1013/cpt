@@ -172,6 +172,10 @@ int pdf_array_push(pdf_object *array,pdf_object *item) {
     if (a->len >= a->cap) {
         size_t new_cap = a->cap==0 ? 4: a->cap*2;
 
+        if (new_cap < a->cap || new_cap > SIZE_MAX / sizeof(*a->items)) {
+            return 0;
+        }
+
         pdf_object **new_items=realloc(a->items,sizeof(pdf_object*) * new_cap);
 
         if (new_items==NULL) {
@@ -380,6 +384,10 @@ int pdf_dict_push_bytes(pdf_object *dict, const unsigned char *key, size_t len,
 
     if (d->len >= d->cap) {
         size_t new_cap = d->cap == 0 ? 4 : d->cap * 2;
+
+        if (new_cap < d->cap || new_cap > SIZE_MAX / sizeof(*d->entries)) {
+            return 0;
+        }
 
         pdf_dict_entry *new_entries = realloc(d->entries,sizeof(pdf_dict_entry) * new_cap);
 

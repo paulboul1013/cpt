@@ -6,6 +6,23 @@ static pdf_object *parse_array(pdf_parser *parser);
 static pdf_object *parse_dict(pdf_parser *parser);
 static const pdf_token *parser_peek_n(pdf_parser *parser, size_t index);
 
+static int parser_enter_container(pdf_parser *parser, size_t offset) {
+    if (parser->limits != NULL && parser->depth >= parser->limits->max_nesting_depth) {
+        pdf_error_set(parser->error, PDF_ERROR_RESOURCE_LIMIT, offset, "parser",
+                      "nested object depth exceeds configured limit");
+        return 0;
+    }
+
+    parser->depth++;
+    return 1;
+}
+
+static void parser_leave_container(pdf_parser *parser) {
+    if (parser->depth > 0) {
+        parser->depth--;
+    }
+}
+
 static size_t parser_offset(const pdf_parser *parser) {
     if (parser == NULL || parser->lexer == NULL || parser->lexer->reader == NULL) {
         return 0;
@@ -22,10 +39,12 @@ static int is_reference_marker(const pdf_token *token) {
 void parser_init(pdf_parser *parser, pdf_lexer *lexer, pdf_error *error) {
     parser->lexer = lexer;
     parser->error = error;
+    parser->limits = lexer == NULL ? NULL : lexer->limits;
     for (size_t i = 0; i < 3; i++) {
         pdf_token_init(&parser->lookahead[i]);
     }
     parser->lookahead_len = 0;
+    parser->depth = 0;
 }
 
 int parser_next(pdf_parser *parser, pdf_token *token) {
@@ -94,8 +113,10 @@ void parser_destroy(pdf_parser *parser) {
     }
 
     parser->lookahead_len = 0;
+    parser->depth = 0;
     parser->lexer = NULL;
     parser->error = NULL;
+    parser->limits = NULL;
 }
 
 pdf_object *parser_parse_object(pdf_parser *parser) {
@@ -244,11 +265,16 @@ pdf_object *parser_parse_object(pdf_parser *parser) {
 }
 
 static pdf_object *parse_array(pdf_parser *parser) {
+    if (!parser_enter_container(parser, parser_offset(parser))) {
+        return NULL;
+    }
+
     pdf_object *array = pdf_object_new_array();
     
     if (!array) {
         pdf_error_set(parser->error, PDF_ERROR_OUT_OF_MEMORY, parser_offset(parser),
                       "parser", "could not allocate array object");
+        parser_leave_container(parser);
         return NULL;
     }
 
@@ -259,6 +285,7 @@ static pdf_object *parse_array(pdf_parser *parser) {
             pdf_error_set(parser->error, PDF_ERROR_MALFORMED, parser_offset(parser),
                           "parser", "could not read array token");
             pdf_object_free(array);
+            parser_leave_container(parser);
             return NULL;
         }
 
@@ -268,6 +295,7 @@ static pdf_object *parse_array(pdf_parser *parser) {
             pdf_token_init(&end);
             parser_next(parser, &end);
             pdf_token_destroy(&end);
+            parser_leave_container(parser);
             break;
         }
 
@@ -275,6 +303,7 @@ static pdf_object *parse_array(pdf_parser *parser) {
             pdf_error_set(parser->error, PDF_ERROR_MALFORMED, token->offset, "parser",
                           "unexpected end of input while parsing array");
             pdf_object_free(array);
+            parser_leave_container(parser);
             return NULL;
         }
 
@@ -283,6 +312,17 @@ static pdf_object *parse_array(pdf_parser *parser) {
 
         if (item==NULL) {
             pdf_object_free(array);
+            parser_leave_container(parser);
+            return NULL;
+        }
+
+        if (parser->limits != NULL &&
+            array->value.array.len >= parser->limits->max_container_entries) {
+            pdf_error_set(parser->error, PDF_ERROR_RESOURCE_LIMIT, item_offset,
+                          "parser", "array entries exceed configured limit");
+            pdf_object_free(item);
+            pdf_object_free(array);
+            parser_leave_container(parser);
             return NULL;
         }
 
@@ -291,19 +331,26 @@ static pdf_object *parse_array(pdf_parser *parser) {
                           "parser", "could not grow array object");
             pdf_object_free(item);
             pdf_object_free(array);
+            parser_leave_container(parser);
             return NULL;
         }
     }
 
+    parser_leave_container(parser);
     return array;
 }
 
 static pdf_object *parse_dict(pdf_parser *parser) {
+    if (!parser_enter_container(parser, parser_offset(parser))) {
+        return NULL;
+    }
+
     pdf_object *dict = pdf_object_new_dict();
 
     if (dict == NULL) {
         pdf_error_set(parser->error, PDF_ERROR_OUT_OF_MEMORY, parser_offset(parser),
                       "parser", "could not allocate dictionary object");
+        parser_leave_container(parser);
         return NULL;
     }
 
@@ -315,6 +362,7 @@ static pdf_object *parse_dict(pdf_parser *parser) {
             pdf_error_set(parser->error, PDF_ERROR_MALFORMED, parser_offset(parser),
                           "parser", "could not read dictionary token");
             pdf_object_free(dict);
+            parser_leave_container(parser);
             return NULL;
         }
 
@@ -325,6 +373,7 @@ static pdf_object *parse_dict(pdf_parser *parser) {
             parser_next(parser, &end);
             pdf_token_destroy(&end);
 
+            parser_leave_container(parser);
             break;
         }
 
@@ -335,6 +384,7 @@ static pdf_object *parse_dict(pdf_parser *parser) {
                           "unexpected end of input while parsing dictionary");
 
             pdf_object_free(dict);
+            parser_leave_container(parser);
 
             return NULL;
         }
@@ -351,6 +401,7 @@ static pdf_object *parse_dict(pdf_parser *parser) {
 
             pdf_token_destroy(&key);
             pdf_object_free(dict);
+            parser_leave_container(parser);
 
             return NULL;
         }
@@ -363,6 +414,7 @@ static pdf_object *parse_dict(pdf_parser *parser) {
             pdf_token_destroy(&key);
 
             pdf_object_free(dict);
+            parser_leave_container(parser);
 
             return NULL;
         }
@@ -376,13 +428,25 @@ static pdf_object *parse_dict(pdf_parser *parser) {
 
             pdf_object_free(value);
             pdf_object_free(dict);
+            parser_leave_container(parser);
 
+            return NULL;
+        }
+
+        if (parser->limits != NULL &&
+            dict->value.dict.len > parser->limits->max_container_entries) {
+            pdf_error_set(parser->error, PDF_ERROR_RESOURCE_LIMIT, key.offset,
+                          "parser", "dictionary entries exceed configured limit");
+            pdf_token_destroy(&key);
+            pdf_object_free(dict);
+            parser_leave_container(parser);
             return NULL;
         }
 
         pdf_token_destroy(&key);
     }
 
+    parser_leave_container(parser);
     return dict;
 }
 

@@ -4,6 +4,7 @@
 #include <stddef.h>
 
 #include "error.h"
+#include "limits.h"
 
 /*
 
@@ -26,11 +27,14 @@ typedef struct {
     unsigned char *data;
     size_t size;
     size_t pos;
+    pdf_limits limits;
 } pdf_reader;
 
 
 //load full pdf file into memory
 int reader_open(pdf_reader *reader,const char *filename,pdf_error *error);
+int reader_open_with_limits(pdf_reader *reader, const char *filename,
+                            pdf_error *error, const pdf_limits *limits);
 
 //free reader usage memory
 void reader_close(pdf_reader *reader);

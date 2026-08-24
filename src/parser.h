@@ -7,9 +7,11 @@
 typedef struct {
     pdf_lexer *lexer;
     pdf_error *error;
+    const pdf_limits *limits;
 
     pdf_token lookahead[3];
     size_t lookahead_len;
+    size_t depth;
 
 } pdf_parser;
 
