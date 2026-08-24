@@ -102,11 +102,24 @@ do
 			;;
 	esac
 
+	fixture_mode=stream
+	case "$input" in
+		object:*)
+			fixture_mode=object
+			input=${input#object:}
+			;;
+	esac
 	fixture_path=$(relative_path "$input")
 	actual_stdout="$work_dir/$total.stdout"
 	actual_stderr="$work_dir/$total.stderr"
 
-	if "$binary" "$fixture_path" >"$actual_stdout" 2>"$actual_stderr"; then
+	if [ "$fixture_mode" = object ]; then
+		if "$binary" --object "$fixture_path" >"$actual_stdout" 2>"$actual_stderr"; then
+			actual_status=0
+		else
+			actual_status=$?
+		fi
+	elif "$binary" "$fixture_path" >"$actual_stdout" 2>"$actual_stderr"; then
 		actual_status=0
 	else
 		actual_status=$?

@@ -13,4 +13,12 @@ primitives|success|tests/fixtures/primitives.txt|0|tests/golden/primitives.stdou
 nested-duplicate|success|tests/fixtures/nested-duplicate.txt|0|tests/golden/nested-duplicate.stdout|-
 references|success|tests/fixtures/references.txt|0|tests/golden/references.stdout|-
 incomplete-reference|malformed|tests/fixtures/incomplete-reference.txt|3|tests/golden/incomplete-reference.stdout|tests/golden/incomplete-reference.stderr
-object-grammar|success|tests/object.txt|0|tests/golden/object.stdout|-
+object-grammar|success|object:tests/object.txt|0|tests/golden/object.stdout|-
+trailing-object|malformed|object:tests/fixtures/trailing-object.txt|3|tests/golden/trailing-object.stdout|tests/golden/trailing-object.stderr
+non-name-key|malformed|tests/fixtures/non-name-key.txt|3|tests/golden/non-name-key.stdout|tests/golden/non-name-key.stderr
+missing-dict-value|malformed|tests/fixtures/missing-dict-value.txt|3|tests/golden/missing-dict-value.stdout|tests/golden/missing-dict-value.stderr
+invalid-hex|malformed|tests/fixtures/invalid-hex.txt|3|tests/golden/invalid-hex.stdout|tests/golden/invalid-hex.stderr
+invalid-name-escape|malformed|tests/fixtures/invalid-name-escape.txt|3|tests/golden/invalid-name-escape.stdout|tests/golden/invalid-name-escape.stderr
+unterminated-string|malformed|tests/fixtures/unterminated-string.txt|3|tests/golden/unterminated-string.stdout|tests/golden/unterminated-string.stderr
+overflow-integer|malformed|tests/fixtures/overflow-integer.txt|3|tests/golden/overflow-integer.stdout|tests/golden/overflow-integer.stderr
+overflow-real|malformed|tests/fixtures/overflow-real.txt|3|tests/golden/overflow-real.stdout|tests/golden/overflow-real.stderr
