@@ -9,6 +9,7 @@ void pdf_token_init(pdf_token *token) {
     }
 
     token->type = PDF_TOKEN_EOF;
+    token->offset = 0;
     token->integer = 0;
     token->text = NULL;
 }
@@ -32,18 +33,20 @@ void pdf_token_move(pdf_token *destination, pdf_token *source) {
     pdf_token_init(source);
 }
 
-static pdf_token token_with_type(pdf_token_type type) {
+static pdf_token token_with_type(pdf_token_type type, size_t offset) {
     pdf_token token;
 
     pdf_token_init(&token);
     token.type = type;
+    token.offset = offset;
 
     return token;
 }
 
 //for reader readed bytes
-void lexer_init(pdf_lexer *lexer, pdf_reader *reader) {
+void lexer_init(pdf_lexer *lexer, pdf_reader *reader, pdf_error *error) {
     lexer->reader = reader; 
+    lexer->error = error;
 }
 
 static int is_whitespace(int c) {
@@ -74,6 +77,7 @@ static int is_name_end(int c) {
 
 static pdf_token lex_name(pdf_lexer *lexer) {
     pdf_reader *reader = lexer->reader;
+	 size_t offset = reader_tell(reader);
 
     //first parse '/'
     reader_get(reader);
@@ -98,7 +102,9 @@ static pdf_token lex_name(pdf_lexer *lexer) {
     char *name=malloc(len+1);
 
     if (name==NULL) {
-        return token_with_type(PDF_TOKEN_INVALID);
+        pdf_error_set(lexer->error, PDF_ERROR_OUT_OF_MEMORY, offset, "lexer",
+                      "could not allocate name token");
+        return token_with_type(PDF_TOKEN_INVALID, offset);
     }
 
     for(size_t i=0;i<len;i++){
@@ -107,7 +113,7 @@ static pdf_token lex_name(pdf_lexer *lexer) {
 
     name[len]='\0';
 
-    pdf_token token = token_with_type(PDF_TOKEN_NAME);
+    pdf_token token = token_with_type(PDF_TOKEN_NAME, offset);
     token.text = name;
 
     return token;
@@ -129,6 +135,7 @@ static void skip_whitespace(pdf_lexer *lexer) {
 
 static pdf_token lex_integer(pdf_lexer *lexer) {
     pdf_reader *reader = lexer->reader;
+	size_t offset = reader_tell(reader);
 
     long value = 0;
     int sign = 1;
@@ -159,6 +166,7 @@ static pdf_token lex_integer(pdf_lexer *lexer) {
 
     pdf_token_init(&token);
     token.type = PDF_TOKEN_INT;
+    token.offset = offset;
     token.integer = sign * value;
 
     return token;
@@ -168,10 +176,11 @@ pdf_token lexer_next(pdf_lexer *lexer) {
     skip_whitespace(lexer);
 
     pdf_reader *reader = lexer->reader;
+	size_t offset = reader_tell(reader);
 
     //EOF
     if (reader_eof(reader)) {
-        return token_with_type(PDF_TOKEN_EOF);
+        return token_with_type(PDF_TOKEN_EOF, offset);
     }
 
     int c = reader_peek(reader);
@@ -182,11 +191,13 @@ pdf_token lexer_next(pdf_lexer *lexer) {
         if (reader_peek(reader)=='<') {
             reader_get(reader);
 
-            return token_with_type(PDF_TOKEN_DICT_BEGIN);
+            return token_with_type(PDF_TOKEN_DICT_BEGIN, offset);
         }
 
 
-        return token_with_type(PDF_TOKEN_INVALID);
+        pdf_error_set(lexer->error, PDF_ERROR_MALFORMED, offset, "lexer",
+                      "single '<' is not a dictionary delimiter");
+        return token_with_type(PDF_TOKEN_INVALID, offset);
     }
 
     if (c == '>') {
@@ -197,10 +208,12 @@ pdf_token lexer_next(pdf_lexer *lexer) {
 
             reader_get(reader);
 
-            return token_with_type(PDF_TOKEN_DICT_END);
+            return token_with_type(PDF_TOKEN_DICT_END, offset);
         }
 
-        return token_with_type(PDF_TOKEN_INVALID);
+        pdf_error_set(lexer->error, PDF_ERROR_MALFORMED, offset, "lexer",
+                      "single '>' is not a dictionary delimiter");
+        return token_with_type(PDF_TOKEN_INVALID, offset);
     }
 
     if (c=='/') {
@@ -216,19 +229,21 @@ pdf_token lexer_next(pdf_lexer *lexer) {
     if (c=='[') {
         reader_get(reader);
 
-        return token_with_type(PDF_TOKEN_ARRAY_BEGIN);
+        return token_with_type(PDF_TOKEN_ARRAY_BEGIN, offset);
     }
 
     //array end
     if (c==']') {
         reader_get(reader);
 
-        return token_with_type(PDF_TOKEN_ARRAY_END);
+        return token_with_type(PDF_TOKEN_ARRAY_END, offset);
     }
     
 
     //unkown byte
     reader_get(reader);
 
-    return token_with_type(PDF_TOKEN_INVALID);
+    pdf_error_set(lexer->error, PDF_ERROR_MALFORMED, offset, "lexer",
+                  "unexpected byte 0x%02x", (unsigned int)(unsigned char)c);
+    return token_with_type(PDF_TOKEN_INVALID, offset);
 }

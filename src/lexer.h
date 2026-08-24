@@ -36,6 +36,7 @@ typedef enum {
 typedef struct {
     pdf_token_type type;
 
+    size_t offset;
     long integer;
     char *text;
 
@@ -49,9 +50,10 @@ void pdf_token_move(pdf_token *destination, pdf_token *source);
 
 typedef struct {
     pdf_reader *reader;
+    pdf_error *error;
 } pdf_lexer;
 
-void lexer_init(pdf_lexer *lexer, pdf_reader *reader);
+void lexer_init(pdf_lexer *lexer, pdf_reader *reader, pdf_error *error);
 
 pdf_token lexer_next(pdf_lexer *lexer);
 

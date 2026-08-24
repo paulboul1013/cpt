@@ -3,14 +3,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int reader_open(pdf_reader *reader,const char *filename){
+int reader_open(pdf_reader *reader,const char *filename,pdf_error *error){
+    if (reader == NULL || filename == NULL) {
+        pdf_error_set(error, PDF_ERROR_IO, 0, "reader",
+                      "input reader or filename is null");
+        return 0;
+    }
+
+    reader->data = NULL;
+    reader->size = 0;
+    reader->pos = 0;
+
     FILE *fp = fopen(filename,"rb");
 
     if (fp==NULL) {
+        pdf_error_set(error, PDF_ERROR_IO, 0, "reader",
+                      "could not open input file");
         return 0;
     }
 
     if (fseek(fp,0,SEEK_END)!=0) {
+        pdf_error_set(error, PDF_ERROR_IO, 0, "reader",
+                      "could not seek to input end");
         fclose(fp);
         return 0;
     }
@@ -18,6 +32,8 @@ int reader_open(pdf_reader *reader,const char *filename){
     long file_size = ftell(fp);
 
     if (file_size < 0 ){
+        pdf_error_set(error, PDF_ERROR_IO, 0, "reader",
+                      "could not determine input size");
         fclose(fp);
         return 0;
     }
@@ -27,6 +43,8 @@ int reader_open(pdf_reader *reader,const char *filename){
     unsigned char *data = malloc((size_t)file_size);
     
     if (data==NULL && file_size!=0) {
+        pdf_error_set(error, PDF_ERROR_OUT_OF_MEMORY, 0, "reader",
+                      "could not allocate input buffer");
         fclose(fp);
         return 0;
     }
@@ -34,9 +52,14 @@ int reader_open(pdf_reader *reader,const char *filename){
     size_t read_size = fread(data,1,(size_t)file_size,fp);
 
     if (read_size!=(size_t)file_size) {
+        pdf_error_set(error, PDF_ERROR_IO, read_size, "reader",
+                      "could not read complete input");
         free(data);
+        fclose(fp);
         return 0;
     }
+
+    fclose(fp);
 
     reader->data = data;
     reader->size=(size_t)file_size;

@@ -4,14 +4,29 @@
 static pdf_object *parse_array(pdf_parser *parser);
 static pdf_object *parse_dict(pdf_parser *parser);
 
-void parser_init(pdf_parser *parser, pdf_lexer *lexer) {
+static size_t parser_offset(const pdf_parser *parser) {
+    if (parser == NULL || parser->lexer == NULL || parser->lexer->reader == NULL) {
+        return 0;
+    }
+
+    return reader_tell(parser->lexer->reader);
+}
+
+void parser_init(pdf_parser *parser, pdf_lexer *lexer, pdf_error *error) {
     parser->lexer = lexer;
+    parser->error = error;
     pdf_token_init(&parser->lookahead);
     parser->has_lookahead = 0;
 }
 
 int parser_next(pdf_parser *parser, pdf_token *token) {
     if (parser == NULL || token == NULL) {
+        return 0;
+    }
+
+    if (parser->lexer == NULL) {
+        pdf_error_set(parser->error, PDF_ERROR_MALFORMED, parser_offset(parser),
+                      "parser", "parser has no lexer");
         return 0;
     }
 
@@ -28,6 +43,12 @@ int parser_next(pdf_parser *parser, pdf_token *token) {
 
 const pdf_token *parser_peek(pdf_parser *parser) {
     if (parser == NULL) {
+        return NULL;
+    }
+
+    if (parser->lexer == NULL) {
+        pdf_error_set(parser->error, PDF_ERROR_MALFORMED, parser_offset(parser),
+                      "parser", "parser has no lexer");
         return NULL;
     }
 
@@ -50,6 +71,7 @@ void parser_destroy(pdf_parser *parser) {
     }
 
     parser->lexer = NULL;
+    parser->error = NULL;
 }
 
 pdf_object *parser_parse_object(pdf_parser *parser) {
@@ -63,6 +85,12 @@ pdf_object *parser_parse_object(pdf_parser *parser) {
     switch(token.type) {
         case PDF_TOKEN_INT: {
             pdf_object *object = pdf_object_new_int(token.integer);
+
+            if (object == NULL) {
+                pdf_error_set(parser->error, PDF_ERROR_OUT_OF_MEMORY, token.offset,
+                              "parser", "could not allocate integer object");
+            }
+
             pdf_token_destroy(&token);
 
             return object;
@@ -70,6 +98,12 @@ pdf_object *parser_parse_object(pdf_parser *parser) {
 
         case PDF_TOKEN_NAME:{
             pdf_object *obj = pdf_object_new_name(token.text);
+
+            if (obj == NULL) {
+                pdf_error_set(parser->error, PDF_ERROR_OUT_OF_MEMORY, token.offset,
+                              "parser", "could not allocate name object");
+            }
+
             pdf_token_destroy(&token);
 
             return obj;
@@ -84,6 +118,8 @@ pdf_object *parser_parse_object(pdf_parser *parser) {
             return parse_array(parser);
 
         default:
+            pdf_error_set(parser->error, PDF_ERROR_MALFORMED, token.offset,
+                          "parser", "unexpected token while parsing object");
             pdf_token_destroy(&token);
             return NULL;
     }
@@ -93,6 +129,8 @@ static pdf_object *parse_array(pdf_parser *parser) {
     pdf_object *array = pdf_object_new_array();
     
     if (!array) {
+        pdf_error_set(parser->error, PDF_ERROR_OUT_OF_MEMORY, parser_offset(parser),
+                      "parser", "could not allocate array object");
         return NULL;
     }
 
@@ -100,6 +138,8 @@ static pdf_object *parse_array(pdf_parser *parser) {
         const pdf_token *token = parser_peek(parser);
 
         if (token == NULL) {
+            pdf_error_set(parser->error, PDF_ERROR_MALFORMED, parser_offset(parser),
+                          "parser", "could not read array token");
             pdf_object_free(array);
             return NULL;
         }
@@ -114,10 +154,13 @@ static pdf_object *parse_array(pdf_parser *parser) {
         }
 
         if (token->type==PDF_TOKEN_EOF) {
+            pdf_error_set(parser->error, PDF_ERROR_MALFORMED, token->offset, "parser",
+                          "unexpected end of input while parsing array");
             pdf_object_free(array);
             return NULL;
         }
 
+        size_t item_offset = token->offset;
         pdf_object *item=parser_parse_object(parser);
 
         if (item==NULL) {
@@ -126,6 +169,8 @@ static pdf_object *parse_array(pdf_parser *parser) {
         }
 
         if (!pdf_array_push(array,item)) {
+            pdf_error_set(parser->error, PDF_ERROR_OUT_OF_MEMORY, item_offset,
+                          "parser", "could not grow array object");
             pdf_object_free(item);
             pdf_object_free(array);
             return NULL;
@@ -139,6 +184,8 @@ static pdf_object *parse_dict(pdf_parser *parser) {
     pdf_object *dict = pdf_object_new_dict();
 
     if (dict == NULL) {
+        pdf_error_set(parser->error, PDF_ERROR_OUT_OF_MEMORY, parser_offset(parser),
+                      "parser", "could not allocate dictionary object");
         return NULL;
     }
 
@@ -147,6 +194,8 @@ static pdf_object *parse_dict(pdf_parser *parser) {
         const pdf_token *token = parser_peek(parser);
 
         if (token == NULL) {
+            pdf_error_set(parser->error, PDF_ERROR_MALFORMED, parser_offset(parser),
+                          "parser", "could not read dictionary token");
             pdf_object_free(dict);
             return NULL;
         }
@@ -164,6 +213,9 @@ static pdf_object *parse_dict(pdf_parser *parser) {
 
         if (token->type == PDF_TOKEN_EOF) {
 
+            pdf_error_set(parser->error, PDF_ERROR_MALFORMED, token->offset, "parser",
+                          "unexpected end of input while parsing dictionary");
+
             pdf_object_free(dict);
 
             return NULL;
@@ -175,6 +227,9 @@ static pdf_object *parse_dict(pdf_parser *parser) {
         parser_next(parser, &key);
 
         if (key.type != PDF_TOKEN_NAME) {
+
+            pdf_error_set(parser->error, PDF_ERROR_MALFORMED, key.offset, "parser",
+                          "dictionary key must be a name");
 
             pdf_token_destroy(&key);
             pdf_object_free(dict);
@@ -195,6 +250,9 @@ static pdf_object *parse_dict(pdf_parser *parser) {
         }
 
         if (!pdf_dict_push(dict,key.text,value)) {
+
+            pdf_error_set(parser->error, PDF_ERROR_OUT_OF_MEMORY, key.offset,
+                          "parser", "could not grow dictionary object");
 
             pdf_token_destroy(&key);
 

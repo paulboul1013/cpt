@@ -10,14 +10,16 @@ int main(void) {
     pdf_reader reader = {0};
     pdf_lexer lexer;
     pdf_parser parser;
+    pdf_error error;
     pdf_token source;
     pdf_token destination;
     pdf_object *array;
     pdf_object *dict;
     pdf_object *child;
 
-    assert(reader_open(&reader, "tests/names.txt"));
-    lexer_init(&lexer, &reader);
+    pdf_error_init(&error);
+    assert(reader_open(&reader, "tests/names.txt", &error));
+    lexer_init(&lexer, &reader, &error);
 
     pdf_token_init(&source);
     source = lexer_next(&lexer);
@@ -33,7 +35,7 @@ int main(void) {
     pdf_token_destroy(&destination);
 
     assert(reader_seek(&reader, 0));
-    parser_init(&parser, &lexer);
+    parser_init(&parser, &lexer, &error);
     const pdf_token *borrowed = parser_peek(&parser);
     assert(borrowed != NULL);
     assert(borrowed->type == PDF_TOKEN_NAME);

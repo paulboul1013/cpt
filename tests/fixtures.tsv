@@ -1,9 +1,11 @@
 # name|result kind|input|exit code|stdout golden|stderr golden
-# The malformed cleanup row records the current pre-error-model behavior; #4 will add diagnostics.
+# Malformed rows verify cleanup and stable module/offset diagnostics.
 numbers|success|tests/numbers.txt|0|tests/golden/numbers.stdout|-
 names|success|tests/names.txt|0|tests/golden/names.stdout|-
 name-array|success|tests/name_array.txt|0|tests/golden/name_array.stdout|-
 array|success|tests/array.txt|0|tests/golden/array.stdout|-
 dictionary|success|tests/dict.txt|0|tests/golden/dict.stdout|-
-missing-input|io|tests/fixtures/does-not-exist.pdf|1|-|tests/golden/missing-input.stderr
-unclosed-array-cleanup|malformed|tests/fixtures/unclosed-array.txt|0|tests/golden/unclosed-array.stdout|-
+missing-input|io|tests/fixtures/does-not-exist.pdf|2|-|tests/golden/missing-input.stderr
+unclosed-array-cleanup|malformed|tests/fixtures/unclosed-array.txt|3|tests/golden/unclosed-array.stdout|tests/golden/unclosed-array.stderr
+invalid-byte|malformed|tests/fixtures/invalid-byte.txt|3|tests/golden/invalid-byte.stdout|tests/golden/invalid-byte.stderr
+unclosed-dictionary|malformed|tests/fixtures/unclosed-dictionary.txt|3|tests/golden/unclosed-dictionary.stdout|tests/golden/unclosed-dictionary.stderr

@@ -2,6 +2,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "object.h"
+#include "error.h"
 
 #include <stdio.h>
 
@@ -13,19 +14,21 @@ int main(int argc,char *argv[]) {
     }
 
     pdf_reader reader;
+    pdf_error error;
+    pdf_error_init(&error);
 
-    if (!reader_open(&reader,argv[1])) {
-        fprintf(stderr,"failed to open PDF\n");
-        return 1;
+    if (!reader_open(&reader,argv[1],&error)) {
+        pdf_error_print(&error, stderr);
+        return pdf_error_exit_code(&error);
     }
 
     printf("file size: %zu bytes\n",reader.size);
 
     pdf_lexer lexer;
-    lexer_init(&lexer,&reader);
+    lexer_init(&lexer,&reader,&error);
 
     pdf_parser parser;
-    parser_init(&parser,&lexer);
+    parser_init(&parser,&lexer,&error);
 
     while(!reader_eof(&reader)) {
         pdf_object *obj = parser_parse_object(&parser);
@@ -42,6 +45,11 @@ int main(int argc,char *argv[]) {
     parser_destroy(&parser);
 
     reader_close(&reader);
+
+    if (error.code != PDF_ERROR_NONE) {
+        pdf_error_print(&error, stderr);
+        return pdf_error_exit_code(&error);
+    }
 
     return 0;
 }

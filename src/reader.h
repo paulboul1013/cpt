@@ -3,6 +3,8 @@
 
 #include <stddef.h>
 
+#include "error.h"
+
 /*
 
 pdf_reader
@@ -28,7 +30,7 @@ typedef struct {
 
 
 //load full pdf file into memory
-int reader_open(pdf_reader *reader,const char *filename);
+int reader_open(pdf_reader *reader,const char *filename,pdf_error *error);
 
 //free reader usage memory
 void reader_close(pdf_reader *reader);

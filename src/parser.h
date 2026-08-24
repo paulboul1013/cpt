@@ -6,13 +6,14 @@
 
 typedef struct {
     pdf_lexer *lexer;
+    pdf_error *error;
 
     pdf_token lookahead; //watch next token
     int has_lookahead; //save next token
 
 } pdf_parser;
 
-void parser_init(pdf_parser *parser, pdf_lexer *lexer);
+void parser_init(pdf_parser *parser, pdf_lexer *lexer, pdf_error *error);
 
 /* parser_peek returns a borrowed token owned by parser. */
 const pdf_token *parser_peek(pdf_parser *parser);
