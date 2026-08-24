@@ -1,0 +1,15 @@
+% M2 legal object fixture
+<<
+  /Type /Page
+  /Parent 2 0 R
+  /MediaBox [0 0 612 792]
+  /Count 5
+  /Ratio 1.5
+  /Enabled true
+  /Optional null
+  /Title (outer (nested) \(escaped\))
+  /Hex <48656C6C6F>
+  /Escaped#20Name /Value
+  /Duplicate /First
+  /Duplicate /Second
+>>

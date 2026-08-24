@@ -1,0 +1,30 @@
+file size: 269 bytes
+DICT
+ Type:
+  NAME Page
+ Parent:
+  REF 2 0
+ MediaBox:
+  ARRAY
+   INT 0
+   INT 0
+   INT 612
+   INT 792
+ Count:
+  INT 5
+ Ratio:
+  REAL 1.5
+ Enabled:
+  BOOL true
+ Optional:
+  NULL
+ Title:
+  STRING HEX 6F7574657220286E65737465642920286573636170656429
+ Hex:
+  HEX STRING HEX 48656C6C6F
+ Escaped Name:
+  NAME Value
+ Duplicate:
+  NAME First
+ Duplicate:
+  NAME Second

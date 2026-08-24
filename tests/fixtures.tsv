@@ -13,3 +13,4 @@ primitives|success|tests/fixtures/primitives.txt|0|tests/golden/primitives.stdou
 nested-duplicate|success|tests/fixtures/nested-duplicate.txt|0|tests/golden/nested-duplicate.stdout|-
 references|success|tests/fixtures/references.txt|0|tests/golden/references.stdout|-
 incomplete-reference|malformed|tests/fixtures/incomplete-reference.txt|3|tests/golden/incomplete-reference.stdout|tests/golden/incomplete-reference.stderr
+object-grammar|success|tests/object.txt|0|tests/golden/object.stdout|-
