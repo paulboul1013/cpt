@@ -99,5 +99,56 @@ int main(void) {
     assert(last->value.integer == 2);
     pdf_object_free(dict);
 
+    pdf_error_clear(&error);
+    assert(reader_open(&reader, "tests/fixtures/references.txt", &error));
+    lexer_init(&lexer, &reader, &error);
+    parser_init(&parser, &lexer, &error);
+
+    object = next_object(&parser);
+    assert(object->type == PDF_OBJECT_REF);
+    assert(object->value.reference.object_number == 2);
+    assert(object->value.reference.generation == 0);
+    pdf_object_free(object);
+
+    object = next_object(&parser);
+    assert(object->type == PDF_OBJECT_ARRAY);
+    assert(object->value.array.len == 3);
+    assert(object->value.array.items[0]->type == PDF_OBJECT_REF);
+    assert(object->value.array.items[0]->value.reference.object_number == 1);
+    pdf_object_free(object);
+
+    object = next_object(&parser);
+    assert(object->type == PDF_OBJECT_DICT);
+    last = pdf_dict_get(object, "Parent");
+    assert(last != NULL && last->type == PDF_OBJECT_REF);
+    assert(last->value.reference.generation == 0);
+    pdf_object_free(object);
+
+    object = next_object(&parser);
+    assert(object->type == PDF_OBJECT_INT);
+    assert(object->value.integer == 1);
+    pdf_object_free(object);
+    object = next_object(&parser);
+    assert(object->type == PDF_OBJECT_INT);
+    assert(object->value.integer == 2);
+    pdf_object_free(object);
+    assert(parser_expect_eof(&parser));
+    parser_destroy(&parser);
+    reader_close(&reader);
+
+    pdf_error_clear(&error);
+    assert(reader_open(&reader, "tests/fixtures/non-reference-integers.txt", &error));
+    lexer_init(&lexer, &reader, &error);
+    parser_init(&parser, &lexer, &error);
+    object = next_object(&parser);
+    assert(object->type == PDF_OBJECT_INT);
+    assert(object->value.integer == 1);
+    pdf_object_free(object);
+    assert(!parser_expect_eof(&parser));
+    assert(error.code == PDF_ERROR_MALFORMED);
+    assert(error.offset == 2);
+    parser_destroy(&parser);
+    reader_close(&reader);
+
     return 0;
 }

@@ -1,8 +1,10 @@
 #include "parser.h"
 #include <stdlib.h>
+#include <string.h>
 
 static pdf_object *parse_array(pdf_parser *parser);
 static pdf_object *parse_dict(pdf_parser *parser);
+static const pdf_token *parser_peek_n(pdf_parser *parser, size_t index);
 
 static size_t parser_offset(const pdf_parser *parser) {
     if (parser == NULL || parser->lexer == NULL || parser->lexer->reader == NULL) {
@@ -12,11 +14,18 @@ static size_t parser_offset(const pdf_parser *parser) {
     return reader_tell(parser->lexer->reader);
 }
 
+static int is_reference_marker(const pdf_token *token) {
+    return token != NULL && token->type == PDF_TOKEN_KEYWORD && token->text != NULL &&
+           strcmp(token->text, "R") == 0;
+}
+
 void parser_init(pdf_parser *parser, pdf_lexer *lexer, pdf_error *error) {
     parser->lexer = lexer;
     parser->error = error;
-    pdf_token_init(&parser->lookahead);
-    parser->has_lookahead = 0;
+    for (size_t i = 0; i < 3; i++) {
+        pdf_token_init(&parser->lookahead[i]);
+    }
+    parser->lookahead_len = 0;
 }
 
 int parser_next(pdf_parser *parser, pdf_token *token) {
@@ -30,9 +39,14 @@ int parser_next(pdf_parser *parser, pdf_token *token) {
         return 0;
     }
 
-    if (parser->has_lookahead) {
-        pdf_token_move(token, &parser->lookahead);
-        parser->has_lookahead = 0;
+    if (parser->lookahead_len > 0) {
+        pdf_token_move(token, &parser->lookahead[0]);
+
+        for (size_t i = 1; i < parser->lookahead_len; i++) {
+            pdf_token_move(&parser->lookahead[i - 1], &parser->lookahead[i]);
+        }
+
+        parser->lookahead_len--;
         return 1;
     }
 
@@ -42,7 +56,17 @@ int parser_next(pdf_parser *parser, pdf_token *token) {
 }
 
 const pdf_token *parser_peek(pdf_parser *parser) {
+    return parser_peek_n(parser, 0);
+}
+
+static const pdf_token *parser_peek_n(pdf_parser *parser, size_t index) {
     if (parser == NULL) {
+        return NULL;
+    }
+
+    if (index >= 3) {
+        pdf_error_set(parser->error, PDF_ERROR_RESOURCE_LIMIT, parser_offset(parser),
+                      "parser", "lookahead depth exceeds parser buffer");
         return NULL;
     }
 
@@ -52,12 +76,12 @@ const pdf_token *parser_peek(pdf_parser *parser) {
         return NULL;
     }
 
-    if (!parser->has_lookahead) {
-        parser->lookahead = lexer_next(parser->lexer);
-        parser->has_lookahead=1;
+    while (parser->lookahead_len <= index) {
+        parser->lookahead[parser->lookahead_len] = lexer_next(parser->lexer);
+        parser->lookahead_len++;
     }
 
-    return &parser->lookahead;
+    return &parser->lookahead[index];
 }
 
 void parser_destroy(pdf_parser *parser) {
@@ -65,11 +89,11 @@ void parser_destroy(pdf_parser *parser) {
         return;
     }
 
-    if (parser->has_lookahead) {
-        pdf_token_destroy(&parser->lookahead);
-        parser->has_lookahead = 0;
+    for (size_t i = 0; i < parser->lookahead_len; i++) {
+        pdf_token_destroy(&parser->lookahead[i]);
     }
 
+    parser->lookahead_len = 0;
     parser->lexer = NULL;
     parser->error = NULL;
 }
@@ -106,6 +130,43 @@ pdf_object *parser_parse_object(pdf_parser *parser) {
         }
 
         case PDF_TOKEN_INT: {
+            const pdf_token *generation = parser_peek_n(parser, 0);
+            const pdf_token *marker = generation == NULL
+                                          ? NULL
+                                          : parser_peek_n(parser, 1);
+
+            if (generation != NULL && generation->type == PDF_TOKEN_INT &&
+                is_reference_marker(marker)) {
+                pdf_token generation_token;
+                pdf_token marker_token;
+                pdf_token_init(&generation_token);
+                pdf_token_init(&marker_token);
+                (void)parser_next(parser, &generation_token);
+                (void)parser_next(parser, &marker_token);
+
+                if (token.integer < 0 || generation_token.integer < 0) {
+                    pdf_error_set(parser->error, PDF_ERROR_MALFORMED, token.offset,
+                                  "parser", "reference numbers must be non-negative");
+                    pdf_token_destroy(&generation_token);
+                    pdf_token_destroy(&marker_token);
+                    pdf_token_destroy(&token);
+                    return NULL;
+                }
+
+                pdf_object *reference = pdf_object_new_ref(token.integer,
+                                                            generation_token.integer);
+
+                if (reference == NULL) {
+                    pdf_error_set(parser->error, PDF_ERROR_OUT_OF_MEMORY, token.offset,
+                                  "parser", "could not allocate reference object");
+                }
+
+                pdf_token_destroy(&generation_token);
+                pdf_token_destroy(&marker_token);
+                pdf_token_destroy(&token);
+                return reference;
+            }
+
             pdf_object *object = pdf_object_new_int(token.integer);
 
             if (object == NULL) {

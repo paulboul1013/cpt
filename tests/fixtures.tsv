@@ -11,3 +11,5 @@ invalid-byte|malformed|tests/fixtures/invalid-byte.txt|3|tests/golden/invalid-by
 unclosed-dictionary|malformed|tests/fixtures/unclosed-dictionary.txt|3|tests/golden/unclosed-dictionary.stdout|tests/golden/unclosed-dictionary.stderr
 primitives|success|tests/fixtures/primitives.txt|0|tests/golden/primitives.stdout|-
 nested-duplicate|success|tests/fixtures/nested-duplicate.txt|0|tests/golden/nested-duplicate.stdout|-
+references|success|tests/fixtures/references.txt|0|tests/golden/references.stdout|-
+incomplete-reference|malformed|tests/fixtures/incomplete-reference.txt|3|tests/golden/incomplete-reference.stdout|tests/golden/incomplete-reference.stderr

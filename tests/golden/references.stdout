@@ -1,0 +1,11 @@
+file size: 42 bytes
+REF 2 0
+ARRAY
+ REF 1 2
+ INT 3
+ INT 4
+DICT
+ Parent:
+  REF 2 0
+INT 1
+INT 2

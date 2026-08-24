@@ -55,6 +55,11 @@ typedef struct {
     size_t cap;
 } pdf_array;
 
+typedef struct {
+    int64_t object_number;
+    int64_t generation;
+} pdf_reference;
+
 
 typedef struct {
     pdf_bytes key;
@@ -89,6 +94,7 @@ struct pdf_object {
         pdf_bytes name;
         pdf_bytes string;
         pdf_bytes hex_string;
+        pdf_reference reference;
         
         pdf_array array;
 
@@ -106,6 +112,7 @@ pdf_object *pdf_object_new_name(const char *name);
 pdf_object *pdf_object_new_name_bytes(const unsigned char *data, size_t len);
 pdf_object *pdf_object_new_string_bytes(const unsigned char *data, size_t len);
 pdf_object *pdf_object_new_hex_string_bytes(const unsigned char *data, size_t len);
+pdf_object *pdf_object_new_ref(int64_t object_number, int64_t generation);
 pdf_object *pdf_object_new_dict(void);
 
 /* On success, the array owns item. On failure, the caller retains item. */

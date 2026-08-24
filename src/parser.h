@@ -8,8 +8,8 @@ typedef struct {
     pdf_lexer *lexer;
     pdf_error *error;
 
-    pdf_token lookahead; //watch next token
-    int has_lookahead; //save next token
+    pdf_token lookahead[3];
+    size_t lookahead_len;
 
 } pdf_parser;
 

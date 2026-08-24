@@ -83,6 +83,18 @@ pdf_object *pdf_object_new_real(double value) {
     return obj;
 }
 
+pdf_object *pdf_object_new_ref(int64_t object_number, int64_t generation) {
+    pdf_object *obj = pdf_object_alloc(PDF_OBJECT_REF);
+
+    if (obj == NULL) {
+        return NULL;
+    }
+
+    obj->value.reference.object_number = object_number;
+    obj->value.reference.generation = generation;
+    return obj;
+}
+
 void pdf_object_free(pdf_object *obj) {
     if (!obj) {
         return;
@@ -222,6 +234,12 @@ void pdf_object_dump(const pdf_object *obj,int depth) {
             printf("HEX STRING HEX ");
             print_bytes_hex(&obj->value.hex_string);
             putchar('\n');
+            break;
+
+        case PDF_OBJECT_REF:
+            printf("REF %" PRId64 " %" PRId64 "\n",
+                   obj->value.reference.object_number,
+                   obj->value.reference.generation);
             break;
 
         case PDF_OBJECT_ARRAY: {
