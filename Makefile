@@ -10,6 +10,8 @@ OWNERSHIP_TARGET := tests/ownership-test
 OWNERSHIP_ASAN_TARGET := tests/ownership-test-asan
 ERROR_TARGET := tests/error-test
 ERROR_ASAN_TARGET := tests/error-test-asan
+LEXER_TARGET := tests/lexer-test
+LEXER_ASAN_TARGET := tests/lexer-test-asan
 ASAN_CFLAGS = $(CFLAGS) -fsanitize=address,undefined -fno-omit-frame-pointer
 ASAN_LDFLAGS = $(LDFLAGS) -fsanitize=address,undefined
 
@@ -29,6 +31,7 @@ HDR = \
 TEST_INPUT = tests/numbers.txt
 OWNERSHIP_SRC = tests/ownership_test.c
 ERROR_SRC = tests/error_test.c
+LEXER_SRC = tests/lexer_test.c
 
 define CHECK_NUMBERS_OUTPUT
 	@expected=$$(printf '%s\n' 'file size: 20 bytes' 'INT 123' 'INT 456' 'INT -42' 'INT 88' 'INT 999'); \
@@ -47,17 +50,19 @@ all: $(TARGET)
 $(TARGET): $(SRC) $(HDR)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(SRC) $(LDLIBS) -o $@
 
-test: $(TARGET) $(OWNERSHIP_TARGET) $(ERROR_TARGET)
+test: $(TARGET) $(OWNERSHIP_TARGET) $(ERROR_TARGET) $(LEXER_TARGET)
 	$(call CHECK_NUMBERS_OUTPUT,$(TARGET))
 	./tests/run-fixtures.sh ./$(TARGET)
 	./$(OWNERSHIP_TARGET)
 	./$(ERROR_TARGET)
+	./$(LEXER_TARGET)
 
-asan: $(ASAN_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_ASAN_TARGET)
+asan: $(ASAN_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_ASAN_TARGET)
 	$(call CHECK_NUMBERS_OUTPUT,$(ASAN_TARGET))
 	./tests/run-fixtures.sh ./$(ASAN_TARGET)
 	./$(OWNERSHIP_ASAN_TARGET)
 	./$(ERROR_ASAN_TARGET)
+	./$(LEXER_ASAN_TARGET)
 
 $(ASAN_TARGET): $(SRC) $(HDR)
 	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $(SRC) $(LDLIBS) -o $@
@@ -74,5 +79,11 @@ $(ERROR_TARGET): $(ERROR_SRC) src/error.c src/error.h
 $(ERROR_ASAN_TARGET): $(ERROR_SRC) src/error.c src/error.h
 	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $(ERROR_SRC) src/error.c $(LDLIBS) -o $@
 
+$(LEXER_TARGET): $(LEXER_SRC) $(SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(LEXER_SRC) src/reader.c src/lexer.c src/error.c $(LDLIBS) -o $@
+
+$(LEXER_ASAN_TARGET): $(LEXER_SRC) $(SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $(LEXER_SRC) src/reader.c src/lexer.c src/error.c $(LDLIBS) -o $@
+
 clean:
-	$(RM) $(TARGET) $(ASAN_TARGET) $(OWNERSHIP_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_TARGET) $(ERROR_ASAN_TARGET)
+	$(RM) $(TARGET) $(ASAN_TARGET) $(OWNERSHIP_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_TARGET) $(LEXER_ASAN_TARGET)
