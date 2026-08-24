@@ -1,7 +1,11 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Wpedantic -g
+CPPFLAGS =
+CFLAGS = -std=c11 -Wall -Wextra -Wpedantic -g
+LDFLAGS =
+LDLIBS =
 
-TARGET = main
+TARGET = pdftext
+ASAN_TARGET := $(TARGET)-asan
 
 SRC = \
 	src/main.c \
@@ -10,8 +14,23 @@ SRC = \
 	src/parser.c \
 	src/object.c
 
+.PHONY: all clean test asan
+
+all: $(TARGET)
+
 $(TARGET): $(SRC)
-	$(CC) $(CFLAGS) $(SRC) -o $(TARGET)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $^ $(LDLIBS) -o $@
+
+test: $(TARGET)
+	@./$(TARGET) tests/numbers.txt >/dev/null
+
+asan: CFLAGS += -fsanitize=address,undefined -fno-omit-frame-pointer
+asan: LDFLAGS += -fsanitize=address,undefined
+asan: $(ASAN_TARGET)
+	@./$(ASAN_TARGET) tests/numbers.txt >/dev/null
+
+$(ASAN_TARGET): $(SRC)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 clean:
-	rm -f $(TARGET)
+	$(RM) $(TARGET) $(ASAN_TARGET)
