@@ -391,3 +391,29 @@ int pdf_dict_push_bytes(pdf_object *dict, const unsigned char *key, size_t len,
 
     return 1;
 }
+
+const pdf_object *pdf_dict_get(const pdf_object *dict, const char *key) {
+    if (key == NULL) {
+        return NULL;
+    }
+
+    return pdf_dict_get_bytes(dict, (const unsigned char *)key, strlen(key));
+}
+
+const pdf_object *pdf_dict_get_bytes(const pdf_object *dict,
+                                     const unsigned char *key, size_t len) {
+    if (dict == NULL || dict->type != PDF_OBJECT_DICT || (len > 0 && key == NULL)) {
+        return NULL;
+    }
+
+    for (size_t i = dict->value.dict.len; i > 0; i--) {
+        const pdf_dict_entry *entry = &dict->value.dict.entries[i - 1];
+
+        if (entry->key.len == len &&
+            (len == 0 || memcmp(entry->key.data, key, len) == 0)) {
+            return entry->value;
+        }
+    }
+
+    return NULL;
+}

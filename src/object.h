@@ -117,6 +117,9 @@ void pdf_object_free(pdf_object *obj);
 int pdf_dict_push(pdf_object *dict,const char *key,pdf_object *value);
 int pdf_dict_push_bytes(pdf_object *dict, const unsigned char *key, size_t len,
                         pdf_object *value);
+const pdf_object *pdf_dict_get(const pdf_object *dict, const char *key);
+const pdf_object *pdf_dict_get_bytes(const pdf_object *dict,
+                                     const unsigned char *key, size_t len);
 
 void pdf_object_dump(const pdf_object *obj,int depth);
 

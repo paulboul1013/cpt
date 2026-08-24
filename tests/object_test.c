@@ -89,5 +89,15 @@ int main(void) {
     parser_destroy(&parser);
     reader_close(&reader);
 
+    pdf_object *dict = pdf_object_new_dict();
+    assert(dict != NULL);
+    assert(pdf_dict_push(dict, "Key", pdf_object_new_int(1)));
+    assert(pdf_dict_push(dict, "Key", pdf_object_new_int(2)));
+    const pdf_object *last = pdf_dict_get(dict, "Key");
+    assert(last != NULL);
+    assert(last->type == PDF_OBJECT_INT);
+    assert(last->value.integer == 2);
+    pdf_object_free(dict);
+
     return 0;
 }

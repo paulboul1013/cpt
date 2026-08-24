@@ -1,0 +1,9 @@
+[
+  <<
+    /Key 1
+    /Key 2
+    /Nested [true << /Value (ok) >>]
+  >>
+  []
+  <<>>
+]

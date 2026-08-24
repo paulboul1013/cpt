@@ -1,0 +1,15 @@
+file size: 85 bytes
+ARRAY
+ DICT
+  Key:
+   INT 1
+  Key:
+   INT 2
+  Nested:
+   ARRAY
+    BOOL true
+    DICT
+     Value:
+      STRING HEX 6F6B
+ ARRAY
+ DICT
