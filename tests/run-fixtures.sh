@@ -24,11 +24,14 @@ if ! (umask 077 && mkdir "$work_dir"); then
 fi
 
 cleanup() {
+	cleanup_status=$?
 	rm -f "$work_dir"/*.stdout "$work_dir"/*.stderr
 	rmdir "$work_dir"
+	return "$cleanup_status"
 }
 
-trap cleanup EXIT HUP INT TERM
+trap cleanup 0
+trap 'exit 1' 1 2 3 15
 
 failures=0
 total=0
@@ -85,6 +88,15 @@ do
 		*)
 			printf '[FAIL] %s: unknown result kind: %s\n' \
 				"$fixture_name" "$result_kind" >&2
+			failures=$((failures + 1))
+			continue
+			;;
+	esac
+
+	case "$expected_status" in
+		''|*[!0-9]*)
+			printf '[FAIL] %s: invalid expected exit code: %s\n' \
+				"$fixture_name" "$expected_status" >&2
 			failures=$((failures + 1))
 			continue
 			;;
