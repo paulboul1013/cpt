@@ -148,6 +148,28 @@ int main(void) {
     assert_malformed_fixture("tests/fixtures/invalid-hex.txt", 0, 1);
     assert_malformed_fixture("tests/fixtures/unterminated-string.txt", 0, 0);
 
+    {
+        static const unsigned char truncated_escape[] = {
+            '(', 'o', 'o', 'p', 's', '\\'
+        };
+        pdf_reader truncated_reader = {0};
+        pdf_lexer truncated_lexer;
+        pdf_token truncated_token;
+
+        pdf_limits_default(&truncated_reader.limits);
+        truncated_reader.data = (unsigned char *)truncated_escape;
+        truncated_reader.size = sizeof(truncated_escape);
+        pdf_error_clear(&error);
+        lexer_init(&truncated_lexer, &truncated_reader, &error);
+        truncated_token = lexer_next(&truncated_lexer);
+        assert(truncated_token.type == PDF_TOKEN_INVALID);
+        assert(truncated_token.offset == 0);
+        assert(error.code == PDF_ERROR_MALFORMED);
+        assert(error.offset == 5);
+        assert(strcmp(error.message, "literal string has truncated escape") == 0);
+        pdf_token_destroy(&truncated_token);
+    }
+
     pdf_error_clear(&error);
     assert(reader_open(&reader, "tests/fixtures/invalid-exponent.txt", &error));
     lexer_init(&lexer, &reader, &error);
