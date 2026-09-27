@@ -15,6 +15,12 @@ typedef struct {
 
 } pdf_parser;
 
+typedef struct {
+    int64_t object_number;
+    int64_t generation;
+    pdf_object *body;
+} pdf_indirect_object;
+
 void parser_init(pdf_parser *parser, pdf_lexer *lexer, pdf_error *error);
 
 /* parser_peek returns a borrowed token owned by parser. */
@@ -27,6 +33,10 @@ int parser_next(pdf_parser *parser, pdf_token *token);
 void parser_destroy(pdf_parser *parser);
 
 pdf_object *parser_parse_object(pdf_parser *parser);
+
+/* Parses one non-stream indirect object; the caller owns the result. */
+pdf_indirect_object *parser_parse_indirect_object(pdf_parser *parser);
+void pdf_indirect_object_free(pdf_indirect_object *object);
 
 /* Validates that the next token is EOF after a standalone object. */
 int parser_expect_eof(pdf_parser *parser);

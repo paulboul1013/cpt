@@ -264,6 +264,90 @@ pdf_object *parser_parse_object(pdf_parser *parser) {
     }
 }
 
+pdf_indirect_object *parser_parse_indirect_object(pdf_parser *parser) {
+    if (parser == NULL) {
+        return NULL;
+    }
+
+    pdf_token token;
+    pdf_token_init(&token);
+    pdf_object *body = NULL;
+    int64_t object_number;
+    int64_t generation;
+
+    if (!parser_next(parser, &token)) {
+        goto fail;
+    }
+    if (token.type != PDF_TOKEN_INT || token.integer <= 0) {
+        pdf_error_set(parser->error, PDF_ERROR_MALFORMED, token.offset, "parser",
+                      "object number must be a positive integer");
+        goto fail;
+    }
+    object_number = token.integer;
+
+    if (!parser_next(parser, &token)) {
+        goto fail;
+    }
+    if (token.type != PDF_TOKEN_INT || token.integer < 0 || token.integer > 65535) {
+        pdf_error_set(parser->error, PDF_ERROR_MALFORMED, token.offset, "parser",
+                      "generation number must be between 0 and 65535");
+        goto fail;
+    }
+    generation = token.integer;
+
+    if (!parser_next(parser, &token)) {
+        goto fail;
+    }
+    if (token.type != PDF_TOKEN_KEYWORD || token.text == NULL ||
+        strcmp(token.text, "obj") != 0) {
+        pdf_error_set(parser->error, PDF_ERROR_MALFORMED, token.offset, "parser",
+                      "expected obj keyword");
+        goto fail;
+    }
+
+    body = parser_parse_object(parser);
+    if (body == NULL) {
+        goto fail;
+    }
+
+    if (!parser_next(parser, &token)) {
+        goto fail;
+    }
+    if (token.type != PDF_TOKEN_KEYWORD || token.text == NULL ||
+        strcmp(token.text, "endobj") != 0) {
+        pdf_error_set(parser->error, PDF_ERROR_MALFORMED, token.offset, "parser",
+                      "expected endobj keyword");
+        goto fail;
+    }
+
+    pdf_indirect_object *result = malloc(sizeof(*result));
+    if (result == NULL) {
+        pdf_error_set(parser->error, PDF_ERROR_OUT_OF_MEMORY, token.offset,
+                      "parser", "could not allocate indirect object");
+        goto fail;
+    }
+
+    result->object_number = object_number;
+    result->generation = generation;
+    result->body = body;
+    pdf_token_destroy(&token);
+    return result;
+
+fail:
+    pdf_object_free(body);
+    pdf_token_destroy(&token);
+    return NULL;
+}
+
+void pdf_indirect_object_free(pdf_indirect_object *object) {
+    if (object == NULL) {
+        return;
+    }
+
+    pdf_object_free(object->body);
+    free(object);
+}
+
 static pdf_object *parse_array(pdf_parser *parser) {
     if (!parser_enter_container(parser, parser_offset(parser))) {
         return NULL;
