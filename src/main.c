@@ -6,9 +6,11 @@
 #include "xref.h"
 #include "document.h"
 #include "pages.h"
+#include "contents.h"
 
 #include <inttypes.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 int main(int argc,char *argv[]) {
@@ -17,6 +19,7 @@ int main(int argc,char *argv[]) {
     int indirect_object = 0;
     int dump_xref = 0;
     int dump_pages = 0;
+    int dump_contents = 0;
     const char *filename = NULL;
 
     if (argc == 2) {
@@ -33,12 +36,15 @@ int main(int argc,char *argv[]) {
     } else if (argc == 3 && strcmp(argv[1], "--dump-pages") == 0) {
         dump_pages = 1;
         filename = argv[2];
+    } else if (argc == 3 && strcmp(argv[1], "--dump-contents") == 0) {
+        dump_contents = 1;
+        filename = argv[2];
     } else {
-        fprintf(stderr,"usage: %s [--object|--indirect|--dump-xref|--dump-pages] input-file\n",argv[0]);
+        fprintf(stderr,"usage: %s [--object|--indirect|--dump-xref|--dump-pages|--dump-contents] input-file\n",argv[0]);
         return 1;
     }
 
-    if (dump_pages) {
+    if (dump_pages || dump_contents) {
         pdf_document document;
         pdf_pages pages = {0};
         pdf_error error;
@@ -48,7 +54,40 @@ int main(int argc,char *argv[]) {
             return pdf_error_exit_code(&error);
         }
         int loaded = pdf_pages_load(&document, &pages, &error);
-        if (loaded) {
+        if (loaded && dump_contents) {
+            size_t *lengths = NULL;
+            if (pages.len > SIZE_MAX / sizeof(*lengths)) {
+                pdf_error_set(&error, PDF_ERROR_RESOURCE_LIMIT, 0, "contents",
+                              "page count exceeds summary capacity");
+                loaded = 0;
+            } else if (pages.len != 0 &&
+                       (lengths = calloc(pages.len, sizeof(*lengths))) == NULL) {
+                pdf_error_set(&error, PDF_ERROR_OUT_OF_MEMORY, 0, "contents",
+                              "could not allocate page lengths");
+                loaded = 0;
+            }
+            if (loaded) {
+                pdf_contents_context context;
+                pdf_contents_context_init(&context, &document);
+                for (size_t i = 0; i < pages.len; i++) {
+                    pdf_contents_result result = {0};
+                    if (!pdf_contents_read(&context, &pages.items[i], &result, &error)) {
+                        pdf_contents_result_free(&result);
+                        loaded = 0;
+                        break;
+                    }
+                    lengths[i] = result.len;
+                    pdf_contents_result_free(&result);
+                }
+            }
+            if (loaded) {
+                printf("PAGES %zu\n", pages.len);
+                for (size_t i = 0; i < pages.len; i++) {
+                    printf("PAGE %zu BYTES %zu\n", i + 1, lengths[i]);
+                }
+            }
+            free(lengths);
+        } else if (loaded) {
             printf("PAGES %zu\n", pages.len);
             for (size_t i = 0; i < pages.len; i++) {
                 const pdf_page *page = &pages.items[i];

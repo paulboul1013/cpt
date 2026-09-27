@@ -35,3 +35,16 @@ pages-multi|success|pages:tests/fixtures/pages-multi.pdf|0|tests/golden/pages-mu
 pages-count-mismatch|malformed|pages:tests/fixtures/pages-count-mismatch.pdf|3|-|tests/golden/pages-count-mismatch.stderr
 pages-cycle|malformed|pages:tests/fixtures/pages-cycle.pdf|3|-|tests/golden/pages-cycle.stderr
 pages-missing-media-box|malformed|pages:tests/fixtures/pages-missing-media-box.pdf|3|-|tests/golden/pages-missing-media-box.stderr
+contents-basic|success|contents:tests/fixtures/contents-basic.pdf|0|tests/golden/contents-basic.stdout|-
+contents-empty|success|contents:tests/fixtures/contents-empty.pdf|0|tests/golden/contents-empty.stdout|-
+contents-flate|success|contents:tests/fixtures/contents-flate.pdf|0|tests/golden/contents-flate.stdout|-
+contents-predictor-one|success|contents:tests/fixtures/contents-predictor-one.pdf|0|tests/golden/contents-predictor-one.stdout|-
+contents-indirect-length|success|contents:tests/fixtures/document-length.pdf|0|tests/golden/contents-indirect-length.stdout|-
+contents-hello|success|contents:tests/hello.pdf|0|tests/golden/contents-hello.stdout|-
+contents-invalid-type|malformed|contents:tests/fixtures/contents-invalid-type.pdf|3|-|tests/golden/contents-invalid-type.stderr
+contents-not-stream|malformed|contents:tests/fixtures/contents-not-stream.pdf|3|-|tests/golden/contents-not-stream.stderr
+contents-unsupported-filter|unsupported|contents:tests/fixtures/contents-unsupported-filter.pdf|4|-|tests/golden/contents-unsupported-filter.stderr
+contents-filter-array|unsupported|contents:tests/fixtures/contents-filter-array.pdf|4|-|tests/golden/contents-filter-array.stderr
+contents-corrupt-flate|malformed|contents:tests/fixtures/contents-corrupt-flate.pdf|3|-|tests/golden/contents-corrupt-flate.stderr
+contents-predictor|unsupported|contents:tests/fixtures/contents-predictor.pdf|4|-|tests/golden/contents-predictor.stderr
+contents-truncated-flate|malformed|contents:tests/fixtures/contents-truncated-flate.pdf|3|-|tests/golden/contents-truncated-flate.stderr

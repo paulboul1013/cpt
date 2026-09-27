@@ -23,6 +23,9 @@ int main(void) {
     assert(limits.max_nesting_depth == 256);
     assert(limits.max_container_entries == 1000000);
     assert(limits.max_xref_entries == 1000000);
+    assert(limits.max_stream_size == 256U * 1024U * 1024U);
+    assert(limits.max_decoded_stream_size == 256U * 1024U * 1024U);
+    assert(limits.max_total_decoded_size == 256U * 1024U * 1024U);
 
     limits.max_input_size = 1;
     pdf_error_init(&error);

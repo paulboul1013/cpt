@@ -2,7 +2,7 @@ CC = gcc
 CPPFLAGS =
 CFLAGS = -std=c11 -Wall -Wextra -Wpedantic -g
 LDFLAGS =
-LDLIBS =
+LDLIBS = -lz
 
 TARGET = pdftext
 ASAN_TARGET := $(TARGET)-asan
@@ -31,6 +31,9 @@ DOCUMENT_SRC := tests/document_test.c
 PAGES_TARGET := tests/pages-test
 PAGES_ASAN_TARGET := tests/pages-test-asan
 PAGES_SRC := tests/pages_test.c
+CONTENTS_TARGET := tests/contents-test
+CONTENTS_ASAN_TARGET := tests/contents-test-asan
+CONTENTS_SRC := tests/contents_test.c
 ASAN_CFLAGS = $(CFLAGS) -fsanitize=address,undefined -fno-omit-frame-pointer
 ASAN_LDFLAGS = $(LDFLAGS) -fsanitize=address,undefined
 
@@ -44,7 +47,9 @@ SRC = \
 	src/limits.c \
 	src/xref.c \
 	src/document.c \
-	src/pages.c
+	src/pages.c \
+	src/contents.c \
+	src/filter.c
 HDR = \
 	src/reader.h \
 	src/lexer.h \
@@ -55,7 +60,9 @@ HDR = \
 	src/limits.h \
 	src/xref.h \
 	src/document.h \
-	src/pages.h
+	src/pages.h \
+	src/contents.h \
+	src/filter.h
 TEST_INPUT = tests/numbers.txt
 OWNERSHIP_SRC = tests/ownership_test.c
 ERROR_SRC = tests/error_test.c
@@ -80,7 +87,7 @@ all: $(TARGET)
 $(TARGET): $(SRC) $(HDR)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(SRC) $(LDLIBS) -o $@
 
-test: $(TARGET) $(OWNERSHIP_TARGET) $(ERROR_TARGET) $(LEXER_TARGET) $(OBJECT_TARGET) $(LIMITS_TARGET) $(READER_TARGET) $(INDIRECT_TARGET) $(XREF_TARGET) $(DOCUMENT_TARGET) $(PAGES_TARGET)
+test: $(TARGET) $(OWNERSHIP_TARGET) $(ERROR_TARGET) $(LEXER_TARGET) $(OBJECT_TARGET) $(LIMITS_TARGET) $(READER_TARGET) $(INDIRECT_TARGET) $(XREF_TARGET) $(DOCUMENT_TARGET) $(PAGES_TARGET) $(CONTENTS_TARGET)
 	$(call CHECK_NUMBERS_OUTPUT,$(TARGET))
 	./tests/run-fixtures.sh ./$(TARGET)
 	./$(OWNERSHIP_TARGET)
@@ -93,8 +100,9 @@ test: $(TARGET) $(OWNERSHIP_TARGET) $(ERROR_TARGET) $(LEXER_TARGET) $(OBJECT_TAR
 	./$(XREF_TARGET)
 	./$(DOCUMENT_TARGET)
 	./$(PAGES_TARGET)
+	./$(CONTENTS_TARGET)
 
-asan: $(ASAN_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_ASAN_TARGET) $(OBJECT_ASAN_TARGET) $(LIMITS_ASAN_TARGET) $(READER_ASAN_TARGET) $(INDIRECT_ASAN_TARGET) $(XREF_ASAN_TARGET) $(DOCUMENT_ASAN_TARGET) $(PAGES_ASAN_TARGET)
+asan: $(ASAN_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_ASAN_TARGET) $(OBJECT_ASAN_TARGET) $(LIMITS_ASAN_TARGET) $(READER_ASAN_TARGET) $(INDIRECT_ASAN_TARGET) $(XREF_ASAN_TARGET) $(DOCUMENT_ASAN_TARGET) $(PAGES_ASAN_TARGET) $(CONTENTS_ASAN_TARGET)
 	$(call CHECK_NUMBERS_OUTPUT,$(ASAN_TARGET))
 	./tests/run-fixtures.sh ./$(ASAN_TARGET)
 	./$(OWNERSHIP_ASAN_TARGET)
@@ -107,6 +115,7 @@ asan: $(ASAN_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_ASAN_
 	./$(XREF_ASAN_TARGET)
 	./$(DOCUMENT_ASAN_TARGET)
 	./$(PAGES_ASAN_TARGET)
+	./$(CONTENTS_ASAN_TARGET)
 
 $(ASAN_TARGET): $(SRC) $(HDR)
 	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $(SRC) $(LDLIBS) -o $@
@@ -171,5 +180,11 @@ $(PAGES_TARGET): $(PAGES_SRC) $(SRC) $(HDR)
 $(PAGES_ASAN_TARGET): $(PAGES_SRC) $(SRC) $(HDR)
 	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $(PAGES_SRC) src/pages.c src/document.c src/xref.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c $(LDLIBS) -o $@
 
+$(CONTENTS_TARGET): $(CONTENTS_SRC) $(SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(CONTENTS_SRC) src/contents.c src/filter.c src/pages.c src/document.c src/xref.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c $(LDLIBS) -o $@
+
+$(CONTENTS_ASAN_TARGET): $(CONTENTS_SRC) $(SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $(CONTENTS_SRC) src/contents.c src/filter.c src/pages.c src/document.c src/xref.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c $(LDLIBS) -o $@
+
 clean:
-	$(RM) $(TARGET) $(ASAN_TARGET) $(OWNERSHIP_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_TARGET) $(LEXER_ASAN_TARGET) $(OBJECT_TARGET) $(OBJECT_ASAN_TARGET) $(LIMITS_TARGET) $(LIMITS_ASAN_TARGET) $(READER_TARGET) $(READER_ASAN_TARGET) $(INDIRECT_TARGET) $(INDIRECT_ASAN_TARGET) $(XREF_TARGET) $(XREF_ASAN_TARGET) $(DOCUMENT_TARGET) $(DOCUMENT_ASAN_TARGET) $(PAGES_TARGET) $(PAGES_ASAN_TARGET)
+	$(RM) $(TARGET) $(ASAN_TARGET) $(OWNERSHIP_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_TARGET) $(LEXER_ASAN_TARGET) $(INDIRECT_TARGET) $(INDIRECT_ASAN_TARGET) $(XREF_TARGET) $(XREF_ASAN_TARGET) $(DOCUMENT_TARGET) $(DOCUMENT_ASAN_TARGET) $(PAGES_TARGET) $(PAGES_ASAN_TARGET) $(CONTENTS_TARGET) $(CONTENTS_ASAN_TARGET)

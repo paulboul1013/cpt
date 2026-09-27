@@ -12,5 +12,7 @@ void pdf_limits_default(pdf_limits *limits) {
     limits->max_object_cache = 1000000;
     limits->max_xref_entries = 1000000;
     limits->max_stream_size = (size_t)256 * 1024 * 1024;
+    limits->max_decoded_stream_size = (size_t)256 * 1024 * 1024;
+    limits->max_total_decoded_size = (size_t)256 * 1024 * 1024;
     limits->max_page_count = 100000;
 }

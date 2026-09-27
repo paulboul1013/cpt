@@ -120,6 +120,10 @@ do
 			fixture_mode=pages
 			input=${input#pages:}
 			;;
+		contents:*)
+			fixture_mode=contents
+			input=${input#contents:}
+			;;
 	esac
 	fixture_path=$(relative_path "$input")
 	actual_stdout="$work_dir/$total.stdout"
@@ -145,6 +149,12 @@ do
 		fi
 	elif [ "$fixture_mode" = pages ]; then
 		if "$binary" --dump-pages "$fixture_path" >"$actual_stdout" 2>"$actual_stderr"; then
+			actual_status=0
+		else
+			actual_status=$?
+		fi
+	elif [ "$fixture_mode" = contents ]; then
+		if "$binary" --dump-contents "$fixture_path" >"$actual_stdout" 2>"$actual_stderr"; then
 			actual_status=0
 		else
 			actual_status=$?

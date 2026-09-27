@@ -1,6 +1,6 @@
 # pdftext：架構與 Roadmap
 
-> 本文件是架構、後續 milestone 與版本邊界的權威來源。M2 Object Parser 已於 2026-08-24 通過 release acceptance；其已完成規格與驗收結果見 [M2 驗收記錄](pdftext_m2_acceptance.md)。M3 Indirect Object Parser、M4 traditional xref／trailer 與 M5 Document／Resolver／Pages Tree 已完成；下一個 milestone 是 M6a Raw Contents Stream。
+> 本文件是架構、後續 milestone 與版本邊界的權威來源。M2 Object Parser 已於 2026-08-24 通過 release acceptance；其已完成規格與驗收結果見 [M2 驗收記錄](pdftext_m2_acceptance.md)。M3 Indirect Object Parser、M4 traditional xref／trailer、M5 Document／Resolver／Pages Tree 與 M6 Contents／FlateDecode 已完成；下一個 milestone 是 M7 Content Interpreter。
 
 ## 1. Roadmap 定位
 
@@ -66,7 +66,7 @@ Roadmap 的 milestone 編號已統一如下；舊文件中 M4–M8 的命名曾�
 | M3 | Indirect Object Parser | 解析 object number、generation、obj/endobj 與 stream raw bytes |
 | M4 | xref / trailer | 解析 traditional xref table、subsections、trailer、startxref |
 | M5 | Document / Resolver / Pages | 建立 resolver、Catalog、Pages Tree、Page inheritance |
-| M6a | Raw Contents Stream | 取得 direct/ref/array Contents 與未壓縮 stream bytes |
+| M6a | Raw Contents Stream | 取得 stream reference、direct／indirect array 的未壓縮 stream bytes |
 | M6b | FlateDecode | 以 zlib 解壓單一 FlateDecode，並遵守 decoded-size limit |
 | M7 | Content Interpreter | 執行 operand stack、BT/ET、文字 operators 與未知 operator policy |
 | M8 | Text State / Geometry | 執行 text matrix、line matrix、CTM、q/Q/cm 與 spacing |
@@ -76,7 +76,7 @@ Roadmap 的 milestone 編號已統一如下；舊文件中 M4–M8 的命名曾�
 
 每個 milestone 都必須有 fixture、golden output、malformed input、build gate 與 sanitizer 驗證；不能只以「程式可以跑」作為完成條件。
 
-M0–M5 已形成目前的 object、indirect object、traditional xref、resolver 與頁樹基線；M6–M11 是後續規劃。目前 CLI 尚不能擷取完整 PDF 的文字。
+M0–M6 已形成目前的 object、indirect object、traditional xref、resolver、頁樹與 Contents 解碼基線；M7–M11 是後續規劃。目前 CLI 尚不能擷取完整 PDF 的文字。
 
 ## 3. M3：Indirect Object Parser
 
@@ -181,8 +181,8 @@ Document 由 reader、xref、trailer、object cache 與 limits 組成。cache en
 支援：
 
 - /Contents 是單一 stream reference。
-- /Contents 是 direct stream。
-- /Contents 是 stream array，依 source order 串接，stream 之間補 newline。
+- /Contents 可直接是 array，或是指向 stream／array 的 reference；stream 本身必須是 indirect object。
+- /Contents array 內的元素是 stream reference，依 source order 串接，stream 之間補 newline。
 - /Length 是 direct integer 或 indirect reference。
 - 沒有 /Filter 時直接使用 raw bytes。
 
@@ -193,6 +193,10 @@ Document 由 reader、xref、trailer、object cache 與 limits 組成。cache en
 - 未知 filter 回報 unsupported PDF feature。
 - filter array 與 filter chain 延後。
 - 解壓後資料受 decoded stream limit 與 total decoded budget 限制。
+
+### 實作與驗收
+
+`src/contents.[ch]` 依頁序回傳 caller-owned decoded bytes，`src/filter.[ch]` 處理 raw 與單一 FlateDecode。`--dump-contents document.pdf` 只輸出每頁 decoded byte length；`tests/contents_test.c` 與 48 筆 golden fixtures 驗證正常、錯誤及上限路徑。`make`、`make test`、`make asan` 已通過。
 
 ## 7. M7：Content Stream Interpreter
 
@@ -429,7 +433,9 @@ stderr 訊息必須包含 module、byte offset（若可取得）與人類可讀�
 | 單一 array/dictionary entries | 1,000,000 |
 | object cache | 1,000,000 objects |
 | xref entries | 1,000,000 entries |
+| 單一 raw stream | 256 MiB |
 | 單一 decoded stream | 256 MiB |
+| 整份文件 decoded bytes（含 stream 間的 newline） | 256 MiB |
 | page count | 100,000 |
 
 所有容量成長、offset、length、numeric conversion 與 decompression 都必須檢查 overflow。

@@ -11,6 +11,8 @@ typedef struct {
     size_t max_object_cache;
     size_t max_xref_entries;
     size_t max_stream_size;
+    size_t max_decoded_stream_size;
+    size_t max_total_decoded_size;
     size_t max_page_count;
 } pdf_limits;
 
