@@ -1,4 +1,5 @@
 #include "parser.h"
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -272,6 +273,8 @@ pdf_indirect_object *parser_parse_indirect_object(pdf_parser *parser) {
     pdf_token token;
     pdf_token_init(&token);
     pdf_object *body = NULL;
+    pdf_bytes stream = {0};
+    int is_stream = 0;
     int64_t object_number;
     int64_t generation;
 
@@ -313,6 +316,95 @@ pdf_indirect_object *parser_parse_indirect_object(pdf_parser *parser) {
     if (!parser_next(parser, &token)) {
         goto fail;
     }
+    if (token.type == PDF_TOKEN_KEYWORD && token.text != NULL &&
+        strcmp(token.text, "stream") == 0 && body->type == PDF_OBJECT_DICT) {
+        is_stream = 1;
+        const pdf_object *length = pdf_dict_get(body, "Length");
+        size_t stream_offset = token.offset;
+        pdf_reader *reader = parser->lexer->reader;
+
+        if (length == NULL || length->type != PDF_OBJECT_INT ||
+            length->value.integer < 0) {
+            pdf_error_set(parser->error, PDF_ERROR_MALFORMED, stream_offset,
+                          "parser", "stream requires a direct non-negative /Length");
+            goto fail;
+        }
+        if ((uintmax_t)length->value.integer > (uintmax_t)SIZE_MAX) {
+            pdf_error_set(parser->error, PDF_ERROR_RESOURCE_LIMIT, stream_offset,
+                          "parser", "stream length exceeds addressable size");
+            goto fail;
+        }
+        stream.len = (size_t)length->value.integer;
+        if (parser->limits != NULL && stream.len > parser->limits->max_stream_size) {
+            pdf_error_set(parser->error, PDF_ERROR_RESOURCE_LIMIT, stream_offset,
+                          "parser", "stream exceeds configured size limit");
+            goto fail;
+        }
+        if (parser->lookahead_len != 0) {
+            pdf_error_set(parser->error, PDF_ERROR_MALFORMED, parser_offset(parser),
+                          "parser", "unexpected lookahead before stream data");
+            goto fail;
+        }
+
+        size_t eol_offset = reader_tell(reader);
+        int eol = reader_get(reader);
+        if (eol == '\r') {
+            if (reader_get(reader) != '\n') {
+                pdf_error_set(parser->error, PDF_ERROR_MALFORMED, eol_offset,
+                              "parser", "stream keyword must be followed by LF or CRLF");
+                goto fail;
+            }
+        } else if (eol != '\n') {
+            pdf_error_set(parser->error, PDF_ERROR_MALFORMED, eol_offset,
+                          "parser", "stream keyword must be followed by LF or CRLF");
+            goto fail;
+        }
+
+        size_t payload_offset = reader_tell(reader);
+        if (stream.len > reader->size - payload_offset) {
+            pdf_error_set(parser->error, PDF_ERROR_MALFORMED, reader->size,
+                          "parser", "stream data is truncated");
+            goto fail;
+        }
+        if (stream.len != 0) {
+            stream.data = malloc(stream.len);
+            if (stream.data == NULL) {
+                pdf_error_set(parser->error, PDF_ERROR_OUT_OF_MEMORY, payload_offset,
+                              "parser", "could not allocate stream data");
+                goto fail;
+            }
+            memcpy(stream.data, reader->data + payload_offset, stream.len);
+        }
+        (void)reader_seek(reader, payload_offset + stream.len);
+
+        /* /Length excludes an optional EOL immediately before endstream. */
+        if (reader_peek(reader) == '\r') {
+            size_t marker_offset = reader_tell(reader);
+            (void)reader_get(reader);
+            if (reader_get(reader) != '\n') {
+                pdf_error_set(parser->error, PDF_ERROR_MALFORMED, marker_offset,
+                              "parser", "expected endstream keyword");
+                goto fail;
+            }
+        } else if (reader_peek(reader) == '\n') {
+            (void)reader_get(reader);
+        }
+
+        size_t marker_offset = reader_tell(reader);
+        if (!parser_next(parser, &token)) {
+            goto fail;
+        }
+        if (token.offset != marker_offset || token.type != PDF_TOKEN_KEYWORD ||
+            token.text == NULL ||
+            strcmp(token.text, "endstream") != 0) {
+            pdf_error_set(parser->error, PDF_ERROR_MALFORMED, marker_offset,
+                          "parser", "expected endstream keyword");
+            goto fail;
+        }
+        if (!parser_next(parser, &token)) {
+            goto fail;
+        }
+    }
     if (token.type != PDF_TOKEN_KEYWORD || token.text == NULL ||
         strcmp(token.text, "endobj") != 0) {
         pdf_error_set(parser->error, PDF_ERROR_MALFORMED, token.offset, "parser",
@@ -330,11 +422,14 @@ pdf_indirect_object *parser_parse_indirect_object(pdf_parser *parser) {
     result->object_number = object_number;
     result->generation = generation;
     result->body = body;
+    result->is_stream = is_stream;
+    result->stream = stream;
     pdf_token_destroy(&token);
     return result;
 
 fail:
     pdf_object_free(body);
+    free(stream.data);
     pdf_token_destroy(&token);
     return NULL;
 }
@@ -345,6 +440,7 @@ void pdf_indirect_object_free(pdf_indirect_object *object) {
     }
 
     pdf_object_free(object->body);
+    free(object->stream.data);
     free(object);
 }
 

@@ -18,7 +18,9 @@ typedef struct {
 typedef struct {
     int64_t object_number;
     int64_t generation;
-    pdf_object *body;
+    pdf_object *body; /* Owned stream dictionary or ordinary object. */
+    int is_stream;    /* Set even when stream.len is zero. */
+    pdf_bytes stream; /* Owned raw bytes; empty for ordinary objects. */
 } pdf_indirect_object;
 
 void parser_init(pdf_parser *parser, pdf_lexer *lexer, pdf_error *error);
@@ -34,7 +36,7 @@ void parser_destroy(pdf_parser *parser);
 
 pdf_object *parser_parse_object(pdf_parser *parser);
 
-/* Parses one non-stream indirect object; the caller owns the result. */
+/* Parses one indirect object; the caller owns the result and its raw stream. */
 pdf_indirect_object *parser_parse_indirect_object(pdf_parser *parser);
 void pdf_indirect_object_free(pdf_indirect_object *object);
 
