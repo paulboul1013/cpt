@@ -22,3 +22,16 @@ invalid-name-escape|malformed|tests/fixtures/invalid-name-escape.txt|3|tests/gol
 unterminated-string|malformed|tests/fixtures/unterminated-string.txt|3|tests/golden/unterminated-string.stdout|tests/golden/unterminated-string.stderr
 overflow-integer|malformed|tests/fixtures/overflow-integer.txt|3|tests/golden/overflow-integer.stdout|tests/golden/overflow-integer.stderr
 overflow-real|malformed|tests/fixtures/overflow-real.txt|3|tests/golden/overflow-real.stdout|tests/golden/overflow-real.stderr
+indirect-basic|success|indirect:tests/fixtures/indirect-basic.txt|0|tests/golden/indirect-basic.stdout|-
+indirect-stream|success|indirect:tests/fixtures/indirect-stream.txt|0|tests/golden/indirect-stream.stdout|-
+indirect-malformed|malformed|indirect:tests/fixtures/indirect-malformed.txt|3|tests/golden/indirect-malformed.stdout|tests/golden/indirect-malformed.stderr
+indirect-unresolved-length|unsupported|indirect:tests/fixtures/indirect-unresolved-length.txt|4|tests/golden/indirect-unresolved-length.stdout|tests/golden/indirect-unresolved-length.stderr
+xref-hello|success|xref:tests/hello.pdf|0|tests/golden/xref-hello.stdout|-
+xref-subsections|success|xref:tests/fixtures/xref-subsections.pdf|0|tests/golden/xref-subsections.stdout|-
+xref-bad-offset|malformed|xref:tests/fixtures/xref-bad-offset.pdf|3|tests/golden/xref-bad-offset.stdout|tests/golden/xref-bad-offset.stderr
+xref-prev|unsupported|xref:tests/fixtures/xref-prev.pdf|4|tests/golden/xref-prev.stdout|tests/golden/xref-prev.stderr
+pages-hello|success|pages:tests/hello.pdf|0|tests/golden/pages-hello.stdout|-
+pages-multi|success|pages:tests/fixtures/pages-multi.pdf|0|tests/golden/pages-multi.stdout|-
+pages-count-mismatch|malformed|pages:tests/fixtures/pages-count-mismatch.pdf|3|-|tests/golden/pages-count-mismatch.stderr
+pages-cycle|malformed|pages:tests/fixtures/pages-cycle.pdf|3|-|tests/golden/pages-cycle.stderr
+pages-missing-media-box|malformed|pages:tests/fixtures/pages-missing-media-box.pdf|3|-|tests/golden/pages-missing-media-box.stderr

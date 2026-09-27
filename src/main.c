@@ -3,13 +3,20 @@
 #include "parser.h"
 #include "object.h"
 #include "error.h"
+#include "xref.h"
+#include "document.h"
+#include "pages.h"
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
 
 int main(int argc,char *argv[]) {
     
     int standalone_object = 0;
+    int indirect_object = 0;
+    int dump_xref = 0;
+    int dump_pages = 0;
     const char *filename = NULL;
 
     if (argc == 2) {
@@ -17,9 +24,56 @@ int main(int argc,char *argv[]) {
     } else if (argc == 3 && strcmp(argv[1], "--object") == 0) {
         standalone_object = 1;
         filename = argv[2];
+    } else if (argc == 3 && strcmp(argv[1], "--indirect") == 0) {
+        indirect_object = 1;
+        filename = argv[2];
+    } else if (argc == 3 && strcmp(argv[1], "--dump-xref") == 0) {
+        dump_xref = 1;
+        filename = argv[2];
+    } else if (argc == 3 && strcmp(argv[1], "--dump-pages") == 0) {
+        dump_pages = 1;
+        filename = argv[2];
     } else {
-        fprintf(stderr,"usage: %s [--object] document.pdf\n",argv[0]);
+        fprintf(stderr,"usage: %s [--object|--indirect|--dump-xref|--dump-pages] input-file\n",argv[0]);
         return 1;
+    }
+
+    if (dump_pages) {
+        pdf_document document;
+        pdf_pages pages = {0};
+        pdf_error error;
+        pdf_error_init(&error);
+        if (!pdf_document_open(&document, filename, NULL, &error)) {
+            pdf_error_print(&error, stderr);
+            return pdf_error_exit_code(&error);
+        }
+        int loaded = pdf_pages_load(&document, &pages, &error);
+        if (loaded) {
+            printf("PAGES %zu\n", pages.len);
+            for (size_t i = 0; i < pages.len; i++) {
+                const pdf_page *page = &pages.items[i];
+                const char *contents = "none";
+                if (page->contents != NULL) {
+                    if (page->contents->type == PDF_OBJECT_REF) contents = "reference";
+                    else if (page->contents->type == PDF_OBJECT_ARRAY) contents = "array";
+                    else contents = "direct";
+                }
+                printf("PAGE %zu %" PRId64 " %" PRId64
+                       " MEDIABOX %g %g %g %g RESOURCES %s CONTENTS %s\n",
+                       i + 1, page->reference.object_number,
+                       page->reference.generation, page->media_box_values[0],
+                       page->media_box_values[1], page->media_box_values[2],
+                       page->media_box_values[3],
+                       page->resources == NULL ? "none" : "present", contents);
+            }
+        }
+        pdf_pages_free(&pages);
+        pdf_document_close(&document);
+        if (!loaded) {
+            pdf_error_print(&error, stderr);
+            return pdf_error_exit_code(&error);
+        }
+        return 0;
     }
 
     pdf_reader reader;
@@ -33,13 +87,52 @@ int main(int argc,char *argv[]) {
 
     printf("file size: %zu bytes\n",reader.size);
 
+    if (dump_xref) {
+        pdf_xref *xref = pdf_xref_parse(&reader, &error);
+        if (xref != NULL) {
+            printf("XREF %zu startxref %zu\n", xref->size, xref->startxref);
+            printf("ROOT %" PRId64 " %" PRId64 "\n",
+                   xref->root.object_number, xref->root.generation);
+            for (size_t i = 0; i < xref->size; i++) {
+                const pdf_xref_entry *entry = pdf_xref_get(xref, i);
+                if (entry->present) {
+                    printf("%zu %c %zu %u\n", i, entry->in_use ? 'n' : 'f',
+                           entry->offset, (unsigned)entry->generation);
+                }
+            }
+            printf("TRAILER\n");
+            pdf_object_dump(xref->trailer, 0);
+            pdf_xref_free(xref);
+        }
+        reader_close(&reader);
+        if (error.code != PDF_ERROR_NONE) {
+            pdf_error_print(&error, stderr);
+            return pdf_error_exit_code(&error);
+        }
+        return 0;
+    }
+
     pdf_lexer lexer;
     lexer_init(&lexer,&reader,&error);
 
     pdf_parser parser;
     parser_init(&parser,&lexer,&error);
 
-    if (standalone_object) {
+    if (indirect_object) {
+        pdf_indirect_object *obj = parser_parse_indirect_object(&parser);
+
+        if (obj != NULL) {
+            if (parser_expect_eof(&parser)) {
+                printf("INDIRECT %" PRId64 " %" PRId64 "\n",
+                       obj->object_number, obj->generation);
+                pdf_object_dump(obj->body, 0);
+                if (obj->is_stream) {
+                    printf("STREAM %zu bytes\n", obj->stream.len);
+                }
+            }
+            pdf_indirect_object_free(obj);
+        }
+    } else if (standalone_object) {
         pdf_object *obj = parser_parse_object(&parser);
 
         if (obj != NULL) {

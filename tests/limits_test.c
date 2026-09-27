@@ -22,6 +22,7 @@ int main(void) {
     assert(limits.max_token_size == 16U * 1024U * 1024U);
     assert(limits.max_nesting_depth == 256);
     assert(limits.max_container_entries == 1000000);
+    assert(limits.max_xref_entries == 1000000);
 
     limits.max_input_size = 1;
     pdf_error_init(&error);

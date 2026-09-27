@@ -22,6 +22,15 @@ READER_SRC := tests/reader_test.c
 INDIRECT_TARGET := tests/indirect-test
 INDIRECT_ASAN_TARGET := tests/indirect-test-asan
 INDIRECT_SRC := tests/indirect_test.c
+XREF_TARGET := tests/xref-test
+XREF_ASAN_TARGET := tests/xref-test-asan
+XREF_SRC := tests/xref_test.c
+DOCUMENT_TARGET := tests/document-test
+DOCUMENT_ASAN_TARGET := tests/document-test-asan
+DOCUMENT_SRC := tests/document_test.c
+PAGES_TARGET := tests/pages-test
+PAGES_ASAN_TARGET := tests/pages-test-asan
+PAGES_SRC := tests/pages_test.c
 ASAN_CFLAGS = $(CFLAGS) -fsanitize=address,undefined -fno-omit-frame-pointer
 ASAN_LDFLAGS = $(LDFLAGS) -fsanitize=address,undefined
 
@@ -32,7 +41,10 @@ SRC = \
 	src/parser.c \
 	src/object.c \
 	src/error.c \
-	src/limits.c
+	src/limits.c \
+	src/xref.c \
+	src/document.c \
+	src/pages.c
 HDR = \
 	src/reader.h \
 	src/lexer.h \
@@ -40,7 +52,10 @@ HDR = \
 	src/object.h \
 	src/error.h \
 	src/bytes.h \
-	src/limits.h
+	src/limits.h \
+	src/xref.h \
+	src/document.h \
+	src/pages.h
 TEST_INPUT = tests/numbers.txt
 OWNERSHIP_SRC = tests/ownership_test.c
 ERROR_SRC = tests/error_test.c
@@ -65,7 +80,7 @@ all: $(TARGET)
 $(TARGET): $(SRC) $(HDR)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(SRC) $(LDLIBS) -o $@
 
-test: $(TARGET) $(OWNERSHIP_TARGET) $(ERROR_TARGET) $(LEXER_TARGET) $(OBJECT_TARGET) $(LIMITS_TARGET) $(READER_TARGET) $(INDIRECT_TARGET)
+test: $(TARGET) $(OWNERSHIP_TARGET) $(ERROR_TARGET) $(LEXER_TARGET) $(OBJECT_TARGET) $(LIMITS_TARGET) $(READER_TARGET) $(INDIRECT_TARGET) $(XREF_TARGET) $(DOCUMENT_TARGET) $(PAGES_TARGET)
 	$(call CHECK_NUMBERS_OUTPUT,$(TARGET))
 	./tests/run-fixtures.sh ./$(TARGET)
 	./$(OWNERSHIP_TARGET)
@@ -75,8 +90,11 @@ test: $(TARGET) $(OWNERSHIP_TARGET) $(ERROR_TARGET) $(LEXER_TARGET) $(OBJECT_TAR
 	./$(LIMITS_TARGET)
 	./$(READER_TARGET)
 	./$(INDIRECT_TARGET)
+	./$(XREF_TARGET)
+	./$(DOCUMENT_TARGET)
+	./$(PAGES_TARGET)
 
-asan: $(ASAN_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_ASAN_TARGET) $(OBJECT_ASAN_TARGET) $(LIMITS_ASAN_TARGET) $(READER_ASAN_TARGET) $(INDIRECT_ASAN_TARGET)
+asan: $(ASAN_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_ASAN_TARGET) $(OBJECT_ASAN_TARGET) $(LIMITS_ASAN_TARGET) $(READER_ASAN_TARGET) $(INDIRECT_ASAN_TARGET) $(XREF_ASAN_TARGET) $(DOCUMENT_ASAN_TARGET) $(PAGES_ASAN_TARGET)
 	$(call CHECK_NUMBERS_OUTPUT,$(ASAN_TARGET))
 	./tests/run-fixtures.sh ./$(ASAN_TARGET)
 	./$(OWNERSHIP_ASAN_TARGET)
@@ -86,6 +104,9 @@ asan: $(ASAN_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_ASAN_
 	./$(LIMITS_ASAN_TARGET)
 	./$(READER_ASAN_TARGET)
 	./$(INDIRECT_ASAN_TARGET)
+	./$(XREF_ASAN_TARGET)
+	./$(DOCUMENT_ASAN_TARGET)
+	./$(PAGES_ASAN_TARGET)
 
 $(ASAN_TARGET): $(SRC) $(HDR)
 	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $(SRC) $(LDLIBS) -o $@
@@ -132,5 +153,23 @@ $(INDIRECT_TARGET): $(INDIRECT_SRC) $(SRC) $(HDR)
 $(INDIRECT_ASAN_TARGET): $(INDIRECT_SRC) $(SRC) $(HDR)
 	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $(INDIRECT_SRC) src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c $(LDLIBS) -o $@
 
+$(XREF_TARGET): $(XREF_SRC) $(SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(XREF_SRC) src/xref.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c $(LDLIBS) -o $@
+
+$(XREF_ASAN_TARGET): $(XREF_SRC) $(SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $(XREF_SRC) src/xref.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c $(LDLIBS) -o $@
+
+$(DOCUMENT_TARGET): $(DOCUMENT_SRC) $(SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(DOCUMENT_SRC) src/document.c src/xref.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c $(LDLIBS) -o $@
+
+$(DOCUMENT_ASAN_TARGET): $(DOCUMENT_SRC) $(SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $(DOCUMENT_SRC) src/document.c src/xref.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c $(LDLIBS) -o $@
+
+$(PAGES_TARGET): $(PAGES_SRC) $(SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(PAGES_SRC) src/pages.c src/document.c src/xref.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c $(LDLIBS) -o $@
+
+$(PAGES_ASAN_TARGET): $(PAGES_SRC) $(SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $(PAGES_SRC) src/pages.c src/document.c src/xref.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c $(LDLIBS) -o $@
+
 clean:
-	$(RM) $(TARGET) $(ASAN_TARGET) $(OWNERSHIP_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_TARGET) $(LEXER_ASAN_TARGET) $(OBJECT_TARGET) $(OBJECT_ASAN_TARGET) $(LIMITS_TARGET) $(LIMITS_ASAN_TARGET) $(READER_TARGET) $(READER_ASAN_TARGET) $(INDIRECT_TARGET) $(INDIRECT_ASAN_TARGET)
+	$(RM) $(TARGET) $(ASAN_TARGET) $(OWNERSHIP_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_TARGET) $(LEXER_ASAN_TARGET) $(OBJECT_TARGET) $(OBJECT_ASAN_TARGET) $(LIMITS_TARGET) $(LIMITS_ASAN_TARGET) $(READER_TARGET) $(READER_ASAN_TARGET) $(INDIRECT_TARGET) $(INDIRECT_ASAN_TARGET) $(XREF_TARGET) $(XREF_ASAN_TARGET) $(DOCUMENT_TARGET) $(DOCUMENT_ASAN_TARGET) $(PAGES_TARGET) $(PAGES_ASAN_TARGET)

@@ -1,6 +1,6 @@
 # pdftext：架構與 Roadmap
 
-> 本文件是架構、後續 milestone 與版本邊界的權威來源。M2 Object Parser 已於 2026-08-24 通過 release acceptance；其已完成規格與驗收結果見 [M2 驗收記錄](pdftext_m2_acceptance.md)。下一個 milestone 是 M3 Indirect Object Parser。
+> 本文件是架構、後續 milestone 與版本邊界的權威來源。M2 Object Parser 已於 2026-08-24 通過 release acceptance；其已完成規格與驗收結果見 [M2 驗收記錄](pdftext_m2_acceptance.md)。M3 Indirect Object Parser、M4 traditional xref／trailer 與 M5 Document／Resolver／Pages Tree 已完成；下一個 milestone 是 M6a Raw Contents Stream。
 
 ## 1. Roadmap 定位
 
@@ -46,11 +46,12 @@ Roadmap 的 milestone 編號已統一如下；舊文件中 M4–M8 的命名曾�
 
 | 順序 | 模組 | 責任與交接 |
 |---|---|---|
-| 1 | `src/main.c` | CLI 選擇連續 object dump 或 `--object` 單一 object 模式，連接下層模組。 |
+| 1 | `src/main.c` | CLI 選擇連續 object dump、`--object`、`--indirect`，或整份 PDF 的 `--dump-xref` 模式，連接下層模組。 |
 | 2 | `src/reader.c`、`src/reader.h` | 載入有大小限制的 binary input，提供 peek/get/seek/tell/eof。 |
 | 3 | `src/lexer.c`、`src/lexer.h` | 從 reader 的 bytes 產生 token，跳過 PDF whitespace 與 comments。 |
 | 4 | `src/parser.c`、`src/parser.h` | 消耗 token，驗證 standalone object grammar，組合巢狀物件並清理失敗時的部分結果。 |
 | 5 | `src/object.c`、`src/object.h` | 定義 tagged object、array/dictionary/reference，負責儲存、dump 與遞迴釋放。 |
+| 6 | `src/xref.c`、`src/xref.h` | 從完整 PDF 的檔尾解析 traditional xref 和 trailer，保留物件 offset 與 /Root。 |
 | 共用 | `src/error.*`、`src/limits.*`、`src/bytes.h` | 提供錯誤回報、資源上限與可包含 NUL 的 byte payload。 |
 
 閱讀時可從 `main.c` 追輸入流程，再依 reader → lexer → parser → object model 追資料流；parser 透過 object API 建樹，不讓 lexer 承擔 PDF object grammar。此時 CLI 輸入仍是 standalone object fixture，尚不能擷取完整 PDF 的文字。
@@ -75,7 +76,7 @@ Roadmap 的 milestone 編號已統一如下；舊文件中 M4–M8 的命名曾�
 
 每個 milestone 都必須有 fixture、golden output、malformed input、build gate 與 sanitizer 驗證；不能只以「程式可以跑」作為完成條件。
 
-M0–M2 已形成目前的 standalone object parser 基線；上表中 M3–M11 是後續規劃，不能當成目前 CLI 已支援的功能。
+M0–M5 已形成目前的 object、indirect object、traditional xref、resolver 與頁樹基線；M6–M11 是後續規劃。目前 CLI 尚不能擷取完整 PDF 的文字。
 
 ## 3. M3：Indirect Object Parser
 
@@ -105,6 +106,12 @@ M0–M2 已形成目前的 standalone object parser 基線；上表中 M3–M11 
 - object cache。
 - xref stream 或 object stream。
 
+### 實作與驗收
+
+`--indirect input-file` 解析單一 indirect object fixture，輸出物件編號、body 與 raw stream 長度；若 `/Length` 是 reference，CLI 沒有 resolver，會回報 unsupported。呼叫 parser API 時可注入 resolver，`tests/indirect_test.c` 的 stub 和真實 PDF 中已知 offset 的測試涵蓋這條路徑。完整 PDF header 由 `reader_validate_pdf_header` 驗證；M3 尚未提供整份 PDF 文件的 CLI 解析模式。
+
+M3 的驗收包含 `tests/fixtures.tsv` 的 indirect object golden cases、`tests/indirect_test.c` 的 direct/reference `/Length`、binary payload、錯誤路徑與 `tests/hello.pdf` 測試，以及 `make test`、`make asan`。既有 M2 fixture 模式持續通過。
+
 ## 4. M4：Traditional xref 與 trailer
 
 ### v1.0 必須支援
@@ -127,6 +134,12 @@ M0–M2 已形成目前的 standalone object parser 基線；上表中 M3–M11 
 - 找不到或不合法的 startxref。
 - /Encrypt。
 - xref offset 指向不相符的 indirect object。
+
+### 實作與驗收
+
+`--dump-xref document.pdf` 會驗證 `%PDF-` header，從檔尾的 `startxref` 讀取 traditional xref table，支援多個 subsection、free entry 與 trailer dictionary，並逐筆核對 in-use entry 的 offset、object number 與 generation。輸出 `/Root`、每個 entry 與 trailer；xref 由呼叫端釋放，解析後 reader 游標回到原位。xref entries 有獨立的 `max_xref_entries` 上限。xref stream、object stream、`/Prev` 與 `/Encrypt` 會被拒絕。
+
+`tests/hello.pdf`、多 subsection fixture、malformed offset、`/Prev` golden fixtures 與 `tests/xref_test.c` 涵蓋正常與錯誤路徑。M4 不負責 reference resolution 或 Pages Tree，這兩項由 M5 接續。
 
 ## 5. M5：Document、Resolver 與 Pages Tree
 
@@ -154,6 +167,12 @@ Document 由 reader、xref、trailer、object cache 與 limits 組成。cache en
 - /MediaBox 經整棵樹仍找不到時報 malformed PDF。
 - /Resources 缺失但 page 沒有文字內容時允許；需要 font 時才報錯。
 - Page、Pages、Catalog 的 /Type 錯誤時報錯。
+
+### 實作與驗收
+
+`src/document.[ch]` 管理 reader、xref 與 indirect object cache；`pdf_resolve()` 核對 xref 身分、回傳文件擁有的物件並支援間接 `/Length`。`src/pages.[ch]` 依 `/Kids` 順序驗證頁樹、`/Parent` 與 `/Count`，計算每頁有效的 `/Resources`、`/MediaBox`，保留原始 `/Contents`。`--dump-pages document.pdf` 輸出頁序與屬性摘要，不解碼內容流。
+
+`tests/document_test.c`、`tests/pages_test.c` 與 35 筆 golden fixtures 覆蓋正常、繼承、循環、錯誤型別與上限路徑；`make`、`make test`、`make asan` 已通過。
 
 ## 6. M6：Contents 與 Stream Decode
 
@@ -409,6 +428,7 @@ stderr 訊息必須包含 module、byte offset（若可取得）與人類可讀�
 | nested depth | 256 |
 | 單一 array/dictionary entries | 1,000,000 |
 | object cache | 1,000,000 objects |
+| xref entries | 1,000,000 entries |
 | 單一 decoded stream | 256 MiB |
 | page count | 100,000 |
 

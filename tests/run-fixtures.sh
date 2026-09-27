@@ -108,6 +108,18 @@ do
 			fixture_mode=object
 			input=${input#object:}
 			;;
+		indirect:*)
+			fixture_mode=indirect
+			input=${input#indirect:}
+			;;
+		xref:*)
+			fixture_mode=xref
+			input=${input#xref:}
+			;;
+		pages:*)
+			fixture_mode=pages
+			input=${input#pages:}
+			;;
 	esac
 	fixture_path=$(relative_path "$input")
 	actual_stdout="$work_dir/$total.stdout"
@@ -115,6 +127,24 @@ do
 
 	if [ "$fixture_mode" = object ]; then
 		if "$binary" --object "$fixture_path" >"$actual_stdout" 2>"$actual_stderr"; then
+			actual_status=0
+		else
+			actual_status=$?
+		fi
+	elif [ "$fixture_mode" = indirect ]; then
+		if "$binary" --indirect "$fixture_path" >"$actual_stdout" 2>"$actual_stderr"; then
+			actual_status=0
+		else
+			actual_status=$?
+		fi
+	elif [ "$fixture_mode" = xref ]; then
+		if "$binary" --dump-xref "$fixture_path" >"$actual_stdout" 2>"$actual_stderr"; then
+			actual_status=0
+		else
+			actual_status=$?
+		fi
+	elif [ "$fixture_mode" = pages ]; then
+		if "$binary" --dump-pages "$fixture_path" >"$actual_stdout" 2>"$actual_stderr"; then
 			actual_status=0
 		else
 			actual_status=$?

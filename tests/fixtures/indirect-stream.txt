@@ -1,0 +1,3 @@
+3 0 obj << /Length 3 >> stream
+abc
+endstream endobj
