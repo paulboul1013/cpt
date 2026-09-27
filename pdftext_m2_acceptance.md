@@ -1,20 +1,20 @@
-# pdftext：當前 Milestone 規格（M2 Object Parser）
+# pdftext：M2 Object Parser 驗收記錄
 
-> 本文件是目前可以直接執行的工作規格。它只描述 M2，不提前實作 xref、Pages Tree、stream decode、font decode 或 layout。
+> M2 已於 2026-08-24 完成 release acceptance。本文件保留當時的實作邊界、核心契約與驗收證據；後續架構與下一個 M3 規劃以 [架構與 Roadmap](pdftext_roadmap.md) 為準。
 
 ## 1. 文件定位
 
-pdftext_implementation_plan.md 是入口索引；長期功能與版本邊界見 pdftext_roadmap.md。本文件回答三個問題：
+[架構與 Roadmap](pdftext_roadmap.md) 是入口與前瞻規劃。本記錄回答三個歷史問題：
 
-1. repo 目前實際完成了什麼？
-2. M2 必須完成什麼才算結束？
-3. M2 完成後，下一個 milestone 從哪裡開始？
+1. M2 驗收時實際完成了什麼？
+2. M2 的驗收契約與測試證據是什麼？
+3. M2 邊界停在哪裡？
 
-本 milestone 的輸入是獨立的 PDF object fixture，不是完整 PDF 文件。M2 完成前不得開始 xref、indirect object resolver 或 CMap。
+M2 的輸入是獨立 PDF object fixture，不是完整 PDF 文件。
 
 ## 2. Repo 實際狀態（2026-08-24，M2 release acceptance）
 
-M2 已完成並由 commit `20ca626` 收斂。CLI 現在保留兩種明確模式：
+M2 功能與診斷測試由 commit `20ca626` 收斂，release acceptance 記錄於 `d7913a5`。驗收時 CLI 有兩種明確模式：
 
 - `pdftext input`：逐一 dump stream 中的 standalone objects，供相容既有 fixture 使用。
 - `pdftext --object input`：解析一個 standalone object，並要求後面只能是 EOF、whitespace 或 comment；trailing token 會回報 malformed error。
@@ -36,11 +36,9 @@ M2 已完成並由 commit `20ca626` 收斂。CLI 現在保留兩種明確模式�
 - 尚未實作 xref、trailer、resolver、Catalog、Pages Tree、content stream、font decode、layout 或 reading order。
 - `object-cache`、stream-size、page-count limits 已定義為共用設定，但要等對應 M3+ module 使用；M2 不宣稱已實作那些 module。
 
-M2 的輸入是 standalone PDF object fixtures，不是完整 PDF 文件；進入 M3 前不擴張這個邊界。
+## 3. 已驗收的 M2 目標
 
-## 3. M2 目標
-
-M2 結束時，parser 必須能把 standalone PDF object grammar 轉成可遞迴釋放的 object tree，並能對合法與非法輸入給出可定位的結果。
+驗收標準是 parser 能把 standalone PDF object grammar 轉成可遞迴釋放的 object tree，並能對合法與非法輸入給出可定位的結果。
 
 ### 3.1 Lexer 必須支援
 
@@ -145,7 +143,7 @@ M2 開始不再使用只有 NULL 的無訊息失敗：
 
 M2 主要驗證 input、token/string、object nesting、array/dictionary entries、size/number overflow 與 allocation failure cleanup；stream/page/object-cache 限制由後續 module 使用同一份 pdf_limits。M2 的 limits unit test 會以可重現的小上限觸發 resource-limit error。
 
-## 7. M2 實作切片
+## 7. M2 實作紀錄
 
 已完成的切片如下；每個切片都保持可編譯並納入後續 gate：
 
@@ -158,7 +156,7 @@ M2 主要驗證 input、token/string、object nesting、array/dictionary entries
 7. 完整合法與 malformed fixtures。
 8. strict C11 Makefile、`pdftext`、`make test`、`make asan`。
 
-M2 期間不得新增 xref、stream decode、Pages Tree、font、content interpreter 或 reading order 程式碼。
+M2 期間未新增 xref、stream decode、Pages Tree、font、content interpreter 或 reading order 程式碼。
 
 ## 8. 測試與驗收
 
@@ -219,11 +217,4 @@ ASan/UBSan 測試不得出現 heap-buffer-overflow、use-after-free、double-fre
 - [x] make test 通過。
 - [x] make asan 通過。
 
-## 10. M3 entry condition
-
-下一個 milestone 是 roadmap 的 M3 Indirect Object Parser。開始 M3 前，必須維持本文件所有 M2 勾選項，並新增以下基線條件：
-
-- 以 `%PDF-` header 驗證完整 PDF input。
-- 定義 indirect object 的 object number、generation、`obj/endobj` grammar 與 error offsets。
-- 以 `/Length` 精確讀取 stream raw bytes，先完成 `endstream` 再完成 `endobj` 驗證。
-- 保留 M2 object parser 作為 stream dictionary 與 indirect object body 的下層 parser；不把 xref lookup、filter decode 或 object cache 偷塞進 M3。
+後續 M3 的範圍與實作決策見 [Roadmap 的 M3 章節](pdftext_roadmap.md#3-m3indirect-object-parser)。
