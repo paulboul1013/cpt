@@ -46,6 +46,17 @@ void parser_init(pdf_parser *parser, pdf_lexer *lexer, pdf_error *error) {
     }
     parser->lookahead_len = 0;
     parser->depth = 0;
+    parser->length_resolver = NULL;
+    parser->length_resolver_context = NULL;
+}
+
+void parser_set_length_resolver(pdf_parser *parser,
+                                pdf_stream_length_resolver resolver, void *context) {
+    if (parser == NULL) {
+        return;
+    }
+    parser->length_resolver = resolver;
+    parser->length_resolver_context = context;
 }
 
 int parser_next(pdf_parser *parser, pdf_token *token) {
@@ -118,6 +129,8 @@ void parser_destroy(pdf_parser *parser) {
     parser->lexer = NULL;
     parser->error = NULL;
     parser->limits = NULL;
+    parser->length_resolver = NULL;
+    parser->length_resolver_context = NULL;
 }
 
 pdf_object *parser_parse_object(pdf_parser *parser) {
@@ -322,19 +335,48 @@ pdf_indirect_object *parser_parse_indirect_object(pdf_parser *parser) {
         const pdf_object *length = pdf_dict_get(body, "Length");
         size_t stream_offset = token.offset;
         pdf_reader *reader = parser->lexer->reader;
+        int64_t length_value;
 
-        if (length == NULL || length->type != PDF_OBJECT_INT ||
-            length->value.integer < 0) {
+        if (length == NULL) {
             pdf_error_set(parser->error, PDF_ERROR_MALFORMED, stream_offset,
-                          "parser", "stream requires a direct non-negative /Length");
+                          "parser", "stream requires /Length");
             goto fail;
         }
-        if ((uintmax_t)length->value.integer > (uintmax_t)SIZE_MAX) {
+        if (length->type == PDF_OBJECT_INT) {
+            length_value = length->value.integer;
+        } else if (length->type == PDF_OBJECT_REF) {
+            if (parser->length_resolver == NULL) {
+                pdf_error_set(parser->error, PDF_ERROR_UNSUPPORTED, stream_offset,
+                              "parser", "indirect /Length requires a resolver");
+                goto fail;
+            }
+            size_t resume_offset = reader_tell(reader);
+            int resolved = parser->length_resolver(
+                parser->length_resolver_context,
+                length->value.reference.object_number,
+                length->value.reference.generation, &length_value);
+            (void)reader_seek(reader, resume_offset);
+            if (!resolved) {
+                pdf_error_set(parser->error, PDF_ERROR_MALFORMED, stream_offset,
+                              "parser", "could not resolve indirect /Length");
+                goto fail;
+            }
+        } else {
+            pdf_error_set(parser->error, PDF_ERROR_MALFORMED, stream_offset,
+                          "parser", "stream /Length must be an integer or reference");
+            goto fail;
+        }
+        if (length_value < 0) {
+            pdf_error_set(parser->error, PDF_ERROR_MALFORMED, stream_offset,
+                          "parser", "stream /Length must be non-negative");
+            goto fail;
+        }
+        if ((uintmax_t)length_value > (uintmax_t)SIZE_MAX) {
             pdf_error_set(parser->error, PDF_ERROR_RESOURCE_LIMIT, stream_offset,
                           "parser", "stream length exceeds addressable size");
             goto fail;
         }
-        stream.len = (size_t)length->value.integer;
+        stream.len = (size_t)length_value;
         if (parser->limits != NULL && stream.len > parser->limits->max_stream_size) {
             pdf_error_set(parser->error, PDF_ERROR_RESOURCE_LIMIT, stream_offset,
                           "parser", "stream exceeds configured size limit");

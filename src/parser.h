@@ -4,6 +4,12 @@
 #include "lexer.h"
 #include "object.h"
 
+/* Resolve an indirect /Length to an integer; return zero if unavailable or invalid.
+ * The parser restores its reader cursor after the callback, so the resolver may
+ * seek the same input while looking up the referenced object. */
+typedef int (*pdf_stream_length_resolver)(void *context, int64_t object_number,
+                                          int64_t generation, int64_t *length);
+
 typedef struct {
     pdf_lexer *lexer;
     pdf_error *error;
@@ -12,6 +18,8 @@ typedef struct {
     pdf_token lookahead[3];
     size_t lookahead_len;
     size_t depth;
+    pdf_stream_length_resolver length_resolver;
+    void *length_resolver_context;
 
 } pdf_parser;
 
@@ -24,6 +32,8 @@ typedef struct {
 } pdf_indirect_object;
 
 void parser_init(pdf_parser *parser, pdf_lexer *lexer, pdf_error *error);
+void parser_set_length_resolver(pdf_parser *parser,
+                                pdf_stream_length_resolver resolver, void *context);
 
 /* parser_peek returns a borrowed token owned by parser. */
 const pdf_token *parser_peek(pdf_parser *parser);
