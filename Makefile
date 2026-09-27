@@ -16,6 +16,9 @@ OBJECT_TARGET := tests/object-test
 OBJECT_ASAN_TARGET := tests/object-test-asan
 LIMITS_TARGET := tests/limits-test
 LIMITS_ASAN_TARGET := tests/limits-test-asan
+READER_TARGET := tests/reader-test
+READER_ASAN_TARGET := tests/reader-test-asan
+READER_SRC := tests/reader_test.c
 ASAN_CFLAGS = $(CFLAGS) -fsanitize=address,undefined -fno-omit-frame-pointer
 ASAN_LDFLAGS = $(LDFLAGS) -fsanitize=address,undefined
 
@@ -59,7 +62,7 @@ all: $(TARGET)
 $(TARGET): $(SRC) $(HDR)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(SRC) $(LDLIBS) -o $@
 
-test: $(TARGET) $(OWNERSHIP_TARGET) $(ERROR_TARGET) $(LEXER_TARGET) $(OBJECT_TARGET) $(LIMITS_TARGET)
+test: $(TARGET) $(OWNERSHIP_TARGET) $(ERROR_TARGET) $(LEXER_TARGET) $(OBJECT_TARGET) $(LIMITS_TARGET) $(READER_TARGET)
 	$(call CHECK_NUMBERS_OUTPUT,$(TARGET))
 	./tests/run-fixtures.sh ./$(TARGET)
 	./$(OWNERSHIP_TARGET)
@@ -67,8 +70,9 @@ test: $(TARGET) $(OWNERSHIP_TARGET) $(ERROR_TARGET) $(LEXER_TARGET) $(OBJECT_TAR
 	./$(LEXER_TARGET)
 	./$(OBJECT_TARGET)
 	./$(LIMITS_TARGET)
+	./$(READER_TARGET)
 
-asan: $(ASAN_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_ASAN_TARGET) $(OBJECT_ASAN_TARGET) $(LIMITS_ASAN_TARGET)
+asan: $(ASAN_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_ASAN_TARGET) $(OBJECT_ASAN_TARGET) $(LIMITS_ASAN_TARGET) $(READER_ASAN_TARGET)
 	$(call CHECK_NUMBERS_OUTPUT,$(ASAN_TARGET))
 	./tests/run-fixtures.sh ./$(ASAN_TARGET)
 	./$(OWNERSHIP_ASAN_TARGET)
@@ -76,6 +80,7 @@ asan: $(ASAN_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_ASAN_
 	./$(LEXER_ASAN_TARGET)
 	./$(OBJECT_ASAN_TARGET)
 	./$(LIMITS_ASAN_TARGET)
+	./$(READER_ASAN_TARGET)
 
 $(ASAN_TARGET): $(SRC) $(HDR)
 	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $(SRC) $(LDLIBS) -o $@
@@ -110,5 +115,11 @@ $(LIMITS_TARGET): $(LIMITS_SRC) $(SRC) $(HDR) src/limits.h
 $(LIMITS_ASAN_TARGET): $(LIMITS_SRC) $(SRC) $(HDR) src/limits.h
 	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $(LIMITS_SRC) src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c $(LDLIBS) -o $@
 
+$(READER_TARGET): $(READER_SRC) src/reader.c src/reader.h src/error.c src/error.h src/limits.c src/limits.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(READER_SRC) src/reader.c src/error.c src/limits.c $(LDLIBS) -o $@
+
+$(READER_ASAN_TARGET): $(READER_SRC) src/reader.c src/reader.h src/error.c src/error.h src/limits.c src/limits.h
+	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $(READER_SRC) src/reader.c src/error.c src/limits.c $(LDLIBS) -o $@
+
 clean:
-	$(RM) $(TARGET) $(ASAN_TARGET) $(OWNERSHIP_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_TARGET) $(LEXER_ASAN_TARGET) $(OBJECT_TARGET) $(OBJECT_ASAN_TARGET) $(LIMITS_TARGET) $(LIMITS_ASAN_TARGET)
+	$(RM) $(TARGET) $(ASAN_TARGET) $(OWNERSHIP_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_TARGET) $(LEXER_ASAN_TARGET) $(OBJECT_TARGET) $(OBJECT_ASAN_TARGET) $(LIMITS_TARGET) $(LIMITS_ASAN_TARGET) $(READER_TARGET) $(READER_ASAN_TARGET)

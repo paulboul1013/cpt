@@ -89,6 +89,30 @@ int reader_open_with_limits(pdf_reader *reader, const char *filename,
     return 1;
 }
 
+int reader_validate_pdf_header(const pdf_reader *reader, pdf_error *error) {
+    static const unsigned char signature[] = "%PDF-";
+
+    if (reader == NULL || (reader->data == NULL && reader->size != 0)) {
+        pdf_error_set(error, PDF_ERROR_IO, 0, "reader", "input reader is invalid");
+        return 0;
+    }
+
+    for (size_t offset = 0; offset < sizeof(signature) - 1; offset++) {
+        if (offset >= reader->size) {
+            pdf_error_set(error, PDF_ERROR_MALFORMED, offset, "reader",
+                          "incomplete PDF header");
+            return 0;
+        }
+        if (reader->data[offset] != signature[offset]) {
+            pdf_error_set(error, PDF_ERROR_MALFORMED, offset, "reader",
+                          "expected %%PDF- header at byte zero");
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 void reader_close(pdf_reader *reader) {
     free(reader->data);
 

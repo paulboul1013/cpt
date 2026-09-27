@@ -36,6 +36,9 @@ int reader_open(pdf_reader *reader,const char *filename,pdf_error *error);
 int reader_open_with_limits(pdf_reader *reader, const char *filename,
                             pdf_error *error, const pdf_limits *limits);
 
+/* Check the %PDF- signature at byte zero without moving the cursor. */
+int reader_validate_pdf_header(const pdf_reader *reader, pdf_error *error);
+
 //free reader usage memory
 void reader_close(pdf_reader *reader);
 
