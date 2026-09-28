@@ -1,6 +1,6 @@
 # pdftext：架構與 Roadmap
 
-> 本文件是架構、後續 milestone 與版本邊界的權威來源。M2 Object Parser 已於 2026-08-24 通過 release acceptance；其已完成規格與驗收結果見 [M2 驗收記錄](pdftext_m2_acceptance.md)。M3 Indirect Object Parser、M4 traditional xref／trailer、M5 Document／Resolver／Pages Tree 與 M6 Contents／FlateDecode 已完成；下一個 milestone 是 M7 Content Interpreter。
+> 本文件是架構、後續 milestone 與版本邊界的權威來源。M2 Object Parser 已於 2026-08-24 通過 release acceptance；其已完成規格與驗收結果見 [M2 驗收記錄](pdftext_m2_acceptance.md)。M3 Indirect Object Parser、M4 traditional xref／trailer、M5 Document／Resolver／Pages Tree 、M6 Contents／FlateDecode 與 M7 Content Interpreter 已完成；下一個 milestone 是 M8 Text State／Geometry。
 
 ## 1. Roadmap 定位
 
@@ -76,7 +76,7 @@ Roadmap 的 milestone 編號已統一如下；舊文件中 M4–M8 的命名曾�
 
 每個 milestone 都必須有 fixture、golden output、malformed input、build gate 與 sanitizer 驗證；不能只以「程式可以跑」作為完成條件。
 
-M0–M6 已形成目前的 object、indirect object、traditional xref、resolver、頁樹與 Contents 解碼基線；M7–M11 是後續規劃。目前 CLI 尚不能擷取完整 PDF 的文字。
+M0–M7 已形成目前的 object、indirect object、traditional xref、resolver、頁樹、Contents 解碼與 Content Interpreter 基線；M8–M11 是後續規劃。目前 CLI 尚不能擷取完整 PDF 的文字。
 
 ## 3. M3：Indirect Object Parser
 
@@ -215,11 +215,22 @@ Document 由 reader、xref、trailer、object cache 與 limits 組成。cache en
 
 ### 錯誤政策
 
-- unknown operator：忽略，debug mode 警告。
+- 完全未知的 operator：清除該次 operands，debug mode 警告。
+- 已知但未實作的標準 operator 一律保守回報 unsupported（包括 BI、Do、gs、Tc、Tw、Tz、TL、Tr、Ts、path／clipping／color、marked content 與 compatibility operators）；不將它們當成完全未知 operator 略過。ID／EI 單獨出現、indirect reference 與 stream operand：malformed。
 - 已知 operator operand 不足或型別錯誤：malformed content stream。
-- BT/ET 外的文字 operator：報錯。
-- q/Q 不平衡：報 malformed content stream。
+- text-positioning／text-showing operators 必須位於 BT/ET 內；text-state operators（如 Tf）可在外設定並跨文字物件保留。BT 重設 text matrix 與 line matrix（PDF Reference 1.7 §5.2–5.3）。
+- q/Q 不平衡、BT/ET 不平衡或 nested BT：報 malformed content stream。q、Q、cm 僅可在 BT/ET 外。
 - 不支援的 graphics feature 不得靜默產生錯誤座標。
+
+### M7 完成狀態與交接
+
+M7 已完成。`src/content_lexer.[ch]` 透過共用 lexer 的 borrowed-buffer 入口掃描 decoded bytes，content operand parser 獨立於 PDF Object Parser；不建立假 reader，也不接受 indirect reference／stream operand。Literal string 的 CR／CRLF 正規化為 LF，保留 NUL、octal escape 與 hex string 原始字元碼。
+
+`src/content_interpreter.h` 的逐操作 visitor 提供已驗證的 typed operands 與 decoded offset；資料只在 callback 期間借用。M8 應依順序消耗操作並自行維護 text state／geometry；M7 不計算矩陣、glyph width 或 Unicode。後續操作失敗不回滾先前 callback，消費者須暫存頁面輸出。失敗時操作摘要清零；錯誤的檔案 offset 指向 Page／Contents，訊息與 `result.error_offset` 保留精確 decoded offset。
+
+`--dump-content input.pdf` 依頁序輸出 `PAGES N` 與 `PAGE i OPS n TEXT_SHOWS n`；`OPS` 僅計入已支援並驗證成功的操作。全頁成功後才寫 stdout，後頁失敗也沒有部分摘要。完全未知操作僅透過 debug warning callback 通知，CLI 不回顯任意 operator／string bytes；既有 `--dump-contents` 仍只顯示解碼 byte length。
+
+驗收：新增兩組 C 單元測試與 15 筆靜態 PDF fixtures（全套共 63 筆），涵蓋 raw／Flate／Contents array、原始 string bytes、型別／參數／狀態錯誤、未知／unsupported、token／container／nesting／q 限制、callback 中止與後頁失敗無 stdout。`make -B test`、`make -B asan` 全數通過，編譯器零 warning；ASan／UBSan／LeakSanitizer 在沙箱外完成。兩位獨立 reviewer 覆核無阻擋問題，另通過 100,000 組隨機 content input 的 sanitizer probe。
 
 ## 8. M8：Text State 與 Geometry
 

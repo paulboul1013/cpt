@@ -7,11 +7,55 @@
 #include "document.h"
 #include "pages.h"
 #include "contents.h"
+#include "content_interpreter.h"
 
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+static void content_warning(void *context, const char *name, size_t offset) {
+    const size_t *file_offset = context;
+    (void)name; /* Never echo untrusted operator bytes to the terminal. */
+    fprintf(stderr, "content: warning at byte %zu: decoded byte %zu: unknown operator ignored\n",
+            *file_offset, offset);
+}
+
+static int dump_content_pages(pdf_document *document, const pdf_pages *pages,
+                               pdf_error *error) {
+    pdf_content_result *summaries = NULL;
+    if (pages->len > SIZE_MAX / sizeof(*summaries)) {
+        pdf_error_set(error, PDF_ERROR_RESOURCE_LIMIT, 0, "content",
+                      "page count exceeds summary capacity");
+        return 0;
+    }
+    if (pages->len != 0 && (summaries = calloc(pages->len, sizeof(*summaries))) == NULL) {
+        pdf_error_set(error, PDF_ERROR_OUT_OF_MEMORY, 0, "content",
+                      "could not allocate page summaries");
+        return 0;
+    }
+    pdf_contents_context context;
+    pdf_contents_context_init(&context, document);
+    int success = 1;
+    for (size_t i = 0; i < pages->len; i++) {
+        pdf_contents_result bytes = {0};
+        size_t file_offset = pdf_document_reference_offset(document, pages->items[i].reference);
+        success = pdf_contents_read(&context, &pages->items[i], &bytes, error) &&
+            pdf_content_interpret(bytes.data, bytes.len, &document->reader.limits,
+                file_offset, NULL, content_warning, &file_offset, &summaries[i], error);
+        pdf_contents_result_free(&bytes);
+        if (!success) break;
+    }
+    if (success) {
+        printf("PAGES %zu\n", pages->len);
+        for (size_t i = 0; i < pages->len; i++) {
+            printf("PAGE %zu OPS %zu TEXT_SHOWS %zu\n", i + 1,
+                   summaries[i].operations, summaries[i].text_shows);
+        }
+    }
+    free(summaries);
+    return success;
+}
 
 int main(int argc,char *argv[]) {
     
@@ -20,6 +64,7 @@ int main(int argc,char *argv[]) {
     int dump_xref = 0;
     int dump_pages = 0;
     int dump_contents = 0;
+    int dump_content = 0;
     const char *filename = NULL;
 
     if (argc == 2) {
@@ -36,15 +81,18 @@ int main(int argc,char *argv[]) {
     } else if (argc == 3 && strcmp(argv[1], "--dump-pages") == 0) {
         dump_pages = 1;
         filename = argv[2];
+    } else if (argc == 3 && strcmp(argv[1], "--dump-content") == 0) {
+        dump_content = 1;
+        filename = argv[2];
     } else if (argc == 3 && strcmp(argv[1], "--dump-contents") == 0) {
         dump_contents = 1;
         filename = argv[2];
     } else {
-        fprintf(stderr,"usage: %s [--object|--indirect|--dump-xref|--dump-pages|--dump-contents] input-file\n",argv[0]);
+        fprintf(stderr,"usage: %s [--object|--indirect|--dump-xref|--dump-pages|--dump-contents|--dump-content] input-file\n",argv[0]);
         return 1;
     }
 
-    if (dump_pages || dump_contents) {
+    if (dump_pages || dump_contents || dump_content) {
         pdf_document document;
         pdf_pages pages = {0};
         pdf_error error;
@@ -54,7 +102,9 @@ int main(int argc,char *argv[]) {
             return pdf_error_exit_code(&error);
         }
         int loaded = pdf_pages_load(&document, &pages, &error);
-        if (loaded && dump_contents) {
+        if (loaded && dump_content) {
+            loaded = dump_content_pages(&document, &pages, &error);
+        } else if (loaded && dump_contents) {
             size_t *lengths = NULL;
             if (pages.len > SIZE_MAX / sizeof(*lengths)) {
                 pdf_error_set(&error, PDF_ERROR_RESOURCE_LIMIT, 0, "contents",

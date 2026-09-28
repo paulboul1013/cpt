@@ -61,12 +61,21 @@ void pdf_token_destroy(pdf_token *token);
 void pdf_token_move(pdf_token *destination, pdf_token *source);
 
 typedef struct {
-    pdf_reader *reader;
+    pdf_reader *reader; /* Borrowed file cursor, NULL for a byte buffer. */
+    const unsigned char *data; /* Borrowed; never freed by the lexer. */
+    size_t size;
+    size_t position;
+    int content_mode;
     pdf_error *error;
     const pdf_limits *limits;
 } pdf_lexer;
 
 void lexer_init(pdf_lexer *lexer, pdf_reader *reader, pdf_error *error);
+
+/* Buffer and limits must remain valid. No reader ownership or PDF header assumed.
+ * Content mode additionally accepts punctuation operators. */
+void lexer_init_bytes(pdf_lexer *lexer, const unsigned char *data, size_t len,
+                      const pdf_limits *limits, pdf_error *error);
 
 pdf_token lexer_next(pdf_lexer *lexer);
 

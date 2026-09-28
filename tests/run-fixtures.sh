@@ -120,6 +120,10 @@ do
 			fixture_mode=pages
 			input=${input#pages:}
 			;;
+		content:*)
+			fixture_mode=content
+			input=${input#content:}
+			;;
 		contents:*)
 			fixture_mode=contents
 			input=${input#contents:}
@@ -149,6 +153,12 @@ do
 		fi
 	elif [ "$fixture_mode" = pages ]; then
 		if "$binary" --dump-pages "$fixture_path" >"$actual_stdout" 2>"$actual_stderr"; then
+			actual_status=0
+		else
+			actual_status=$?
+		fi
+	elif [ "$fixture_mode" = content ]; then
+		if "$binary" --dump-content "$fixture_path" >"$actual_stdout" 2>"$actual_stderr"; then
 			actual_status=0
 		else
 			actual_status=$?
