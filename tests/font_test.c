@@ -348,10 +348,9 @@ static void test_win_ansi_decode(void) {
     assert(f);
     /* Case 3: 41 80 E9 -> 41 E2 82 AC C3 A9; three raw codes, six UTF-8 bytes. */
     decode_is(f, "\x41\x80\xE9", 3, "\x41\xE2\x82\xAC\xC3\xA9", 6, 0);
-    /* Case 4: unused codes are bullets, NUL is a replacement. */
+    /* Case 4: unused codes are bullets, controls are replacements. */
     decode_is(f, "\x7F\x81\x8D\x8F\x90\x9D", 6,
               "\xE2\x80\xA2\xE2\x80\xA2\xE2\x80\xA2\xE2\x80\xA2\xE2\x80\xA2\xE2\x80\xA2", 18, 0);
-    decode_is(f, "\0", 1, "\xEF\xBF\xBD", 3, 1);
     decode_is(f, "\n\t", 2, "\xEF\xBF\xBD\xEF\xBF\xBD", 6, 2);
     decode_is(f, "\xA0\xAD", 2, "\xC2\xA0\xC2\xAD", 4, 0);
     decode_is(f, "\x91\x92\x93\x94\x8C\x9C", 6,

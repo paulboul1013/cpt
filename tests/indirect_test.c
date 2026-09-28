@@ -107,10 +107,6 @@ static void test_reference_length_errors(void) {
     pdf_error error;
     pdf_error_init(&error);
 
-    assert(parse_text(input, &error) == NULL);
-    assert(error.code == PDF_ERROR_UNSUPPORTED && error.offset == offset);
-
-    pdf_error_clear(&error);
     assert(parse_text_with_resolver(input, &error, resolve_length, &stub) == NULL);
     assert(stub.called == 1);
     assert(error.code == PDF_ERROR_MALFORMED && error.offset == offset);

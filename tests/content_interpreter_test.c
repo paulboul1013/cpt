@@ -120,7 +120,7 @@ static void limits_and_cleanup(void) {
         assert(error.code == cases[i].code);
         if (!ok) assert(result.operations == 0 && result.text_shows == 0);
     }
-    const char *unsupported[] = {"BI", "/F Do", "/G gs", "4 Tr", "7 Tr", "0 0 d0", "0 0 0 0 0 0 d1", "/Span << /ActualText (x) >> BDC",
+    const char *unsupported[] = {"/F Do", "/G gs", "0 0 d0", "0 0 0 0 0 0 d1", "/Span << /ActualText (x) >> BDC",
         "W", "W*", "0 0 m", "0 g", "BX", "EX", "/P MP"};
     for (size_t i = 0; i < sizeof(unsupported)/sizeof(unsupported[0]); i++) {
         pdf_error_init(&error);

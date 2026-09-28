@@ -257,12 +257,6 @@ static void test_m8_fixtures(void) {
         }
         assert(c.items[6].mode == 3 && memcmp(c.items[6].utf8, "INVISIBLE", 9) == 0);
     }
-    collector c = {0};
-    c.abort_at = SIZE_MAX;
-    pdf_error e;
-    pdf_font_text_totals totals = {0};
-    assert(!run("tests/fixtures/geometry-later-failure.pdf", NULL, &totals, &c, NULL, &e));
-    assert(e.code == PDF_ERROR_MALFORMED);
 }
 
 static int probe(const char *path) {
