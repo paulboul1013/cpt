@@ -2,7 +2,7 @@
 
 ## 目標與授權範圍
 
-本文件是下一輪實作計畫，本輪只寫計畫與交接，不開始 C 程式實作、不 commit。權威範圍是 [roadmap M9](../../pdftext_roadmap.md#9-m9font-decode)、[Common Contracts](../../pdftext_roadmap.md#14-common-contracts) 與 Architecture Rules；目前 M8 已提交，現行介面以 [text_state.h](../../src/text_state.h)、[pages.h](../../src/pages.h)、[document.h](../../src/document.h) 為準。
+本文件是下一輪實作計畫，本輪只寫計畫與交接，不開始 C 程式實作、不 commit。權威範圍是 [roadmap M9](pdftext_roadmap.md#9-m9font-decode)、[Common Contracts](pdftext_roadmap.md#14-common-contracts) 與 Architecture Rules；目前 M8 已提交，現行介面以 [text_state.h](../../src/text_state.h)、[pages.h](../../src/pages.h)、[document.h](../../src/document.h) 為準。
 
 M9 要把頁面的 font resource name 解析成真正的 Simple Font，取得字形寬度給 M8，並把同一個字型下的原始 byte strings 轉成 caller-owned UTF-8。字寬查找與 Unicode 解碼是兩個獨立功能：用原始 code 查 `/Widths`，不能依解碼後的 Unicode 或 UTF-8 byte count 計算 advance。
 
@@ -200,4 +200,4 @@ Page bridge 任何失敗後只可 destroy；UTF-8 結果失敗清空，cache 更
 
 ## 實作紀錄
 
-任務 1–7 已依序完成，現行契約寫在 [roadmap M9](../../pdftext_roadmap.md#m9-支援政策實作契約) 與 `src/font.h`、`src/font_text.h`；完成狀態、驗收與剩餘缺口見 roadmap「M9 完成狀態與交接」。與計畫的差異：名稱依計畫建議固定為 `pdf_font_context_*`／`pdf_font_width`／`pdf_font_decode`／`pdf_font_text_page_interpret`；WinAnsi table 放在 `font.c` 內（無私有 header）；單元測試以 `tests/pdf_builder.h` 由測試原始碼產生小 PDF，整合 goldens 用 `tests/make-font-fixtures.py` 產生並提交的靜態 fixtures。
+任務 1–7 已依序完成，現行契約寫在 [roadmap M9](pdftext_roadmap.md#m9-支援政策實作契約) 與 `src/font.h`、`src/font_text.h`；完成狀態、驗收與剩餘缺口見 roadmap「M9 完成狀態與交接」。與計畫的差異：名稱依計畫建議固定為 `pdf_font_context_*`／`pdf_font_width`／`pdf_font_decode`／`pdf_font_text_page_interpret`；WinAnsi table 放在 `font.c` 內（無私有 header）；單元測試以 `tests/pdf_builder.h` 由測試原始碼產生小 PDF，整合 goldens 用 `tests/make-font-fixtures.py` 產生並提交的靜態 fixtures。

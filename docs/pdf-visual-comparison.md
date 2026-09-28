@@ -1,6 +1,6 @@
 # PDF 畫面與實際解析結果對照
 
-> 各節是該 milestone 驗收當下的快照：「尚未實作」「尚未進入」等描述指當時狀態。v1.0 現況以 [roadmap](../pdftext_roadmap.md) 與最後的「M11 完成驗收」為準。
+> 各節是該 milestone 驗收當下的快照：「尚未實作」「尚未進入」等描述指當時狀態。v1.0 現況以 [roadmap](archive/pdftext_roadmap.md) 與最後的「M11 完成驗收」為準。
 
 [開啟左右對照報告](../output/pdf/m7-comparison/index.html)：左側是原始 PDF 第 1 頁的實際渲染，右側是本專案 CLI、M7 visitor 診斷 trace 與 Poppler 參考文字。點擊圖片可查看完整解析度。
 

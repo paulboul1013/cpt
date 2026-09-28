@@ -1,6 +1,6 @@
 # M5 實作計畫：Document、Resolver、Pages Tree
 
-本計畫依 [架構與 Roadmap](../../pdftext_roadmap.md#5-m5documentresolver-與-pages-tree) 執行。目標是從整份 PDF 的 trailer `/Root` 取得依來源順序排列的頁面，以及每頁有效的 `/Resources`、`/MediaBox`、`/Contents` 參照。M5 不解碼內容流、不擷取文字。
+本計畫依 [架構與 Roadmap](pdftext_roadmap.md#5-m5documentresolver-與-pages-tree) 執行。目標是從整份 PDF 的 trailer `/Root` 取得依來源順序排列的頁面，以及每頁有效的 `/Resources`、`/MediaBox`、`/Contents` 參照。M5 不解碼內容流、不擷取文字。
 
 ## 依賴與共同契約
 

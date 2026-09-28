@@ -2,7 +2,7 @@
 
 版本 1.0.0。用 C11 寫的 PDF 文字提取工具：讀取 PDF 的原生文字層，依單欄、水平的閱讀順序輸出 UTF-8 純文字。只依賴 libc（含 libm）與 zlib。
 
-完整規格與各階段契約見 [pdftext_roadmap.md](pdftext_roadmap.md)。
+完整規格與各階段契約見 [pdftext_roadmap.md](docs/archive/pdftext_roadmap.md)。
 
 ## 建置與測試
 

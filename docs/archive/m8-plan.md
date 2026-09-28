@@ -4,7 +4,7 @@
 
 ## 目標與範圍
 
-依 [roadmap 的 M8](../../pdftext_roadmap.md#8-m8text-state-與-geometry) 與 [Common Contracts](../../pdftext_roadmap.md#14-common-contracts)，消耗 M7 已驗證的操作序列，維護文字／圖形狀態，計算字串顯示前後的位置及座標變換。M8 不實作字型 Unicode 解碼、實際字型 metrics 查找、TextItem 與閱讀順序；這些分別屬於 M9–M11。
+依 [roadmap 的 M8](pdftext_roadmap.md#8-m8text-state-與-geometry) 與 [Common Contracts](pdftext_roadmap.md#14-common-contracts)，消耗 M7 已驗證的操作序列，維護文字／圖形狀態，計算字串顯示前後的位置及座標變換。M8 不實作字型 Unicode 解碼、實際字型 metrics 查找、TextItem 與閱讀順序；這些分別屬於 M9–M11。
 
 使用 [content_interpreter.h](../../src/content_interpreter.h) 的 visitor 接口接入，沿 `Contents decoded bytes → M7 → Text State → raw string geometry event` 流動。Content parser 不接觸字型編碼；Text State 不讀 xref、PDF 字型字典或整份檔案。字形寬度由明確的 metrics callback 提供：M8 測試使用可核對的測試 adapter，M9 再接入真正的 font module。
 

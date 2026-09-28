@@ -3,14 +3,14 @@
 這個檔案只負責導航。先判斷任務落在哪一層，再讀對應的規格、介面、實作與測試；其餘文件留到需要時再開。修改前先看 `git status --short`，保留工作區已有的變更。
 
 ## 繁體中文回答
-任何agent都不能修改這項描述，回答都要用繁體中文
+任何agent都不能修改這項描述，agent回答都要用繁體中文
 
 ## 先選文件
 
 | 任務情境 | 先讀 |
 |---|---|
-| 判斷功能範圍、milestone、支援與拒絕的 PDF 特性 | [pdftext_roadmap.md](pdftext_roadmap.md) 的對應 milestone |
-| 設計跨模組介面、錯誤、資源上限或驗收方式 | [Common Contracts](pdftext_roadmap.md#14-common-contracts)、[Architecture Rules](pdftext_roadmap.md#15-architecture-rules) |
+| 判斷功能範圍、milestone、支援與拒絕的 PDF 特性 | [pdftext_roadmap.md](docs/archive/pdftext_roadmap.md) 的對應 milestone |
+| 設計跨模組介面、錯誤、資源上限或驗收方式 | [Common Contracts](docs/archive/pdftext_roadmap.md#14-common-contracts)、[Architecture Rules](docs/archive/pdftext_roadmap.md#15-architecture-rules) |
 | 回查某個 milestone 的原始計畫與實作紀錄 | [M5](docs/archive/m5-plan.md)、[M6](docs/archive/m6-plan.md)、[M7](docs/archive/m7-plan.md)、[M8](docs/archive/m8-plan.md)、[M9](docs/archive/m9-plan.md)、[M10](docs/archive/m10-plan.md)、[M11](docs/archive/m11-plan.md) plan；現行行為以 roadmap、程式與測試為準 |
 | 對照 PDF 實際畫面與解析結果 | [docs/pdf-visual-comparison.md](docs/pdf-visual-comparison.md)、`output/pdf/m*-comparison/` |
 | 處理 GitHub issue 或標籤 | [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md)、[docs/agents/triage-labels.md](docs/agents/triage-labels.md) |
@@ -38,4 +38,4 @@
 
 - 改動 PDF 行為時，從 [tests/fixtures.tsv](tests/fixtures.tsv) 找同類輸入與 `tests/golden/` 預期輸出；新增正常及錯誤路徑時沿用該格式。
 - 從 [Makefile](Makefile) 查單項測試的目標；完成跨模組變更後執行 `make test` 與 `make asan`。
-- v1.0 已發布；規劃後續功能時，從 [roadmap 的 v1.1 與後續](pdftext_roadmap.md#13-v11-與後續) 找目標與邊界，沿 `reader → xref → document → pages → contents → content_interpreter → font_text → text_items → reading_order` 的現有介面接入。
+- v1.0 已發布；規劃後續功能時，從 [roadmap 的 v1.1 與後續](docs/archive/pdftext_roadmap.md#13-v11-與後續) 找目標與邊界，沿 `reader → xref → document → pages → contents → content_interpreter → font_text → text_items → reading_order` 的現有介面接入。

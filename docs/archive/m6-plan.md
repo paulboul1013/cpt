@@ -2,7 +2,7 @@
 
 ## 目標與邊界
 
-依 [roadmap 的 M6 與 Common Contracts](../../pdftext_roadmap.md#6-m6contents-與-stream-decode)，把 M5 每頁保留的 `/Contents` 轉成依來源順序排列、已解碼的位元組，供 M7 content interpreter 使用。M6 不解析 PDF 內容指令、不做字型解碼或文字輸出，也不新增 xref stream／object stream 支援。
+依 [roadmap 的 M6 與 Common Contracts](pdftext_roadmap.md#6-m6contents-與-stream-decode)，把 M5 每頁保留的 `/Contents` 轉成依來源順序排列、已解碼的位元組，供 M7 content interpreter 使用。M6 不解析 PDF 內容指令、不做字型解碼或文字輸出，也不新增 xref stream／object stream 支援。
 
 目前 [Pages API](../../src/pages.h) 提供 borrowed `/Contents` 物件，[Document API](../../src/document.h) 的 resolver 保留含 raw stream bytes 的完整 indirect object；`/Length` 的 direct integer 與 indirect reference 已由 parser/resolver 處理。M6 應在其上新增擁有輸出 buffer 的 `contents` 模組，讓呼叫端明確釋放，不改動 M5 cache 的所有權。
 

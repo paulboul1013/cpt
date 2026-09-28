@@ -272,7 +272,7 @@ v1.0 不轉換 /Rotate；遇到非 0 page rotation 回報 unsupported page rotat
 
 metrics callback 接收 length-aware font name 與單一原始 code byte，回傳 finite 的 width_1000。僅限水平 Simple Font；M9 負責真實 metrics adapter。非空字串缺 metrics 回 unsupported，正式 CLI 不猜固定寬度。每 glyph 推進 `(width/1000*size+Tc+(code==0x20?Tw:0))*hscale`；TJ number 推進 `-number/1000*size*hscale`。引號先換行；雙引號先保留 Tw/Tc 再換行顯示。每 string segment 保留獨立事件、rendering matrix、origin、advance vector 與來源位置，不稱作 glyph bbox。
 
-font name 複製且 length-aware，q stack 共享 immutable storage；stack、容量、引用計數與來源計數檢查 overflow。頁面 Rotate 繼承、可間接引用，integer 且為 90 倍數；保留原值，geometry 入口拒絕任何非零值（含 360），錯誤定位 Page reference。詳細驗收與視覺證據要求見 [M8 plan](docs/archive/m8-plan.md)。M8 已完成驗收。
+font name 複製且 length-aware，q stack 共享 immutable storage；stack、容量、引用計數與來源計數檢查 overflow。頁面 Rotate 繼承、可間接引用，integer 且為 90 倍數；保留原值，geometry 入口拒絕任何非零值（含 360），錯誤定位 Page reference。詳細驗收與視覺證據要求見 [M8 plan](m8-plan.md)。M8 已完成驗收。
 
 ### M8 完成狀態與交接
 
@@ -280,7 +280,7 @@ font name 複製且 length-aware，q stack 共享 immutable storage；stack、�
 
 `make -B test`、沙箱外 `make -B asan` 全部通過（ASan／UBSan／LeakSanitizer，未停用 leak detection），編譯器零 warning。65 筆 CLI fixtures 加上 matrix／Text State／Pages／整頁測試，覆蓋 raw／Flate／array 完整 trace golden、跨頁重置與無部分輸出、數值溢位、字型名稱含 NUL、q/Q 所有權、callback 失敗與 Rotate。獨立 subagent 完成契約與程式審查，所提 library dump 與視覺命令失敗檢查均已補齊。
 
-兩份受控 PDF 共 16 個 string events 的實際 origin／advance／rendering matrix 與 raw bytes 通過手算對照，實際 PNG 與 overlay 已人工檢查；[視覺報告](output/pdf/m8-comparison/index.html) 與 [驗收紀錄](docs/pdf-visual-comparison.md#m8-完成驗收) 保存 expected／actual／delta、hash、命令與限制。hello.pdf 的 `w`、compilerbook.pdf 的 xref stream 仍 unsupported，實際 stdout 空白、exit 4。
+兩份受控 PDF 共 16 個 string events 的實際 origin／advance／rendering matrix 與 raw bytes 通過手算對照，實際 PNG 與 overlay 已人工檢查；[視覺報告](../../output/pdf/m8-comparison/index.html) 與 [驗收紀錄](../../docs/pdf-visual-comparison.md#m8-完成驗收) 保存 expected／actual／delta、hash、命令與限制。hello.pdf 的 `w`、compilerbook.pdf 的 xref stream 仍 unsupported，實際 stdout 空白、exit 4。
 
 M9 接 `pdf_text_metrics` 的單 byte 水平 Simple Font seam，自行持有 page Resources／document 並取得真實 widths；M8 不作 Unicode 解碼或 glyph bbox，不把測試 Courier-600 當正式 fallback。
 
@@ -324,7 +324,7 @@ Raw PDF string 是編碼後的 bytes，不等於 UTF-8；文字必須經 font de
 
 `src/font.[ch]` 以每頁 font context 解析 `/Resources /Font`（length-aware name、direct／indirect 欄位、有界 ref chain 與 cycle 偵測、transactional name／indirect-ref cache），提供常數時間 width（含 provenance）與 caller-owned UTF-8 decode。`src/font_text.[ch]` 是整頁 bridge：同一 M7 operation 序列交給 M8，成功 Tf／Q 後重新選取 active font，metrics 與 decode 使用同一 handle，輸出借用的 decoded event（raw geometry + UTF-8 + replacement count）；Rotate 檢查抽成共用 `pdf_text_page_check`。`--dump-content` 等既有 CLI 不變，未新增產品純文字模式。
 
-驗收：`make -B test`、`make -B asan`（ASan／UBSan／LeakSanitizer）全部通過，編譯器零 warning。新增 font 單元測試（policy／error 分類與定位、ref cycle／depth、cache 與 token 限制、256 codes WinAnsi 全表、MissingWidth provenance）、bridge 整合測試（手算案例 1–6、q/Q 巢狀、跨 Contents stream、Tf 必驗證、文件級 UTF-8／event budget、consumer 錯誤保留）與 staged probe goldens；真實 adapter 下的 M8 fixtures raw geometry 與 M8 golden 逐 byte 相同。[視覺驗收](docs/pdf-visual-comparison.md#m9-完成驗收) 以 Poppler 實際渲染字型的 advance 與 cp1252 獨立核對 13 個 strings 的 bytes／Unicode／geometry，並人工查看 overlay。獨立 subagent code review 無 blocker，minor 項目已修正。
+驗收：`make -B test`、`make -B asan`（ASan／UBSan／LeakSanitizer）全部通過，編譯器零 warning。新增 font 單元測試（policy／error 分類與定位、ref cycle／depth、cache 與 token 限制、256 codes WinAnsi 全表、MissingWidth provenance）、bridge 整合測試（手算案例 1–6、q/Q 巢狀、跨 Contents stream、Tf 必驗證、文件級 UTF-8／event budget、consumer 錯誤保留）與 staged probe goldens；真實 adapter 下的 M8 fixtures raw geometry 與 M8 golden 逐 byte 相同。[視覺驗收](../../docs/pdf-visual-comparison.md#m9-完成驗收) 以 Poppler 實際渲染字型的 advance 與 cp1252 獨立核對 13 個 strings 的 bytes／Unicode／geometry，並人工查看 overlay。獨立 subagent code review 無 blocker，minor 項目已修正。
 
 尚未覆蓋：allocation-failure injection（沒有 malloc fault 注入設施）；本機沒有逗號小數 locale，locale 測試會明示 skip。M10 應消費 `pdf_font_text_event`（複製所需欄位），不重新解析字型；glyph bbox、閱讀順序與純文字 CLI 仍屬 M10／M11。
 
@@ -366,7 +366,7 @@ width 依 glyph width、font size 與 horizontal scale 計算。
 
 `src/text_items.[ch]` 消費 M9 bridge 的 borrowed decoded event，複製成 caller-owned 的 `pdf_text_items`：item 陣列加一塊 byte arena，建構期以 offset 暫存，全部成功後才轉成指標；失敗時集合歸零並保留原始 error。`pdftext --dump-text-items` 在記憶體中格式化全部 item，成功後一次寫出 stdout。JSON preview helper 移至 `pdf_font_json_preview` 共用；連結加入 libm（`hypot`）。
 
-驗收：`make -B test`、`make -B asan` 全部通過，編譯器零 warning；CLI fixtures 由 65 筆增至 75 筆（10 筆 `items-*`：正常、無文字、後頁失敗、缺 resource、Rotate、hello.pdf）。新增 TextItem 測試涵蓋計畫的 6 個核對案例、負 Tc／負 Tz、名稱含 NUL、兩頁同名字型、200 items 的 arena growth、item／UTF-8／font-name 限制與全有或全無；M8 geometry fixtures 轉成 items 後與既有數值一致。[視覺驗收](docs/pdf-visual-comparison.md#m10-完成驗收) 以獨立矩陣計算與渲染字型寬度核對 13 個 items，並人工查看 em 框 overlay。兩個獨立 subagent：code review 無 blocker（含 realloc 逐一失敗注入 probe），minor 項目已修正；對抗式驗證跑約 4,600 份隨機 PDF 與約 31,000 個 item 的 Python oracle，零 sanitizer 報告、零差異。
+驗收：`make -B test`、`make -B asan` 全部通過，編譯器零 warning；CLI fixtures 由 65 筆增至 75 筆（10 筆 `items-*`：正常、無文字、後頁失敗、缺 resource、Rotate、hello.pdf）。新增 TextItem 測試涵蓋計畫的 6 個核對案例、負 Tc／負 Tz、名稱含 NUL、兩頁同名字型、200 items 的 arena growth、item／UTF-8／font-name 限制與全有或全無；M8 geometry fixtures 轉成 items 後與既有數值一致。[視覺驗收](../../docs/pdf-visual-comparison.md#m10-完成驗收) 以獨立矩陣計算與渲染字型寬度核對 13 個 items，並人工查看 em 框 overlay。兩個獨立 subagent：code review 無 blocker（含 realloc 逐一失敗注入 probe），minor 項目已修正；對抗式驗證跑約 4,600 份隨機 PDF 與約 31,000 個 item 的 Python oracle，零 sanitizer 報告、零差異。
 
 交接 M11：消費 `pdf_text_items`（不重跑解析），以 page → 行（effective_size 為 line tolerance 基準）→ x 排序，source order／sequence 作 tie-breaker；需決定 Tr=3、`horizontal=0` 與 replacement 在純文字模式的政策，再實作 synthetic space 與正式 CLI。
 
@@ -431,7 +431,7 @@ width 依 glyph width、font size 與 horizontal scale 計算。
 
 `src/reading_order.[ch]` 依上述政策分行、排序、補空白並組成純文字，另提供行分群的 debug dump；`src/main.c` 改為表驅動的選項解析，加入 `-o` 原子寫入、`--help`、`--version`、`--dump-header`、`--dump-trailer`、`--dump-object N`，舊的無選項模式改名 `--dump-objects`。輸入不是一般檔案（例如目錄）時回報 io。所有模式成功後若 stdout 寫入失敗一律 exit 2。
 
-驗收：GCC 與 clang 的 `make -B test`、`make -B asan` 全部通過，零 warning。CLI fixtures 由 75 筆增至 87 筆（12 筆 `text-*`），新增 reading order 單元測試（容差與門檻邊界、錨點不串接、同座標、rise、空白保留、重疊、多頁與空頁、輸出上限、非水平文字）與 CLI 行為測試（usage、help／version、`-o` 成功／失敗／長檔名／目錄／`-` 開頭、U+FFFD 警告、`/dev/full`、三種新 dump 模式）。[視覺驗收](docs/pdf-visual-comparison.md#m11-完成驗收) 以手寫預期文字核對閱讀順序，並與 Poppler `pdftotext` 參考並列。兩個獨立 subagent：code review 無 blocker，minor 項目已修正；對抗式驗證以 3,000 份隨機 PDF（約 148,600 items）對照獨立 Python 實作逐 byte 一致，另有 6,600 份損壞輸入與約 55 種 CLI 參數組合，零 sanitizer 報告。
+驗收：GCC 與 clang 的 `make -B test`、`make -B asan` 全部通過，零 warning。CLI fixtures 由 75 筆增至 87 筆（12 筆 `text-*`），新增 reading order 單元測試（容差與門檻邊界、錨點不串接、同座標、rise、空白保留、重疊、多頁與空頁、輸出上限、非水平文字）與 CLI 行為測試（usage、help／version、`-o` 成功／失敗／長檔名／目錄／`-` 開頭、U+FFFD 警告、`/dev/full`、三種新 dump 模式）。[視覺驗收](../../docs/pdf-visual-comparison.md#m11-完成驗收) 以手寫預期文字核對閱讀順序，並與 Poppler `pdftotext` 參考並列。兩個獨立 subagent：code review 無 blocker，minor 項目已修正；對抗式驗證以 3,000 份隨機 PDF（約 148,600 items）對照獨立 Python 實作逐 byte 一致，另有 6,600 份損壞輸入與約 55 種 CLI 參數組合，零 sanitizer 報告。
 
 已知限制：不偵測多欄；上下標超過行容差會自成一行；剛好等於 ¼ em 的間距不補空白；排序依浮點座標，極小的數值誤差可能改變邊界上的分行。舊的除錯模式（`--dump-xref`、`--dump-objects` 等）是串流輸出，失敗前可能已印出部分內容；全有或全無只保證於純文字、`--dump-content` 與 `--dump-text-items`。
 
@@ -538,7 +538,7 @@ stderr 訊息必須包含 module、byte offset（若可取得）與人類可讀�
     make test
     make asan
 
-額外可觀察驗收須保存實際 PDF 渲染截圖與本專案實際解析 trace／輸出的對照，區分來源 bytes、座標、Unicode 與閱讀順序，unsupported PDF 記錄真實拒絕點。現有基線見 [PDF 畫面與解析對照](docs/pdf-visual-comparison.md)，M8 的詳細判定與座標慣例見 [M8 計畫](docs/archive/m8-plan.md#pdf-渲染截圖與真實解析對照驗收)。Poppler／Python 等工具只用於額外視覺報告，不成為核心 make test／make asan 的必需依賴。
+額外可觀察驗收須保存實際 PDF 渲染截圖與本專案實際解析 trace／輸出的對照，區分來源 bytes、座標、Unicode 與閱讀順序，unsupported PDF 記錄真實拒絕點。現有基線見 [PDF 畫面與解析對照](../../docs/pdf-visual-comparison.md)，M8 的詳細判定與座標慣例見 [M8 計畫](m8-plan.md#pdf-渲染截圖與真實解析對照驗收)。Poppler／Python 等工具只用於額外視覺報告，不成為核心 make test／make asan 的必需依賴。
 
 編譯 flags：
 
@@ -573,4 +573,4 @@ Makefile 必須允許 CC、CFLAGS、LDFLAGS、LDLIBS 覆寫。測試使用 POSIX
 - [x] v1.0 out-of-scope feature 不會被靜默當成成功。
 - [x] README、CLI help、error/exit-code 文件與本 roadmap 一致。
 
-2026-09-28 全部勾選：M0–M2 見 commit `d7913a5` 的 M2 驗收記錄，M3–M11 見各節完成狀態；87 筆 CLI fixtures 與全部單元／golden 測試通過；malformed／unsupported 的 exit code 由 fixtures 驗證；GCC 與 clang 零 warning；`make test`、`make asan` 通過；範圍外功能（xref stream、非零 Rotate、非水平文字、`/ToUnicode` 等）回報 unsupported 而非成功；[README](README.md)、`--help` 與本 roadmap 一致。`--version` 為 `pdftext 1.0.0`。
+2026-09-28 全部勾選：M0–M2 見 commit `d7913a5` 的 M2 驗收記錄，M3–M11 見各節完成狀態；87 筆 CLI fixtures 與全部單元／golden 測試通過；malformed／unsupported 的 exit code 由 fixtures 驗證；GCC 與 clang 零 warning；`make test`、`make asan` 通過；範圍外功能（xref stream、非零 Rotate、非水平文字、`/ToUnicode` 等）回報 unsupported 而非成功；[README](../../README.md)、`--help` 與本 roadmap 一致。`--version` 為 `pdftext 1.0.0`。

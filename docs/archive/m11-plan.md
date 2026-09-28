@@ -1,10 +1,10 @@
 # M11 實作計畫：Reading Order、純文字輸出與正式 CLI
 
-> 已完成（v1.0.0，2026-09-28）。下方「建議政策」是計畫原文，其中 `1.0.0-dev` 等過渡描述已由結果取代；現行行為以 [roadmap M11](../../pdftext_roadmap.md#11-m11reading-order-與-cli) 與程式為準。
+> 已完成（v1.0.0，2026-09-28）。下方「建議政策」是計畫原文，其中 `1.0.0-dev` 等過渡描述已由結果取代；現行行為以 [roadmap M11](pdftext_roadmap.md#11-m11reading-order-與-cli) 與程式為準。
 
 ## 目標與授權範圍
 
-使用者已確認下方全部建議政策（特別確認 D2 非水平文字整份失敗、A5 dump 寫 stdout），並追加 `-o FILE` 原子寫入。範圍以 [roadmap M11](../../pdftext_roadmap.md#11-m11reading-order-與-cli)、[v1.0 發布範圍](../../pdftext_roadmap.md#12-v10-發布範圍)、[Common Contracts](../../pdftext_roadmap.md#14-common-contracts) 與 [Release Gate](../../pdftext_roadmap.md#16-release-gate) 為準。上游介面是 [text_items.h](../../src/text_items.h)（M10，`989a986`）。
+使用者已確認下方全部建議政策（特別確認 D2 非水平文字整份失敗、A5 dump 寫 stdout），並追加 `-o FILE` 原子寫入。範圍以 [roadmap M11](pdftext_roadmap.md#11-m11reading-order-與-cli)、[v1.0 發布範圍](pdftext_roadmap.md#12-v10-發布範圍)、[Common Contracts](pdftext_roadmap.md#14-common-contracts) 與 [Release Gate](pdftext_roadmap.md#16-release-gate) 為準。上游介面是 [text_items.h](../../src/text_items.h)（M10，`989a986`）。
 
 M11 讓 `pdftext input.pdf` 輸出可閱讀的純文字：消費 `pdf_text_items`，排成單欄、水平的閱讀順序，分行、補空白，整份成功後寫 stdout。同時整理正式 CLI，並對照 Release Gate 判斷能否宣告 v1.0。M11 不重新解析 PDF，也不改 M6–M10 的行為。
 
@@ -94,4 +94,4 @@ M11 讓 `pdftext input.pdf` 輸出可閱讀的純文字：消費 `pdf_text_items
 
 ## 實作紀錄
 
-任務 1–7 已完成，契約見 [roadmap M11 政策](../../pdftext_roadmap.md#m11-政策實作契約)，驗收與已知限制見 roadmap「M11 完成狀態」，Release Gate 於 2026-09-28 全部勾選，版本 1.0.0。與計畫的差異：新增 `-o FILE`（同目錄隱藏暫存檔、fsync、rename；檔名不可以 `-` 開頭）；所有模式成功後檢查 stdout 寫入（失敗 exit 2）；輸入不是一般檔案時回報 io；修正 clang 對一個 M9 測試字串串接的 warning。CLI 未加入 `--dump-lines`，行分群 dump 只在 library 層（`pdf_text_lines_dump`）。
+任務 1–7 已完成，契約見 [roadmap M11 政策](pdftext_roadmap.md#m11-政策實作契約)，驗收與已知限制見 roadmap「M11 完成狀態」，Release Gate 於 2026-09-28 全部勾選，版本 1.0.0。與計畫的差異：新增 `-o FILE`（同目錄隱藏暫存檔、fsync、rename；檔名不可以 `-` 開頭）；所有模式成功後檢查 stdout 寫入（失敗 exit 2）；輸入不是一般檔案時回報 io；修正 clang 對一個 M9 測試字串串接的 warning。CLI 未加入 `--dump-lines`，行分群 dump 只在 library 層（`pdf_text_lines_dump`）。
