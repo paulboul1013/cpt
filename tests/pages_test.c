@@ -12,6 +12,7 @@ static void test_source_order_and_inheritance(void) {
                              &error));
     assert(pdf_pages_load(&document, &pages, &error));
     assert(error.code == PDF_ERROR_NONE && pages.len == 3);
+    assert(pages.items[0].rotation == 0);
     assert(pages.items[0].reference.object_number == 5);
     assert(pages.items[1].reference.object_number == 6);
     assert(pages.items[2].reference.object_number == 4);
@@ -102,7 +103,26 @@ static void test_depth_limit(void) {
     pdf_document_close(&document);
 }
 
+static void test_rotation(void) {
+    pdf_document doc={0}; pdf_pages pages={0}; pdf_error e; pdf_error_init(&e);
+    assert(pdf_document_open(&doc,"tests/fixtures/rotate-inherit.pdf",NULL,&e));
+    assert(pdf_pages_load(&doc,&pages,&e));
+    assert(pages.len==3 && pages.items[0].rotation==90);
+    assert(pages.items[1].rotation==0 && pages.items[2].rotation==-180);
+    pdf_pages_free(&pages); pdf_document_close(&doc);
+    const char *paths[]={"tests/fixtures/rotate-negative.pdf","tests/fixtures/rotate-360.pdf"};
+    for(size_t i=0;i<2;i++) {
+        assert(pdf_document_open(&doc,paths[i],NULL,&e));
+        assert(pdf_pages_load(&doc,&pages,&e));
+        assert(pages.items[0].rotation==(i?360:-90));
+        pdf_pages_free(&pages); pdf_document_close(&doc);
+    }
+    expect_failure("tests/fixtures/rotate-bad-type.pdf",PDF_ERROR_MALFORMED);
+    expect_failure("tests/fixtures/rotate-bad-angle.pdf",PDF_ERROR_MALFORMED);
+    expect_failure("tests/fixtures/rotate-min.pdf",PDF_ERROR_MALFORMED);
+}
 int main(void) {
+    test_rotation();
     test_source_order_and_inheritance();
     test_indirect_inherited_properties();
     test_malformed_trees();

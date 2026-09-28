@@ -1,0 +1,1006 @@
+{
+  "dpi": 120,
+  "page": 1,
+  "adapter": "test Courier-600: F1 codes 32..126, matches explicit PDF Widths; no production font parser",
+  "tolerance": {
+    "absolute": 1e-08,
+    "relative": 1e-09,
+    "visual_pixels": 2
+  },
+  "versions": {
+    "pdftoppm": "pdftoppm version 24.02.0\nCopyright 2005-2024 The Poppler Developers - http://poppler.freedesktop.org\nCopyright 1996-2011, 2022 Glyph & Cog, LLC"
+  },
+  "binaries": {
+    "pdftext": "57dd4edc9c386663d9cb276b6098d16bf75e128aec404c3317c6eddb6564308c",
+    "tests/geometry-test": "5035834f92741b9b2e3cd1d4468cf291f3420340e6a8be727001b3fb78826423"
+  },
+  "cases": [
+    {
+      "name": "visual",
+      "source": "tests/fixtures/visual-m7-text.pdf",
+      "sha256": "6414fa8208884a3655b494b44c8ff1fef100872365194e03e8e53128b304ff45",
+      "page": 1,
+      "commands": [
+        {
+          "command": [
+            "pdftoppm",
+            "-f",
+            "1",
+            "-singlefile",
+            "-r",
+            "120",
+            "-png",
+            "tests/fixtures/visual-m7-text.pdf",
+            "output/pdf/m8-comparison/visual-page1"
+          ],
+          "exit": 0,
+          "stdout": "visual-render.stdout",
+          "stderr": "visual-render.stderr"
+        },
+        {
+          "command": [
+            "pdfinfo",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-box",
+            "tests/fixtures/visual-m7-text.pdf"
+          ],
+          "exit": 0,
+          "stdout": "visual-info.stdout",
+          "stderr": "visual-info.stderr"
+        },
+        {
+          "command": [
+            "pdftotext",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-bbox",
+            "tests/fixtures/visual-m7-text.pdf",
+            "-"
+          ],
+          "exit": 0,
+          "stdout": "visual-reference.stdout",
+          "stderr": "visual-reference.stderr"
+        },
+        {
+          "command": [
+            "./pdftext",
+            "--dump-content",
+            "tests/fixtures/visual-m7-text.pdf"
+          ],
+          "exit": 0,
+          "stdout": "visual-cpt.stdout",
+          "stderr": "visual-cpt.stderr"
+        },
+        {
+          "command": [
+            "./tests/geometry-test",
+            "tests/fixtures/visual-m7-text.pdf"
+          ],
+          "exit": 0,
+          "stdout": "visual-trace.stdout",
+          "stderr": "visual-trace.stderr"
+        }
+      ],
+      "png_size": [
+        600,
+        400
+      ],
+      "page_attributes": "Custom Metadata: no\nMetadata Stream: no\nTagged:          no\nUserProperties:  no\nSuspects:        no\nForm:            none\nJavaScript:      no\nPages:           1\nEncrypted:       no\nPage    1 size:  360 x 240 pts\nPage    1 rot:   0\nPage    1 MediaBox:      0.00     0.00   360.00   240.00\nPage    1 CropBox:       0.00     0.00   360.00   240.00\nPage    1 BleedBox:      0.00     0.00   360.00   240.00\nPage    1 TrimBox:       0.00     0.00   360.00   240.00\nPage    1 ArtBox:        0.00     0.00   360.00   240.00\nFile size:       1231 bytes\nOptimized:       no\nPDF version:     1.4\n",
+      "media_box": [
+        0,
+        0,
+        360,
+        240
+      ],
+      "rotate": 0,
+      "user_unit": 1,
+      "crop_equals_media": true,
+      "comparison": [
+        {
+          "ascii_preview": "PDF visual comparison",
+          "expected": [
+            36,
+            192,
+            201.6,
+            0,
+            16,
+            0,
+            0,
+            16,
+            36,
+            192
+          ],
+          "actual": [
+            36.0,
+            192.0,
+            201.6,
+            0.0,
+            16.0,
+            0.0,
+            0.0,
+            16.0,
+            36.0,
+            192.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pass": true,
+          "mode": 0
+        },
+        {
+          "ascii_preview": "Line 2: Hello PDF",
+          "expected": [
+            36,
+            164,
+            163.2,
+            0,
+            16,
+            0,
+            0,
+            16,
+            36,
+            164
+          ],
+          "actual": [
+            36.0,
+            164.0,
+            163.2,
+            0.0,
+            16.0,
+            0.0,
+            0.0,
+            16.0,
+            36.0,
+            164.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pass": true,
+          "mode": 0
+        },
+        {
+          "ascii_preview": "A",
+          "expected": [
+            36,
+            136,
+            9.6,
+            0,
+            16,
+            0,
+            0,
+            16,
+            36,
+            136
+          ],
+          "actual": [
+            36.0,
+            136.0,
+            9.6,
+            0.0,
+            16.0,
+            0.0,
+            0.0,
+            16.0,
+            36.0,
+            136.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pass": true,
+          "mode": 0
+        },
+        {
+          "ascii_preview": "B",
+          "expected": [
+            49.6,
+            136,
+            9.6,
+            0,
+            16,
+            0,
+            0,
+            16,
+            49.6,
+            136
+          ],
+          "actual": [
+            49.6,
+            136.0,
+            9.6,
+            0.0,
+            16.0,
+            0.0,
+            0.0,
+            16.0,
+            49.6,
+            136.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pass": true,
+          "mode": 0
+        },
+        {
+          "ascii_preview": "SCALED",
+          "expected": [
+            36,
+            96,
+            64.8,
+            0,
+            18,
+            0,
+            0,
+            18,
+            36,
+            96
+          ],
+          "actual": [
+            36.0,
+            96.0,
+            64.8,
+            0.0,
+            18.0,
+            0.0,
+            0.0,
+            18.0,
+            36.0,
+            96.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pass": true,
+          "mode": 0
+        },
+        {
+          "ascii_preview": "Restored after Q",
+          "expected": [
+            36,
+            48,
+            115.2,
+            0,
+            12,
+            0,
+            0,
+            12,
+            36,
+            48
+          ],
+          "actual": [
+            36.0,
+            48.0,
+            115.2,
+            0.0,
+            12.0,
+            0.0,
+            0.0,
+            12.0,
+            36.0,
+            48.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pass": true,
+          "mode": 0
+        }
+      ]
+    },
+    {
+      "name": "geometry",
+      "source": "tests/fixtures/geometry-raw.pdf",
+      "sha256": "3983955cc8bd88127258193d3fe7e6479ab66b19d9f90d20d2181eeb3513928b",
+      "page": 1,
+      "commands": [
+        {
+          "command": [
+            "pdftoppm",
+            "-f",
+            "1",
+            "-singlefile",
+            "-r",
+            "120",
+            "-png",
+            "tests/fixtures/geometry-raw.pdf",
+            "output/pdf/m8-comparison/geometry-page1"
+          ],
+          "exit": 0,
+          "stdout": "geometry-render.stdout",
+          "stderr": "geometry-render.stderr"
+        },
+        {
+          "command": [
+            "pdfinfo",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-box",
+            "tests/fixtures/geometry-raw.pdf"
+          ],
+          "exit": 0,
+          "stdout": "geometry-info.stdout",
+          "stderr": "geometry-info.stderr"
+        },
+        {
+          "command": [
+            "pdftotext",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-bbox",
+            "tests/fixtures/geometry-raw.pdf",
+            "-"
+          ],
+          "exit": 0,
+          "stdout": "geometry-reference.stdout",
+          "stderr": "geometry-reference.stderr"
+        },
+        {
+          "command": [
+            "./pdftext",
+            "--dump-content",
+            "tests/fixtures/geometry-raw.pdf"
+          ],
+          "exit": 0,
+          "stdout": "geometry-cpt.stdout",
+          "stderr": "geometry-cpt.stderr"
+        },
+        {
+          "command": [
+            "./tests/geometry-test",
+            "tests/fixtures/geometry-raw.pdf"
+          ],
+          "exit": 0,
+          "stdout": "geometry-trace.stdout",
+          "stderr": "geometry-trace.stderr"
+        }
+      ],
+      "png_size": [
+        667,
+        500
+      ],
+      "page_attributes": "Custom Metadata: no\nMetadata Stream: no\nTagged:          no\nUserProperties:  no\nSuspects:        no\nForm:            none\nJavaScript:      no\nPages:           1\nEncrypted:       no\nPage    1 size:  400 x 300 pts\nPage    1 rot:   0\nPage    1 MediaBox:      0.00     0.00   400.00   300.00\nPage    1 CropBox:       0.00     0.00   400.00   300.00\nPage    1 BleedBox:      0.00     0.00   400.00   300.00\nPage    1 TrimBox:       0.00     0.00   400.00   300.00\nPage    1 ArtBox:        0.00     0.00   400.00   300.00\nFile size:       1354 bytes\nOptimized:       no\nPDF version:     1.4\n",
+      "media_box": [
+        0,
+        0,
+        400,
+        300
+      ],
+      "rotate": 0,
+      "user_unit": 1,
+      "crop_equals_media": true,
+      "comparison": [
+        {
+          "ascii_preview": "LINE ONE",
+          "expected": [
+            36,
+            250,
+            57.6,
+            0,
+            12,
+            0,
+            0,
+            12,
+            36,
+            250
+          ],
+          "actual": [
+            36.0,
+            250.0,
+            57.6,
+            0.0,
+            12.0,
+            0.0,
+            0.0,
+            12.0,
+            36.0,
+            250.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pass": true,
+          "mode": 0
+        },
+        {
+          "ascii_preview": "LINE TWO",
+          "expected": [
+            46,
+            226,
+            57.6,
+            0,
+            12,
+            0,
+            0,
+            12,
+            46,
+            226
+          ],
+          "actual": [
+            46.0,
+            226.0,
+            57.6,
+            0.0,
+            12.0,
+            0.0,
+            0.0,
+            12.0,
+            46.0,
+            226.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pass": true,
+          "mode": 0
+        },
+        {
+          "ascii_preview": "A",
+          "expected": [
+            46,
+            208,
+            7.2,
+            0,
+            12,
+            0,
+            0,
+            12,
+            46,
+            208
+          ],
+          "actual": [
+            46.0,
+            208.0,
+            7.2,
+            0.0,
+            12.0,
+            0.0,
+            0.0,
+            12.0,
+            46.0,
+            208.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pass": true,
+          "mode": 0
+        },
+        {
+          "ascii_preview": "B",
+          "expected": [
+            51.76,
+            208,
+            7.2,
+            0,
+            12,
+            0,
+            0,
+            12,
+            51.76,
+            208
+          ],
+          "actual": [
+            51.76,
+            208.0,
+            7.2,
+            0.0,
+            12.0,
+            0.0,
+            0.0,
+            12.0,
+            51.76,
+            208.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pass": true,
+          "mode": 0
+        },
+        {
+          "ascii_preview": "C",
+          "expected": [
+            61.96,
+            208,
+            7.2,
+            0,
+            12,
+            0,
+            0,
+            12,
+            61.96,
+            208
+          ],
+          "actual": [
+            61.96,
+            208.0,
+            7.2,
+            0.0,
+            12.0,
+            0.0,
+            0.0,
+            12.0,
+            61.96,
+            208.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pass": true,
+          "mode": 0
+        },
+        {
+          "ascii_preview": "A B",
+          "expected": [
+            46,
+            194,
+            22.08,
+            0,
+            9.6,
+            0,
+            0,
+            12,
+            46,
+            194
+          ],
+          "actual": [
+            46.0,
+            194.0,
+            22.08,
+            0.0,
+            9.6,
+            0.0,
+            0.0,
+            12.0,
+            46.0,
+            194.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pass": true,
+          "mode": 0
+        },
+        {
+          "ascii_preview": "INVISIBLE",
+          "expected": [
+            46,
+            172,
+            64.8,
+            0,
+            12,
+            0,
+            0,
+            12,
+            46,
+            172
+          ],
+          "actual": [
+            46.0,
+            172.0,
+            64.8,
+            0.0,
+            12.0,
+            0.0,
+            0.0,
+            12.0,
+            46.0,
+            172.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pass": true,
+          "mode": 3
+        },
+        {
+          "ascii_preview": "SCALE",
+          "expected": [
+            36,
+            110,
+            72,
+            0,
+            24,
+            0,
+            0,
+            24,
+            36,
+            110
+          ],
+          "actual": [
+            36.0,
+            110.0,
+            72.0,
+            0.0,
+            24.0,
+            0.0,
+            0.0,
+            24.0,
+            36.0,
+            110.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pass": true,
+          "mode": 0
+        },
+        {
+          "ascii_preview": "RESTORED",
+          "expected": [
+            36,
+            76,
+            57.6,
+            0,
+            12,
+            0,
+            0,
+            12,
+            36,
+            76
+          ],
+          "actual": [
+            36.0,
+            76.0,
+            57.6,
+            0.0,
+            12.0,
+            0.0,
+            0.0,
+            12.0,
+            36.0,
+            76.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pass": true,
+          "mode": 0
+        },
+        {
+          "ascii_preview": "REVERSE",
+          "expected": [
+            36,
+            40,
+            100.8,
+            0,
+            24,
+            0,
+            0,
+            24,
+            36,
+            40
+          ],
+          "actual": [
+            36.0,
+            40.0,
+            100.8,
+            0.0,
+            24.0,
+            0.0,
+            0.0,
+            24.0,
+            36.0,
+            40.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "pass": true,
+          "mode": 0
+        }
+      ]
+    },
+    {
+      "name": "hello",
+      "source": "tests/hello.pdf",
+      "sha256": "137bfd835346e04270cb07c95749b058802cc5a02b376d7091b7618adefb4f67",
+      "page": 1,
+      "commands": [
+        {
+          "command": [
+            "pdftoppm",
+            "-f",
+            "1",
+            "-singlefile",
+            "-r",
+            "120",
+            "-png",
+            "tests/hello.pdf",
+            "output/pdf/m8-comparison/hello-page1"
+          ],
+          "exit": 0,
+          "stdout": "hello-render.stdout",
+          "stderr": "hello-render.stderr"
+        },
+        {
+          "command": [
+            "pdfinfo",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-box",
+            "tests/hello.pdf"
+          ],
+          "exit": 0,
+          "stdout": "hello-info.stdout",
+          "stderr": "hello-info.stderr"
+        },
+        {
+          "command": [
+            "pdftotext",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-bbox",
+            "tests/hello.pdf",
+            "-"
+          ],
+          "exit": 0,
+          "stdout": "hello-reference.stdout",
+          "stderr": "hello-reference.stderr"
+        },
+        {
+          "command": [
+            "./pdftext",
+            "--dump-content",
+            "tests/hello.pdf"
+          ],
+          "exit": 4,
+          "stdout": "hello-cpt.stdout",
+          "stderr": "hello-cpt.stderr"
+        },
+        {
+          "command": [
+            "./tests/geometry-test",
+            "tests/hello.pdf"
+          ],
+          "exit": 4,
+          "stdout": "hello-trace.stdout",
+          "stderr": "hello-trace.stderr"
+        }
+      ],
+      "png_size": [
+        993,
+        1404
+      ],
+      "page_attributes": "Creator:         Writer\nProducer:        LibreOffice 24.8.1.2 (X86_64) / LibreOffice Community\nCreationDate:    Sun Aug  9 15:21:04 2026 CST\nCustom Metadata: no\nMetadata Stream: no\nTagged:          yes\nUserProperties:  no\nSuspects:        no\nForm:            none\nJavaScript:      no\nPages:           1\nEncrypted:       no\nPage    1 size:  595.304 x 841.89 pts (A4)\nPage    1 rot:   0\nPage    1 MediaBox:      0.00     0.00   595.30   841.89\nPage    1 CropBox:       0.00     0.00   595.30   841.89\nPage    1 BleedBox:      0.00     0.00   595.30   841.89\nPage    1 TrimBox:       0.00     0.00   595.30   841.89\nPage    1 ArtBox:        0.00     0.00   595.30   841.89\nFile size:       9222 bytes\nOptimized:       no\nPDF version:     1.7\n"
+    },
+    {
+      "name": "compilerbook",
+      "source": "tests/compilerbook.pdf",
+      "sha256": "a48c8a537f9ee862d3caa1f2f893d713ffeb23ba8143420b7c0e02a2ca0e8733",
+      "page": 1,
+      "commands": [
+        {
+          "command": [
+            "pdftoppm",
+            "-f",
+            "1",
+            "-singlefile",
+            "-r",
+            "120",
+            "-png",
+            "tests/compilerbook.pdf",
+            "output/pdf/m8-comparison/compilerbook-page1"
+          ],
+          "exit": 0,
+          "stdout": "compilerbook-render.stdout",
+          "stderr": "compilerbook-render.stderr"
+        },
+        {
+          "command": [
+            "pdfinfo",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-box",
+            "tests/compilerbook.pdf"
+          ],
+          "exit": 0,
+          "stdout": "compilerbook-info.stdout",
+          "stderr": "compilerbook-info.stderr"
+        },
+        {
+          "command": [
+            "pdftotext",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-bbox",
+            "tests/compilerbook.pdf",
+            "-"
+          ],
+          "exit": 0,
+          "stdout": "compilerbook-reference.stdout",
+          "stderr": "compilerbook-reference.stderr"
+        },
+        {
+          "command": [
+            "./pdftext",
+            "--dump-content",
+            "tests/compilerbook.pdf"
+          ],
+          "exit": 4,
+          "stdout": "compilerbook-cpt.stdout",
+          "stderr": "compilerbook-cpt.stderr"
+        },
+        {
+          "command": [
+            "./tests/geometry-test",
+            "tests/compilerbook.pdf"
+          ],
+          "exit": 4,
+          "stdout": "compilerbook-trace.stdout",
+          "stderr": "compilerbook-trace.stderr"
+        }
+      ],
+      "png_size": [
+        720,
+        1080
+      ],
+      "page_attributes": "Title:           Introduction to Compilers and Language Design\nSubject:         \nKeywords:        compilers, programming languages, theory\nAuthor:          Douglas Thain\nCreator:         LaTeX with hyperref package\nProducer:        pdfTeX-1.40.19\nCreationDate:    Thu Aug 24 21:06:34 2023 CST\nModDate:         Thu Aug 24 21:06:34 2023 CST\nCustom Metadata: yes\nMetadata Stream: no\nTagged:          no\nUserProperties:  no\nSuspects:        no\nForm:            none\nJavaScript:      no\nPages:           247\nEncrypted:       no\nPage    1 size:  432 x 648 pts\nPage    1 rot:   0\nPage    1 MediaBox:      0.00     0.00   432.00   648.00\nPage    1 CropBox:       0.00     0.00   432.00   648.00\nPage    1 BleedBox:      0.00     0.00   432.00   648.00\nPage    1 TrimBox:       0.00     0.00   432.00   648.00\nPage    1 ArtBox:        0.00     0.00   432.00   648.00\nFile size:       1316545 bytes\nOptimized:       no\nPDF version:     1.5\n"
+    }
+  ],
+  "numeric_pass": true
+}

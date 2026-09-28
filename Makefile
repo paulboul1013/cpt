@@ -51,7 +51,9 @@ SRC = \
 	src/contents.c \
 	src/filter.c \
 	src/content_lexer.c \
-	src/content_interpreter.c
+	src/content_interpreter.c \
+	src/matrix.c \
+	src/text_state.c
 HDR = \
 	src/reader.h \
 	src/lexer.h \
@@ -66,7 +68,9 @@ HDR = \
 	src/contents.h \
 	src/filter.h \
 	src/content_lexer.h \
-	src/content_interpreter.h
+	src/content_interpreter.h \
+	src/matrix.h \
+	src/text_state.h
 TEST_INPUT = tests/numbers.txt
 OWNERSHIP_SRC = tests/ownership_test.c
 ERROR_SRC = tests/error_test.c
@@ -106,6 +110,10 @@ test: tests/content-lexer-test tests/content-interpreter-test $(TARGET) $(OWNERS
 	./$(PAGES_TARGET)
 	./$(CONTENTS_TARGET)
 	./tests/content-lexer-test
+	./tests/matrix-test
+	./tests/text-state-test
+	./tests/geometry-test
+	sh tests/run-geometry-fixtures.sh ./tests/geometry-test
 	./tests/content-interpreter-test
 
 asan: tests/content-lexer-test-asan tests/content-interpreter-test-asan $(ASAN_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_ASAN_TARGET) $(OBJECT_ASAN_TARGET) $(LIMITS_ASAN_TARGET) $(READER_ASAN_TARGET) $(INDIRECT_ASAN_TARGET) $(XREF_ASAN_TARGET) $(DOCUMENT_ASAN_TARGET) $(PAGES_ASAN_TARGET) $(CONTENTS_ASAN_TARGET)
@@ -123,6 +131,10 @@ asan: tests/content-lexer-test-asan tests/content-interpreter-test-asan $(ASAN_T
 	./$(PAGES_ASAN_TARGET)
 	./$(CONTENTS_ASAN_TARGET)
 	./tests/content-lexer-test-asan
+	./tests/matrix-test-asan
+	./tests/text-state-test-asan
+	./tests/geometry-test-asan
+	sh tests/run-geometry-fixtures.sh ./tests/geometry-test-asan
 	./tests/content-interpreter-test-asan
 
 $(ASAN_TARGET): $(SRC) $(HDR)
@@ -195,7 +207,7 @@ $(CONTENTS_ASAN_TARGET): $(CONTENTS_SRC) $(SRC) $(HDR)
 	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $(CONTENTS_SRC) src/contents.c src/filter.c src/pages.c src/document.c src/xref.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c $(LDLIBS) -o $@
 
 clean:
-	$(RM) tests/content-lexer-test tests/content-interpreter-test tests/content-lexer-test-asan tests/content-interpreter-test-asan $(TARGET) $(ASAN_TARGET) $(OWNERSHIP_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_TARGET) $(LEXER_ASAN_TARGET) $(INDIRECT_TARGET) $(INDIRECT_ASAN_TARGET) $(XREF_TARGET) $(XREF_ASAN_TARGET) $(DOCUMENT_TARGET) $(DOCUMENT_ASAN_TARGET) $(PAGES_TARGET) $(PAGES_ASAN_TARGET) $(CONTENTS_TARGET) $(CONTENTS_ASAN_TARGET)
+	$(RM) tests/matrix-test tests/matrix-test-asan tests/text-state-test tests/text-state-test-asan tests/geometry-test tests/geometry-test-asan tests/content-lexer-test tests/content-interpreter-test tests/content-lexer-test-asan tests/content-interpreter-test-asan $(TARGET) $(ASAN_TARGET) $(OWNERSHIP_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_TARGET) $(LEXER_ASAN_TARGET) $(INDIRECT_TARGET) $(INDIRECT_ASAN_TARGET) $(XREF_TARGET) $(XREF_ASAN_TARGET) $(DOCUMENT_TARGET) $(DOCUMENT_ASAN_TARGET) $(PAGES_TARGET) $(PAGES_ASAN_TARGET) $(CONTENTS_TARGET) $(CONTENTS_ASAN_TARGET)
 
 CONTENT_TEST_SRC = src/content_interpreter.c src/content_lexer.c src/lexer.c src/reader.c src/object.c src/error.c src/limits.c
 
@@ -210,3 +222,29 @@ tests/content-lexer-test-asan: tests/content_lexer_test.c $(CONTENT_TEST_SRC) $(
 
 tests/content-interpreter-test-asan: tests/content_interpreter_test.c $(CONTENT_TEST_SRC) $(HDR)
 	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $< $(CONTENT_TEST_SRC) $(LDLIBS) -o $@
+
+
+tests/matrix-test: tests/matrix_test.c src/matrix.c src/matrix.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $< src/matrix.c $(LDLIBS) -o $@
+
+tests/matrix-test-asan: tests/matrix_test.c src/matrix.c src/matrix.h
+	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $< src/matrix.c $(LDLIBS) -o $@
+
+test: tests/matrix-test
+asan: tests/matrix-test-asan
+
+TEXT_TEST_SRC = src/text_state.c src/matrix.c $(CONTENT_TEST_SRC)
+tests/text-state-test: tests/text_state_test.c $(TEXT_TEST_SRC) src/text_state.h src/matrix.h $(HDR)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $< $(TEXT_TEST_SRC) $(LDLIBS) -o $@
+tests/text-state-test-asan: tests/text_state_test.c $(TEXT_TEST_SRC) src/text_state.h src/matrix.h $(HDR)
+	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $< $(TEXT_TEST_SRC) $(LDLIBS) -o $@
+test: tests/text-state-test
+asan: tests/text-state-test-asan
+
+GEOMETRY_TEST_SRC = $(filter-out src/main.c,$(SRC))
+tests/geometry-test: tests/geometry_test.c $(SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $< $(GEOMETRY_TEST_SRC) $(LDLIBS) -o $@
+tests/geometry-test-asan: tests/geometry_test.c $(SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $< $(GEOMETRY_TEST_SRC) $(LDLIBS) -o $@
+test: tests/geometry-test
+asan: tests/geometry-test-asan

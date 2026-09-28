@@ -1,0 +1,18 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title></title>
+<meta name="Creator" content="Writer"/>
+<meta name="Producer" content="LibreOffice 24.8.1.2 (X86_64) / LibreOffice Community"/>
+<meta name="CreationDate" content="2026-08-09T07:21:04Z"/>
+</head>
+<body>
+<doc>
+  <page width="595.303937" height="841.889764">
+    <word xMin="56.800000" yMin="56.730764" xMax="80.800000" yMax="68.050764">test</word>
+    <word xMin="86.800000" yMin="56.730764" xMax="104.800000" yMax="68.050764">pdf</word>
+    <word xMin="110.800000" yMin="56.730764" xMax="146.800000" yMax="68.050764">format</word>
+    <word xMin="56.800000" yMin="68.080764" xMax="122.800000" yMax="79.400764">hello,world</word>
+  </page>
+</doc>
+</body>
+</html>

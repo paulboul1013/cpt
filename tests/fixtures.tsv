@@ -58,8 +58,10 @@ content-unclosed-bt|malformed|content:tests/fixtures/content-unclosed-bt.pdf|3|-
 content-nested-bt|malformed|content:tests/fixtures/content-nested-bt.pdf|3|-|tests/golden/content-nested-bt.stderr
 content-inline-image|unsupported|content:tests/fixtures/content-inline-image.pdf|4|-|tests/golden/content-inline-image.stderr
 content-xobject|unsupported|content:tests/fixtures/content-xobject.pdf|4|-|tests/golden/content-xobject.stderr
-content-text-state|unsupported|content:tests/fixtures/content-text-state.pdf|4|-|tests/golden/content-text-state.stderr
+content-text-state|success|content:tests/fixtures/content-text-state.pdf|0|tests/golden/content-text-state.stdout|-
 content-reference|malformed|content:tests/fixtures/content-reference.pdf|3|-|tests/golden/content-reference.stderr
 content-tj-type|malformed|content:tests/fixtures/content-tj-type.pdf|3|-|tests/golden/content-tj-type.stderr
 content-later-failure|malformed|content:tests/fixtures/content-later-failure.pdf|3|-|tests/golden/content-later-failure.stderr
 content-truncated-string|malformed|content:tests/fixtures/content-truncated-string.pdf|3|-|tests/golden/content-truncated-string.stderr
+visual-m7-text|success|content:tests/fixtures/visual-m7-text.pdf|0|tests/golden/visual-m7-text.stdout|-
+content-clipping|unsupported|content:tests/fixtures/content-clipping.pdf|4|-|tests/golden/content-clipping.stderr

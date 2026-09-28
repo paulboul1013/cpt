@@ -1,0 +1,22 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+</head>
+<body>
+<doc>
+  <page width="400.000000" height="300.000000">
+    <word xMin="36.000000" yMin="42.452000" xMax="64.800000" yMax="51.884000">LINE</word>
+    <word xMin="72.000000" yMin="42.452000" xMax="93.600000" yMax="51.884000">ONE</word>
+    <word xMin="46.000000" yMin="66.452000" xMax="74.800000" yMax="75.884000">LINE</word>
+    <word xMin="82.000000" yMin="66.452000" xMax="103.600000" yMax="75.884000">TWO</word>
+    <word xMin="46.000000" yMin="84.452000" xMax="58.960000" yMax="93.884000">AB</word>
+    <word xMin="61.960000" yMin="84.452000" xMax="69.160000" yMax="93.884000">C</word>
+    <word xMin="46.000000" yMin="98.452000" xMax="51.760000" yMax="107.884000">A</word>
+    <word xMin="61.520000" yMin="98.452000" xMax="67.280000" yMax="107.884000">B</word>
+    <word xMin="46.000000" yMin="120.452000" xMax="110.800000" yMax="129.884000">INVISIBLE</word>
+    <word xMin="36.000000" yMin="174.904000" xMax="108.000000" yMax="193.768000">SCALE</word>
+    <word xMin="36.000000" yMin="216.452000" xMax="93.600000" yMax="225.884000">RESTORED</word>
+    <word xMin="36.000000" yMin="244.904000" xMax="136.800000" yMax="263.768000">REVERSE</word>
+  </page>
+</doc>
+</body>
+</html>

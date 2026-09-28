@@ -128,6 +128,12 @@ static const operator_spec operators[] = {
     {"ET", PDF_CONTENT_ET, "", 1, 0},
     {"q", PDF_CONTENT_SAVE, "", 0, 0},
     {"Q", PDF_CONTENT_RESTORE, "", 0, 0},
+    {"Tc", PDF_CONTENT_TC, "n", 0, 0},
+    {"Tw", PDF_CONTENT_TW, "n", 0, 0},
+    {"Tz", PDF_CONTENT_TZ, "n", 0, 0},
+    {"TL", PDF_CONTENT_TL, "n", 0, 0},
+    {"Ts", PDF_CONTENT_TS, "n", 0, 0},
+    {"Tr", PDF_CONTENT_TR, "i", 0, 0},
     {"Tf", PDF_CONTENT_TF, "/n", 0, 0},
     {"Tm", PDF_CONTENT_TM, "nnnnnn", 1, 0},
     {"Td", PDF_CONTENT_TD, "nn", 1, 0},
@@ -155,6 +161,7 @@ static int is_string(const pdf_object *object) {
 
 static int matches_type(const pdf_object *object, char type) {
     switch (type) {
+        case 'i': return object->type == PDF_OBJECT_INT;
         case 'n': return is_number(object);
         case '/': return object->type == PDF_OBJECT_NAME;
         case 's': return is_string(object);
@@ -175,7 +182,7 @@ static int dispatch(content_parser *parser, pdf_object *args, int *in_text,
                      pdf_content_result *result) {
     const char *name = parser->token.text;
     const char *const malformed[] = {"R", "obj", "endobj", "stream", "endstream", "ID", "EI"};
-    const char *const unsupported[] = {"BI", "Do", "gs", "Tc", "Tw", "Tz", "TL", "Tr", "Ts", "d0", "d1",
+    const char *const unsupported[] = {"BI", "Do", "gs", "d0", "d1",
         "w", "J", "j", "M", "d", "ri", "i", "m", "l", "c", "v", "y", "h", "re",
         "S", "s", "f", "F", "f*", "B", "B*", "b", "b*", "n", "W", "W*",
         "CS", "cs", "SC", "SCN", "sc", "scn", "G", "g", "RG", "rg", "K", "k", "sh",
@@ -204,6 +211,15 @@ static int dispatch(content_parser *parser, pdf_object *args, int *in_text,
         if (!matches_type(args->value.array.items[i], spec->types[i])) {
             fail(parser, PDF_ERROR_MALFORMED, "wrong operator operand type");
             return 0;
+        }
+    }
+    if (spec->kind == PDF_CONTENT_TR) {
+        int64_t mode = args->value.array.items[0]->value.integer;
+        if (mode < 0 || mode > 7) {
+            fail(parser, PDF_ERROR_MALFORMED, "Tr must be an integer from 0 to 7"); return 0;
+        }
+        if (mode >= 4) {
+            fail(parser, PDF_ERROR_UNSUPPORTED, "glyph clipping is unsupported"); return 0;
         }
     }
     if (spec->in_text && !*in_text) {

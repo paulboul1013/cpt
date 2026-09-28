@@ -1,0 +1,310 @@
+{
+  "scope": "M7 evidence; page-1 screenshots/reference text; CLI handles whole document",
+  "cases": [
+    {
+      "name": "visual",
+      "source": "tests/fixtures/visual-m7-text.pdf",
+      "sha256": "6414fa8208884a3655b494b44c8ff1fef100872365194e03e8e53128b304ff45",
+      "commands": [
+        {
+          "kind": "render",
+          "argv": [
+            "pdftoppm",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-singlefile",
+            "-r",
+            "120",
+            "-png",
+            "tests/fixtures/visual-m7-text.pdf",
+            "output/pdf/m7-comparison/visual-page1"
+          ],
+          "exit_code": 0
+        },
+        {
+          "kind": "reference",
+          "argv": [
+            "pdftotext",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-layout",
+            "tests/fixtures/visual-m7-text.pdf",
+            "-"
+          ],
+          "exit_code": 0
+        },
+        {
+          "kind": "bbox",
+          "argv": [
+            "pdftotext",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-bbox",
+            "tests/fixtures/visual-m7-text.pdf",
+            "-"
+          ],
+          "exit_code": 0
+        },
+        {
+          "kind": "cpt",
+          "argv": [
+            "./pdftext",
+            "--dump-content",
+            "tests/fixtures/visual-m7-text.pdf"
+          ],
+          "exit_code": 0
+        },
+        {
+          "kind": "trace",
+          "argv": [
+            "/tmp/cpt-visual-content-probe",
+            "tests/fixtures/visual-m7-text.pdf"
+          ],
+          "exit_code": 0
+        }
+      ]
+    },
+    {
+      "name": "hello",
+      "source": "tests/hello.pdf",
+      "sha256": "137bfd835346e04270cb07c95749b058802cc5a02b376d7091b7618adefb4f67",
+      "commands": [
+        {
+          "kind": "render",
+          "argv": [
+            "pdftoppm",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-singlefile",
+            "-r",
+            "120",
+            "-png",
+            "tests/hello.pdf",
+            "output/pdf/m7-comparison/hello-page1"
+          ],
+          "exit_code": 0
+        },
+        {
+          "kind": "reference",
+          "argv": [
+            "pdftotext",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-layout",
+            "tests/hello.pdf",
+            "-"
+          ],
+          "exit_code": 0
+        },
+        {
+          "kind": "bbox",
+          "argv": [
+            "pdftotext",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-bbox",
+            "tests/hello.pdf",
+            "-"
+          ],
+          "exit_code": 0
+        },
+        {
+          "kind": "cpt",
+          "argv": [
+            "./pdftext",
+            "--dump-content",
+            "tests/hello.pdf"
+          ],
+          "exit_code": 4
+        },
+        {
+          "kind": "trace",
+          "argv": [
+            "/tmp/cpt-visual-content-probe",
+            "tests/hello.pdf"
+          ],
+          "exit_code": 4
+        }
+      ]
+    },
+    {
+      "name": "compilerbook",
+      "source": "tests/compilerbook.pdf",
+      "sha256": "a48c8a537f9ee862d3caa1f2f893d713ffeb23ba8143420b7c0e02a2ca0e8733",
+      "commands": [
+        {
+          "kind": "render",
+          "argv": [
+            "pdftoppm",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-singlefile",
+            "-r",
+            "120",
+            "-png",
+            "tests/compilerbook.pdf",
+            "output/pdf/m7-comparison/compilerbook-page1"
+          ],
+          "exit_code": 0
+        },
+        {
+          "kind": "reference",
+          "argv": [
+            "pdftotext",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-layout",
+            "tests/compilerbook.pdf",
+            "-"
+          ],
+          "exit_code": 0
+        },
+        {
+          "kind": "bbox",
+          "argv": [
+            "pdftotext",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-bbox",
+            "tests/compilerbook.pdf",
+            "-"
+          ],
+          "exit_code": 0
+        },
+        {
+          "kind": "cpt",
+          "argv": [
+            "./pdftext",
+            "--dump-content",
+            "tests/compilerbook.pdf"
+          ],
+          "exit_code": 4
+        },
+        {
+          "kind": "trace",
+          "argv": [
+            "/tmp/cpt-visual-content-probe",
+            "tests/compilerbook.pdf"
+          ],
+          "exit_code": 4
+        }
+      ]
+    }
+  ],
+  "tools": {
+    "poppler": "pdftoppm version 24.02.0\nCopyright 2005-2024 The Poppler Developers - http://poppler.freedesktop.org\nCopyright 1996-2011, 2022 Glyph & Cog, LLC",
+    "pdftotext": "pdftotext version 24.02.0\nCopyright 2005-2024 The Poppler Developers - http://poppler.freedesktop.org\nCopyright 1996-2011, 2022 Glyph & Cog, LLC",
+    "git": "5039acad96fd6b2d644596c9b678d1a4350c72cc",
+    "pdftext_sha256": "45b61809779aef34cdde51267a7ac6ec4706633bf4faeceb5289bd0563a9029e"
+  },
+  "checks": {
+    "visual_ascii_content_and_source_order": "pass",
+    "visual_m7_summary": "pass",
+    "m8_geometry": "not implemented; pending",
+    "unicode_decoding": "not implemented; ASCII preview only"
+  },
+  "visual_reference_word_bboxes": [
+    {
+      "text": "PDF",
+      "xMin": 36.0,
+      "yMin": 37.936,
+      "xMax": 64.8,
+      "yMax": 50.512
+    },
+    {
+      "text": "visual",
+      "xMin": 74.4,
+      "yMin": 37.936,
+      "xMax": 132.0,
+      "yMax": 50.512
+    },
+    {
+      "text": "comparison",
+      "xMin": 141.6,
+      "yMin": 37.936,
+      "xMax": 237.6,
+      "yMax": 50.512
+    },
+    {
+      "text": "Line",
+      "xMin": 36.0,
+      "yMin": 65.936,
+      "xMax": 74.4,
+      "yMax": 78.512
+    },
+    {
+      "text": "2:",
+      "xMin": 84.0,
+      "yMin": 65.936,
+      "xMax": 103.2,
+      "yMax": 78.512
+    },
+    {
+      "text": "Hello",
+      "xMin": 112.8,
+      "yMin": 65.936,
+      "xMax": 160.8,
+      "yMax": 78.512
+    },
+    {
+      "text": "PDF",
+      "xMin": 170.4,
+      "yMin": 65.936,
+      "xMax": 199.2,
+      "yMax": 78.512
+    },
+    {
+      "text": "AB",
+      "xMin": 36.0,
+      "yMin": 93.936,
+      "xMax": 59.2,
+      "yMax": 106.512
+    },
+    {
+      "text": "SCALED",
+      "xMin": 36.0,
+      "yMin": 132.678,
+      "xMax": 100.8,
+      "yMax": 146.826
+    },
+    {
+      "text": "Restored",
+      "xMin": 36.0,
+      "yMin": 184.452,
+      "xMax": 93.6,
+      "yMax": 193.884
+    },
+    {
+      "text": "after",
+      "xMin": 100.8,
+      "yMin": 184.452,
+      "xMax": 136.8,
+      "yMax": 193.884
+    },
+    {
+      "text": "Q",
+      "xMin": 144.0,
+      "yMin": 184.452,
+      "xMax": 151.2,
+      "yMax": 193.884
+    }
+  ]
+}

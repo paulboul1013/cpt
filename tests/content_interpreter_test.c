@@ -120,8 +120,7 @@ static void limits_and_cleanup(void) {
         assert(error.code == cases[i].code);
         if (!ok) assert(result.operations == 0 && result.text_shows == 0);
     }
-    const char *unsupported[] = {"BI", "/F Do", "/G gs", "0 Tc", "0 Tw", "100 Tz",
-        "12 TL", "0 Tr", "0 Ts", "0 0 d0", "0 0 0 0 0 0 d1", "/Span << /ActualText (x) >> BDC",
+    const char *unsupported[] = {"BI", "/F Do", "/G gs", "4 Tr", "7 Tr", "0 0 d0", "0 0 0 0 0 0 d1", "/Span << /ActualText (x) >> BDC",
         "W", "W*", "0 0 m", "0 g", "BX", "EX", "/P MP"};
     for (size_t i = 0; i < sizeof(unsupported)/sizeof(unsupported[0]); i++) {
         pdf_error_init(&error);
@@ -158,6 +157,26 @@ static void limits_and_cleanup(void) {
 }
 
 int main(void) {
+    pdf_error e; pdf_content_result r;
+    const char *settings="1 Tc 2 Tw -80 Tz 18 TL 4 Ts 3 Tr BT 0 Tr ET";
+    pdf_error_init(&e);
+    assert(pdf_content_interpret((const unsigned char *)settings,strlen(settings),NULL,
+        10,NULL,NULL,NULL,&r,&e));
+    const char *bad_settings[]={"Tc","1 2 Tw","/F Tz","() TL","[] Ts","1.0 Tr","-1 Tr","8 Tr"};
+    for(size_t i=0;i<sizeof(bad_settings)/sizeof(*bad_settings);i++) {
+        pdf_error_clear(&e);
+        assert(!pdf_content_interpret((const unsigned char *)bad_settings[i],strlen(bad_settings[i]),
+            NULL,10,NULL,NULL,NULL,&r,&e));
+        assert(e.code==PDF_ERROR_MALFORMED);
+    }
+    for(int mode=0;mode<=7;mode++) {
+        char input[16]; snprintf(input,sizeof(input),"%d Tr",mode);
+        pdf_error_clear(&e);
+        int ok=pdf_content_interpret((const unsigned char *)input,strlen(input),NULL,10,
+                                    NULL,NULL,NULL,&r,&e);
+        assert(ok==(mode<4));
+        assert(e.code==(mode<4?PDF_ERROR_NONE:PDF_ERROR_UNSUPPORTED));
+    }
     typed_operations();
     limits_and_cleanup();
     const char *inputs[] = {"", "BT ET q Q", "BT BT", "ET", "BT", "Q", "q", "12 0 R", "BI", "ID", "EI", "1 mystery BT ET", "1", "[1", "<< /A >>"};

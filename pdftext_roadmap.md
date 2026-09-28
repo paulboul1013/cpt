@@ -205,7 +205,7 @@ Document 由 reader、xref、trailer、object cache 與 limits 組成。cache en
 ### 必須支援的 operators
 
 - BT、ET
-- Tf
+- Tf、Tc、Tw、Tz、TL、Ts、Tr
 - Tm
 - Td、TD、T*
 - Tj、TJ
@@ -216,7 +216,7 @@ Document 由 reader、xref、trailer、object cache 與 limits 組成。cache en
 ### 錯誤政策
 
 - 完全未知的 operator：清除該次 operands，debug mode 警告。
-- 已知但未實作的標準 operator 一律保守回報 unsupported（包括 BI、Do、gs、Tc、Tw、Tz、TL、Tr、Ts、path／clipping／color、marked content 與 compatibility operators）；不將它們當成完全未知 operator 略過。ID／EI 單獨出現、indirect reference 與 stream operand：malformed。
+- 已知但未實作的標準 operator 一律保守回報 unsupported（包括 BI、Do、gs、path／clipping／color、marked content 與 compatibility operators）；不將它們當成完全未知 operator 略過。ID／EI 單獨出現、indirect reference 與 stream operand：malformed。
 - 已知 operator operand 不足或型別錯誤：malformed content stream。
 - text-positioning／text-showing operators 必須位於 BT/ET 內；text-state operators（如 Tf）可在外設定並跨文字物件保留。BT 重設 text matrix 與 line matrix（PDF Reference 1.7 §5.2–5.3）。
 - q/Q 不平衡、BT/ET 不平衡或 nested BT：報 malformed content stream。q、Q、cm 僅可在 BT/ET 外。
@@ -239,7 +239,10 @@ M7 已完成。`src/content_lexer.[ch]` 透過共用 lexer 的 borrowed-buffer �
 - BT 時 text matrix 與 line matrix 都是 identity。
 - Tf 未設定前執行 Tj/TJ 報錯。
 - Tf 的 font size 必須大於 0。
-- 每個 BT 都重設 text object 內部狀態。
+- BT 只重設兩個文字矩陣；font、size、spacing、leading、hscale、rise、mode 與 CTM 跨 BT 保留。
+- Tc/Tw/TL/Ts/Tz 接受有限數值；Tz 除以 100 儲存，不限制正負。
+- Tr 必須是 0–7 的 integer；0–3 保留並產生事件，4–7 glyph clipping 回 unsupported。
+- Tf size 有限且大於 0 是本專案 v1.0 限制。所有 text-show（含空字串／空 TJ）先要求合法 Tf。
 
 ### Matrix
 
@@ -252,13 +255,34 @@ PDF affine matrix [a b c d e f] 使用：
 - Td 更新 line matrix，再令 text matrix 等於 line matrix。
 - TD 等同 Td，並設定 leading = -ty。
 - T* 等同 Td(0, -leading)。
-- cm 更新 CTM。
-- q/Q 至少保存與恢復 CTM。
+- compose(A,B) 表示先 A 再 B；cm 令 CTM = compose(M,CTM)。
+- Td 令 Tlm = compose(translate(tx,ty),Tlm)，再令 Tm = Tlm；Tm 直接取代兩個矩陣。
+- q/Q 保存 CTM 及全部 text-state parameters，不保存文字矩陣。
+- rendering matrix = compose(compose([size*hscale 0 0 size 0 rise],Tm),CTM)。
+- 初始 CTM identity；所有運算與結果必須 finite，溢位 malformed；允許 singular matrix。
 - 所有位置計算使用 double。
 - PDF 原始座標使用左下角原點。
 - /MediaBox 提供 page bounds，不改變原始 text coordinates。
 
 v1.0 不轉換 /Rotate；遇到非 0 page rotation 回報 unsupported page rotation。完整 rotation、vertical writing 與複雜 graphics state 延後。
+
+### M8 interface 與驗收契約
+
+`matrix.[ch]` 提供純矩陣運算；`text_state.[ch]` 以 M7 visitor 接入，snapshot 與 raw-string event 是借用資料。失敗後 context 只可 destroy；consumer 必須暫存輸出，後續失敗不回滾事件。
+
+metrics callback 接收 length-aware font name 與單一原始 code byte，回傳 finite 的 width_1000。僅限水平 Simple Font；M9 負責真實 metrics adapter。非空字串缺 metrics 回 unsupported，正式 CLI 不猜固定寬度。每 glyph 推進 `(width/1000*size+Tc+(code==0x20?Tw:0))*hscale`；TJ number 推進 `-number/1000*size*hscale`。引號先換行；雙引號先保留 Tw/Tc 再換行顯示。每 string segment 保留獨立事件、rendering matrix、origin、advance vector 與來源位置，不稱作 glyph bbox。
+
+font name 複製且 length-aware，q stack 共享 immutable storage；stack、容量、引用計數與來源計數檢查 overflow。頁面 Rotate 繼承、可間接引用，integer 且為 90 倍數；保留原值，geometry 入口拒絕任何非零值（含 360），錯誤定位 Page reference。詳細驗收與視覺證據要求見 [M8 plan](docs/m8-plan.md)。M8 已完成驗收。
+
+### M8 完成狀態與交接
+
+`matrix.[ch]`、`text_state.[ch]` 已實作上述契約。公開 snapshot 與 `pdf_text_event_dump` 提供安全 raw geometry 診斷；dump 以 thread-local C numeric locale 固定九位小數、font length／hex 與 raw bytes hex 輸出，不改 process locale。`pdf_text_page_interpret` 每頁初始化狀態，拒絕非零有效 Rotate；既有 CLI 摘要不使用測試 metrics。
+
+`make -B test`、沙箱外 `make -B asan` 全部通過（ASan／UBSan／LeakSanitizer，未停用 leak detection），編譯器零 warning。65 筆 CLI fixtures 加上 matrix／Text State／Pages／整頁測試，覆蓋 raw／Flate／array 完整 trace golden、跨頁重置與無部分輸出、數值溢位、字型名稱含 NUL、q/Q 所有權、callback 失敗與 Rotate。獨立 subagent 完成契約與程式審查，所提 library dump 與視覺命令失敗檢查均已補齊。
+
+兩份受控 PDF 共 16 個 string events 的實際 origin／advance／rendering matrix 與 raw bytes 通過手算對照，實際 PNG 與 overlay 已人工檢查；[視覺報告](output/pdf/m8-comparison/index.html) 與 [驗收紀錄](docs/pdf-visual-comparison.md#m8-完成驗收) 保存 expected／actual／delta、hash、命令與限制。hello.pdf 的 `w`、compilerbook.pdf 的 xref stream 仍 unsupported，實際 stdout 空白、exit 4。
+
+M9 接 `pdf_text_metrics` 的單 byte 水平 Simple Font seam，自行持有 page Resources／document 並取得真實 widths；M8 不作 Unicode 解碼或 glyph bbox，不把測試 Courier-600 當正式 fallback。
 
 ## 9. M9：Font Decode
 
@@ -457,6 +481,8 @@ stderr 訊息必須包含 module、byte offset（若可取得）與人類可讀�
     make test
     make asan
 
+額外可觀察驗收須保存實際 PDF 渲染截圖與本專案實際解析 trace／輸出的對照，區分來源 bytes、座標、Unicode 與閱讀順序，unsupported PDF 記錄真實拒絕點。現有基線見 [PDF 畫面與解析對照](docs/pdf-visual-comparison.md)，M8 的詳細判定與座標慣例見 [M8 計畫](docs/m8-plan.md#pdf-渲染截圖與真實解析對照驗收)。Poppler／Python 等工具只用於額外視覺報告，不成為核心 make test／make asan 的必需依賴。
+
 編譯 flags：
 
     -std=c11 -Wall -Wextra -Wpedantic -g
@@ -468,7 +494,7 @@ Makefile 必須允許 CC、CFLAGS、LDFLAGS、LDLIBS 覆寫。測試使用 POSIX
 1. 每層明定 input、output、ownership 與 error contract；高層透過低層 API 交接，不繞過其抽象直接取用內部資料。
 2. Pages module 不直接處理 xref，一律透過 pdf_resolve()。
 3. Content parser 不知道 WinAnsi、CID 或 CMap 細節。
-4. Tj/TJ 不直接 printf，先建立 TextItem。
+4. Tj/TJ 不直接 printf；M8 先產生 raw geometry event，M10 才建立 TextItem。
 5. Stream 以 /Length 為主，不使用 strstr 找 endstream。
 6. Parser 與 layout 分層。
 7. 所有 malloc 都要能回答誰負責 free。

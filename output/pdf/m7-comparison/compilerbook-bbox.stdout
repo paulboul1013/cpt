@@ -1,0 +1,33 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Introduction to Compilers and Language Design</title>
+<meta name="Subject" content=""/>
+<meta name="Keywords" content="compilers, programming languages, theory"/>
+<meta name="Author" content="Douglas Thain"/>
+<meta name="Creator" content="LaTeX with hyperref package"/>
+<meta name="Producer" content="pdfTeX-1.40.19"/>
+<meta name="CreationDate" content="2023-08-24T09:06:34-04"/>
+<meta name="ModDate" content="2023-08-24T09:06:34-04"/>
+</head>
+<body>
+<doc>
+  <page width="432.000000" height="648.000000">
+    <word xMin="64.949000" yMin="236.004714" xMax="209.036412" yMax="259.279801">Introduction</word>
+    <word xMin="215.927226" yMin="236.004714" xMax="239.326248" yMax="259.279801">to</word>
+    <word xMin="246.217062" yMin="236.004714" xMax="367.054175" yMax="259.279801">Compilers</word>
+    <word xMin="87.220000" yMin="265.892714" xMax="131.291464" yMax="289.167801">and</word>
+    <word xMin="138.182278" yMin="265.892714" xMax="255.251751" yMax="289.167801">Language</word>
+    <word xMin="262.142565" yMin="265.892714" xMax="344.782756" yMax="289.167801">Design</word>
+    <word xMin="163.788000" yMin="305.763044" xMax="215.606474" yMax="319.234125">Second</word>
+    <word xMin="219.594718" yMin="305.763044" xMax="268.213990" yMax="319.234125">Edition</word>
+    <word xMin="148.459000" yMin="395.696044" xMax="180.709258" yMax="409.167125">Prof.</word>
+    <word xMin="184.697501" yMin="395.696044" xMax="241.293260" yMax="409.167125">Douglas</word>
+    <word xMin="245.281504" yMin="395.696044" xMax="283.542819" yMax="409.167125">Thain</word>
+    <word xMin="130.412000" yMin="413.629044" xMax="199.560684" yMax="427.100125">University</word>
+    <word xMin="203.548928" yMin="413.629044" xMax="217.091740" yMax="427.100125">of</word>
+    <word xMin="221.079984" yMin="413.629044" xMax="258.537912" yMax="427.100125">Notre</word>
+    <word xMin="262.526156" yMin="413.629044" xMax="301.590858" yMax="427.100125">Dame</word>
+  </page>
+</doc>
+</body>
+</html>

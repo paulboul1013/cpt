@@ -8,6 +8,7 @@ typedef struct {
     const pdf_object *resources; /* Effective dictionary, or NULL. Borrowed. */
     const pdf_object *media_box; /* Effective four-element array. Borrowed. */
     double media_box_values[4];
+    int64_t rotation; /* Effective inherited /Rotate, raw multiple of 90; default 0. */
     const pdf_object *contents; /* Raw /Contents value, or NULL. Borrowed. */
 } pdf_page;
 

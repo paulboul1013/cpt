@@ -127,7 +127,7 @@ static int validate_media_box(page_walk *walk, const pdf_object *box,
 
 static int inherited_properties(page_walk *walk, const pdf_object *dict,
                                 const pdf_object **resources,
-                                const pdf_object **media_box) {
+                                const pdf_object **media_box, int64_t *rotation) {
     const pdf_object *local = pdf_dict_get(dict, "Resources");
     if (local) {
         local = resolve_value(walk, local);
@@ -137,6 +137,14 @@ static int inherited_properties(page_walk *walk, const pdf_object *dict,
                         "/Resources must be a dictionary");
         }
         *resources = local;
+    }
+    local = pdf_dict_get(dict, "Rotate");
+    if (local) {
+        local = resolve_value(walk, local);
+        if (!local) return 0;
+        if (local->type != PDF_OBJECT_INT || local->value.integer % 90 != 0)
+            return fail(walk, PDF_ERROR_MALFORMED, "/Rotate must be an integer multiple of 90");
+        *rotation = local->value.integer;
     }
     local = pdf_dict_get(dict, "MediaBox");
     if (local) {
@@ -175,7 +183,7 @@ static int append_page(page_walk *walk, pdf_page page) {
 static int walk_node(page_walk *walk, pdf_reference reference,
                      const page_ancestor *parent, size_t depth,
                      const pdf_object *resources,
-                     const pdf_object *media_box) {
+                     const pdf_object *media_box, int64_t rotation) {
     walk->current_reference = reference;
     if (depth > walk->document->reader.limits.max_nesting_depth) {
         return fail(walk, PDF_ERROR_RESOURCE_LIMIT,
@@ -213,7 +221,7 @@ static int walk_node(page_walk *walk, pdf_reference reference,
         return fail(walk, PDF_ERROR_MALFORMED,
                     "root /Pages must not have /Parent");
     }
-    if (!inherited_properties(walk, dict, &resources, &media_box)) return 0;
+    if (!inherited_properties(walk, dict, &resources, &media_box, &rotation)) return 0;
     if (!is_pages) {
         if (!parent) return fail(walk, PDF_ERROR_MALFORMED,
                                  "Catalog /Pages must refer to a /Pages node");
@@ -221,6 +229,7 @@ static int walk_node(page_walk *walk, pdf_reference reference,
                                     "page has no inherited /MediaBox");
         pdf_page page = {0};
         page.reference = reference;
+        page.rotation = rotation;
         page.resources = resources;
         page.media_box = media_box;
         page.contents = pdf_dict_get(dict, "Contents");
@@ -243,7 +252,7 @@ static int walk_node(page_walk *walk, pdf_reference reference,
                         "/Kids entries must be indirect references");
         }
         if (!walk_node(walk, kid->value.reference, &current, depth + 1,
-                       resources, media_box)) return 0;
+                       resources, media_box, rotation)) return 0;
         walk->current_reference = reference;
     }
     if ((uint64_t)count->value.integer != (uint64_t)(walk->pages->len - before)) {
@@ -281,7 +290,7 @@ int pdf_pages_load(pdf_document *document, pdf_pages *pages, pdf_error *error) {
         return fail(&walk, PDF_ERROR_MALFORMED,
                     "Catalog /Pages must be an indirect reference");
     }
-    int ok = walk_node(&walk, root->value.reference, NULL, 1, NULL, NULL);
+    int ok = walk_node(&walk, root->value.reference, NULL, 1, NULL, NULL, 0);
     free(walk.seen);
     if (!ok) {
         pdf_pages_free(pages);
