@@ -2,14 +2,14 @@
 
 ## 目標與邊界
 
-依 [roadmap 的 M6 與 Common Contracts](../pdftext_roadmap.md#6-m6contents-與-stream-decode)，把 M5 每頁保留的 `/Contents` 轉成依來源順序排列、已解碼的位元組，供 M7 content interpreter 使用。M6 不解析 PDF 內容指令、不做字型解碼或文字輸出，也不新增 xref stream／object stream 支援。
+依 [roadmap 的 M6 與 Common Contracts](../../pdftext_roadmap.md#6-m6contents-與-stream-decode)，把 M5 每頁保留的 `/Contents` 轉成依來源順序排列、已解碼的位元組，供 M7 content interpreter 使用。M6 不解析 PDF 內容指令、不做字型解碼或文字輸出，也不新增 xref stream／object stream 支援。
 
-目前 [Pages API](../src/pages.h) 提供 borrowed `/Contents` 物件，[Document API](../src/document.h) 的 resolver 保留含 raw stream bytes 的完整 indirect object；`/Length` 的 direct integer 與 indirect reference 已由 parser/resolver 處理。M6 應在其上新增擁有輸出 buffer 的 `contents` 模組，讓呼叫端明確釋放，不改動 M5 cache 的所有權。
+目前 [Pages API](../../src/pages.h) 提供 borrowed `/Contents` 物件，[Document API](../../src/document.h) 的 resolver 保留含 raw stream bytes 的完整 indirect object；`/Length` 的 direct integer 與 indirect reference 已由 parser/resolver 處理。M6 應在其上新增擁有輸出 buffer 的 `contents` 模組，讓呼叫端明確釋放，不改動 M5 cache 的所有權。
 
 ## 開工前校正兩項契約
 
 1. Roadmap 的「direct stream」與 PDF 格式規則衝突。[Adobe 的 CosStream 文件](https://opensource.adobe.com/dc-acrobat-sdk-docs/pdflsdk/apireference/COS_Layer/CosStream.html) 明確指出 stream 必須是 indirect object；現有 `pdf_object` 也無 direct stream 表示法。建議把該項改為「`/Contents` 可直接是 array，或是指向 stream／array 的 reference；stream 本身必須是 indirect」，並以 malformed fixture 驗證錯誤型別。先更新權威 roadmap，再依修正後的契約實作。
-2. Roadmap 要求單一解碼上限與跨頁 total decoded budget，但 [現有 limits](../src/limits.h) 只有 raw stream 上限。新增獨立的 `max_decoded_stream_size` 與 `max_total_decoded_size`；預設各 256 MiB，並把 array 串接時插入的 newline 算進總輸出量。保留 `max_stream_size` 的 raw bytes 語意。
+2. Roadmap 要求單一解碼上限與跨頁 total decoded budget，但 [現有 limits](../../src/limits.h) 只有 raw stream 上限。新增獨立的 `max_decoded_stream_size` 與 `max_total_decoded_size`；預設各 256 MiB，並把 array 串接時插入的 newline 算進總輸出量。保留 `max_stream_size` 的 raw bytes 語意。
 
 ## 資料與錯誤契約
 
@@ -42,11 +42,11 @@
 
 新增可重用的 filter 解碼層，使用 zlib 的增量 inflate，並在每次輸出增長前檢查單 stream 與 total budget。先測單一 `/FlateDecode`，再接入 Contents；涵蓋有效資料、空資料、截斷／損壞資料、解壓膨脹超限、未知 filter、filter array 與非預設 `/DecodeParms`。
 
-**驗收**：[tests/hello.pdf](../tests/hello.pdf) 的 Contents 可解碼；每個失敗類別都有 fixture／單元測試，`make test` 通過。
+**驗收**：[tests/hello.pdf](../../tests/hello.pdf) 的 Contents 可解碼；每個失敗類別都有 fixture／單元測試，`make test` 通過。
 
 ### 5. 增加可觀察的整份 PDF 驗收
 
-新增不輸出任意 binary bytes 的 `--dump-contents document.pdf` 摘要模式，顯示頁序與 decoded byte length；逐頁讀取與釋放。更新 Makefile 的 `-lz`、單元測試、[fixture runner](../tests/run-fixtures.sh)、golden 和 roadmap 狀態。
+新增不輸出任意 binary bytes 的 `--dump-contents document.pdf` 摘要模式，顯示頁序與 decoded byte length；逐頁讀取與釋放。更新 Makefile 的 `-lz`、單元測試、[fixture runner](../../tests/run-fixtures.sh)、golden 和 roadmap 狀態。
 
 **驗收**：合法及 malformed fixture 的 exit code、stdout、stderr 符合 golden；`make`、`make test`、`make asan` 全通過，既有 M0–M5 模式回歸不變。
 

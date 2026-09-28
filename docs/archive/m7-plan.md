@@ -2,9 +2,9 @@
 
 ## 目標與邊界
 
-依 [roadmap 的 M7 與 Common Contracts](../pdftext_roadmap.md#7-m7content-stream-interpreter)，把 M6 每頁回傳的 decoded bytes 解讀為依來源順序出現的 PDF operands 與 operators，驗證已支援指令的參數及文字／圖形狀態邊界，供 M8 計算座標。M7 不解碼字型字元碼、不產生 UTF-8 TextItem，也不推估閱讀順序。`Tj`、`TJ` 等操作保留原始 byte string；文字矩陣與 glyph width 的數值計算留給 M8–M10。
+依 [roadmap 的 M7 與 Common Contracts](../../pdftext_roadmap.md#7-m7content-stream-interpreter)，把 M6 每頁回傳的 decoded bytes 解讀為依來源順序出現的 PDF operands 與 operators，驗證已支援指令的參數及文字／圖形狀態邊界，供 M8 計算座標。M7 不解碼字型字元碼、不產生 UTF-8 TextItem，也不推估閱讀順序。`Tj`、`TJ` 等操作保留原始 byte string；文字矩陣與 glyph width 的數值計算留給 M8–M10。
 
-入口沿用 [Contents API](../src/contents.h) 的 caller-owned `{data, len}`，每頁獨立建立 interpreter 狀態；M6 的 Contents array 已在 stream 之間插入 newline。M7 的 parser 與現有 [PDF Object Parser](../src/parser.h) 分開，但可重用既有 token／object 表示法和詞法規則，不能把 decoded buffer 假裝成由 `reader_open()` 擁有的整份 PDF。
+入口沿用 [Contents API](../../src/contents.h) 的 caller-owned `{data, len}`，每頁獨立建立 interpreter 狀態；M6 的 Contents array 已在 stream 之間插入 newline。M7 的 parser 與現有 [PDF Object Parser](../../src/parser.h) 分開，但可重用既有 token／object 表示法和詞法規則，不能把 decoded buffer 假裝成由 `reader_open()` 擁有的整份 PDF。
 
 ## 開工前固定契約
 

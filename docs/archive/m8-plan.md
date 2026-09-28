@@ -4,9 +4,9 @@
 
 ## 目標與範圍
 
-依 [roadmap 的 M8](../pdftext_roadmap.md#8-m8text-state-與-geometry) 與 [Common Contracts](../pdftext_roadmap.md#14-common-contracts)，消耗 M7 已驗證的操作序列，維護文字／圖形狀態，計算字串顯示前後的位置及座標變換。M8 不實作字型 Unicode 解碼、實際字型 metrics 查找、TextItem 與閱讀順序；這些分別屬於 M9–M11。
+依 [roadmap 的 M8](../../pdftext_roadmap.md#8-m8text-state-與-geometry) 與 [Common Contracts](../../pdftext_roadmap.md#14-common-contracts)，消耗 M7 已驗證的操作序列，維護文字／圖形狀態，計算字串顯示前後的位置及座標變換。M8 不實作字型 Unicode 解碼、實際字型 metrics 查找、TextItem 與閱讀順序；這些分別屬於 M9–M11。
 
-使用 [content_interpreter.h](../src/content_interpreter.h) 的 visitor 接口接入，沿 `Contents decoded bytes → M7 → Text State → raw string geometry event` 流動。Content parser 不接觸字型編碼；Text State 不讀 xref、PDF 字型字典或整份檔案。字形寬度由明確的 metrics callback 提供：M8 測試使用可核對的測試 adapter，M9 再接入真正的 font module。
+使用 [content_interpreter.h](../../src/content_interpreter.h) 的 visitor 接口接入，沿 `Contents decoded bytes → M7 → Text State → raw string geometry event` 流動。Content parser 不接觸字型編碼；Text State 不讀 xref、PDF 字型字典或整份檔案。字形寬度由明確的 metrics callback 提供：M8 測試使用可核對的測試 adapter，M9 再接入真正的 font module。
 
 本階段優先完成可驗證的文字提取核心。`w`、path、color、clipping、marked content、Form XObject、inline image 與 xref stream 不因 M8 而擴充。`tests/hello.pdf`、`tests/compilerbook.pdf` 不作為 M8 成功驗收輸入；M8 完成也不表示它們已受支援；它們仍需納入截圖與拒絕點的對照報告，作為相容性缺口紀錄，而不是忽略。
 
@@ -166,10 +166,10 @@ Text State 作為 M7 callback 時，以當前 operation 的 decoded offset 設 l
 
 ## PDF 渲染截圖與真實解析對照驗收
 
-此項是使用者追加的必要可觀察驗收，不能只展示手寫預期值或測試通過訊息。現有基線見 [PDF 畫面與實際解析對照](pdf-visual-comparison.md) 與其左右對照 HTML；三份 PDF 已有真實頁面 PNG、M7 CLI／visitor 輸出及外部參考，M8 geometry 欄目前明確標為待驗證。
+此項是使用者追加的必要可觀察驗收，不能只展示手寫預期值或測試通過訊息。現有基線見 [PDF 畫面與實際解析對照](../pdf-visual-comparison.md) 與其左右對照 HTML；三份 PDF 已有真實頁面 PNG、M7 CLI／visitor 輸出及外部參考，M8 geometry 欄目前明確標為待驗證。
 
 - **來源與畫面**：為成功的受控 fixture 及現有 hello.pdf／compilerbook.pdf 保存來源 path、SHA-256、頁碼、MediaBox／Rotate、renderer 版本、DPI 及原始頁面 PNG。只用實際 PDF 渲染，不把預期字串重新排版成「原 PDF 截圖」。原始頁面與帶標记的 overlay 分別保存。
-- **成功 geometry 對照**：任務 1／5 使用具有有效 `/Resources /Font` 且真實可渲染的 PDF；測試 metrics adapter 的值必須與該 PDF 的明示 widths／字型資料一致，記錄 adapter 身份。既有 [visual-m7-text.pdf](../tests/fixtures/visual-m7-text.pdf) 使用 Courier、width=600，可作為第一份 fixture；不要把舊的缺字型資源語法 fixtures 當作畫面正確性測試。
+- **成功 geometry 對照**：任務 1／5 使用具有有效 `/Resources /Font` 且真實可渲染的 PDF；測試 metrics adapter 的值必須與該 PDF 的明示 widths／字型資料一致，記錄 adapter 身份。既有 [visual-m7-text.pdf](../../tests/fixtures/visual-m7-text.pdf) 使用 Courier、width=600，可作為第一份 fixture；不要把舊的缺字型資源語法 fixtures 當作畫面正確性測試。
 - **實際資料**：M8 跑出原始 string bytes、font/state、origin、advance、rendering matrix、decoded offset 的 raw trace；報告並列 expected、actual、delta、tolerance、pass/fail，actual 必須來自本專案的執行結果。M9 之前只標示 raw bytes／ASCII 預覽，不宣稱 Unicode 解碼。
 - **外部參考**：可使用 Poppler `pdftoppm` 的頁面 PNG 與 `pdftotext -bbox` 的 word boxes／文字作為獨立參考；標明這些不是本專案的輸出。先對照受控、明示字型資料的 fixtures，再觀察真實一般 PDF；unsupported case 顯示空 stdout、實際 stderr／exit code 與停止階段，不強行當成成功。
 - **座標轉換與容差**：截圖通常左上角原點，M8 是 default user-space／左下角慣例。對 Rotate=0、CropBox=MediaBox、UserUnit=1 的受控頁面，使用 `px=(x-x0)*dpi/72`、`py=(y1-y)*dpi/72`，並保存實際 PNG 尺寸；其他 CropBox／UserUnit／Rotate 不套用這個簡式，需另列限制或使用 renderer 的實際 transform。圖上標出本專案的 glyph origin／advance vectors；Poppler word bbox 不是 baseline，也不是實際 glyph ink bbox，不能把兩者數值直接相減。
@@ -201,7 +201,7 @@ Poppler／Python／browser 只用於額外可選的視覺驗證與報告生成�
 
 任務 1–7 的實作位於 `src/matrix.[ch]`、`src/text_state.[ch]`、M7 operator 分派與 Pages Rotate 繼承。公開入口為 `pdf_text_state_create/destroy/visit/snapshot`、`pdf_text_page_interpret`、`pdf_text_event_dump`；metrics／event callback 與借用生命週期以 `text_state.h` 為準。JSON dump 使用 libc POSIX thread-local numeric locale，固定九位小數，不改 process locale；正式 CLI 保持 M7 摘要。
 
-驗收入口：`tests/matrix_test.c`、`tests/text_state_test.c`、`tests/geometry_test.c`、`tests/run-geometry-fixtures.sh` 及擴充的 Pages／M7 tests。靜態 fixtures 覆蓋 raw／Flate／array／多頁／後頁失敗與 Rotate；collector 跨整份文件限制事件，所有頁成功才 dump。視覺 actual、overlay 和重跑命令見 [M8 report](../output/pdf/m8-comparison/README.md) 與 [視覺驗收](pdf-visual-comparison.md#m8-完成驗收)。
+驗收入口：`tests/matrix_test.c`、`tests/text_state_test.c`、`tests/geometry_test.c`、`tests/run-geometry-fixtures.sh` 及擴充的 Pages／M7 tests。靜態 fixtures 覆蓋 raw／Flate／array／多頁／後頁失敗與 Rotate；collector 跨整份文件限制事件，所有頁成功才 dump。視覺 actual、overlay 和重跑命令見 [M8 report](../../output/pdf/m8-comparison/README.md) 與 [視覺驗收](../pdf-visual-comparison.md#m8-完成驗收)。
 
 M9 可在同一個 byte-wise metrics seam 接 page Resources／document adapter；仍不得使用測試 Courier-600 作正式 fallback。未加入 Unicode、TextItem、閱讀順序、glyph bbox、page rotation transform 或一般 graphics operators。
 

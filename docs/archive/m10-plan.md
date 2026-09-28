@@ -2,7 +2,7 @@
 
 ## 目標與授權範圍
 
-本文件只做規劃，還沒有開始寫 C 程式，也不 commit。範圍以 [roadmap M10](../pdftext_roadmap.md#10-m10textitem)、[Common Contracts](../pdftext_roadmap.md#14-common-contracts) 與 Architecture Rules 為準。現行介面看 [font_text.h](../src/font_text.h)、[text_state.h](../src/text_state.h)、[font.h](../src/font.h)。M9 已提交（`a7d37d6`）。
+本文件只做規劃，還沒有開始寫 C 程式，也不 commit。範圍以 [roadmap M10](../../pdftext_roadmap.md#10-m10textitem)、[Common Contracts](../../pdftext_roadmap.md#14-common-contracts) 與 Architecture Rules 為準。現行介面看 [font_text.h](../../src/font_text.h)、[text_state.h](../../src/text_state.h)、[font.h](../../src/font.h)。M9 已提交（`a7d37d6`）。
 
 M10 把 M9 的 **borrowed decoded event** 轉成 **caller-owned、整份文件存活的 TextItem 集合**，並提供 roadmap 已列出的 `--dump-text-items` debug CLI。M10 不做新的 PDF 解析、字型解碼或矩陣運算：幾何沿用 M8，字寬與 UTF-8 沿用 M9。
 
@@ -103,7 +103,7 @@ M11 才做以下幾件事：閱讀順序排序、同行判定、synthetic space�
 
 ### 任務 5：真實 PDF 對照與 release acceptance
 
-**工作**：新增 `output/pdf/m10-comparison/`，更新 [視覺驗收文件](pdf-visual-comparison.md)。在 Poppler 截圖上畫出每個 item 的 origin、advance 與 `height` 框（標示為 em 高度，不是 ink bbox）。
+**工作**：新增 `output/pdf/m10-comparison/`，更新 [視覺驗收文件](../pdf-visual-comparison.md)。在 Poppler 截圖上畫出每個 item 的 origin、advance 與 `height` 框（標示為 em 高度，不是 ink bbox）。
 
 **驗收**：
 - 專案 CLI 實際輸出的 item 欄位，與獨立計算的 expected（沿用 M9 capture 的字型寬度來源）逐項比較 expected／actual／delta。
@@ -133,4 +133,4 @@ M11 才做以下幾件事：閱讀順序排序、同行判定、synthetic space�
 
 ## 實作紀錄
 
-任務 1–5 已完成，契約見 [roadmap M10 政策](../pdftext_roadmap.md#m10-textitem-政策實作契約) 與 `src/text_items.h`，驗收與交接見 roadmap「M10 完成狀態與交接」。與計畫的差異：arena 採 offset 暫存、成功後轉指標；em 高度欄位命名為 `em_height`（另存 `effective_size`）；item 數與 UTF-8 上限實際先由 M9 bridge 的共用 totals 觸發，M10 的同名檢查保留為防禦；`--dump-text-items` 先在記憶體格式化再一次寫出；新增 libm 連結。
+任務 1–5 已完成，契約見 [roadmap M10 政策](../../pdftext_roadmap.md#m10-textitem-政策實作契約) 與 `src/text_items.h`，驗收與交接見 roadmap「M10 完成狀態與交接」。與計畫的差異：arena 採 offset 暫存、成功後轉指標；em 高度欄位命名為 `em_height`（另存 `effective_size`）；item 數與 UTF-8 上限實際先由 M9 bridge 的共用 totals 觸發，M10 的同名檢查保留為防禦；`--dump-text-items` 先在記憶體格式化再一次寫出；新增 libm 連結。

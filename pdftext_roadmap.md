@@ -272,7 +272,7 @@ v1.0 不轉換 /Rotate；遇到非 0 page rotation 回報 unsupported page rotat
 
 metrics callback 接收 length-aware font name 與單一原始 code byte，回傳 finite 的 width_1000。僅限水平 Simple Font；M9 負責真實 metrics adapter。非空字串缺 metrics 回 unsupported，正式 CLI 不猜固定寬度。每 glyph 推進 `(width/1000*size+Tc+(code==0x20?Tw:0))*hscale`；TJ number 推進 `-number/1000*size*hscale`。引號先換行；雙引號先保留 Tw/Tc 再換行顯示。每 string segment 保留獨立事件、rendering matrix、origin、advance vector 與來源位置，不稱作 glyph bbox。
 
-font name 複製且 length-aware，q stack 共享 immutable storage；stack、容量、引用計數與來源計數檢查 overflow。頁面 Rotate 繼承、可間接引用，integer 且為 90 倍數；保留原值，geometry 入口拒絕任何非零值（含 360），錯誤定位 Page reference。詳細驗收與視覺證據要求見 [M8 plan](docs/m8-plan.md)。M8 已完成驗收。
+font name 複製且 length-aware，q stack 共享 immutable storage；stack、容量、引用計數與來源計數檢查 overflow。頁面 Rotate 繼承、可間接引用，integer 且為 90 倍數；保留原值，geometry 入口拒絕任何非零值（含 360），錯誤定位 Page reference。詳細驗收與視覺證據要求見 [M8 plan](docs/archive/m8-plan.md)。M8 已完成驗收。
 
 ### M8 完成狀態與交接
 
@@ -538,7 +538,7 @@ stderr 訊息必須包含 module、byte offset（若可取得）與人類可讀�
     make test
     make asan
 
-額外可觀察驗收須保存實際 PDF 渲染截圖與本專案實際解析 trace／輸出的對照，區分來源 bytes、座標、Unicode 與閱讀順序，unsupported PDF 記錄真實拒絕點。現有基線見 [PDF 畫面與解析對照](docs/pdf-visual-comparison.md)，M8 的詳細判定與座標慣例見 [M8 計畫](docs/m8-plan.md#pdf-渲染截圖與真實解析對照驗收)。Poppler／Python 等工具只用於額外視覺報告，不成為核心 make test／make asan 的必需依賴。
+額外可觀察驗收須保存實際 PDF 渲染截圖與本專案實際解析 trace／輸出的對照，區分來源 bytes、座標、Unicode 與閱讀順序，unsupported PDF 記錄真實拒絕點。現有基線見 [PDF 畫面與解析對照](docs/pdf-visual-comparison.md)，M8 的詳細判定與座標慣例見 [M8 計畫](docs/archive/m8-plan.md#pdf-渲染截圖與真實解析對照驗收)。Poppler／Python 等工具只用於額外視覺報告，不成為核心 make test／make asan 的必需依賴。
 
 編譯 flags：
 
