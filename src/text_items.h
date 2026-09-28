@@ -15,6 +15,7 @@ typedef struct {
     size_t source_order;        /* M8 page-local order; empty strings leave gaps. */
     size_t sequence;            /* 0-based, document-wide. */
     size_t offset;              /* Decoded content offset of the operator. */
+    size_t page_offset;         /* Page object file offset, for diagnostics. */
     double x, y;                /* M8 baseline origin (CTM and rise applied). */
     double dx, dy;              /* Signed advance vector. */
     double width;               /* == dx; may be negative. */

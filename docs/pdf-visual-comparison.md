@@ -171,3 +171,30 @@ M8 的 snapshot／library JSON dump 是診斷資料，字串仍為 raw bytes／A
 | 9 | 9 | Rise 4 | 24, 44 | 34.008 | 12 | rise 移動 origin，不改 em_height |
 
 `text-items-transform.pdf` 的 9 個 items 與 `font-winansi.pdf` 前 4 個 items 的 UTF-8、origin、advance、width、em_height、字級、mode、horizontal 與 order 全部通過（absolute 1e-6，dump 為九位小數）。人工查看 overlay：每個框的起點與終點都對齊實際字形的基線與 advance（2 px 內），旋轉項目的框沿旋轉後的基線。`hello.pdf`、`compilerbook.pdf` 仍 exit 4、stdout 空白。items 依 source order 排列；閱讀順序、synthetic space 與純文字輸出屬 M11。
+
+## M11 完成驗收
+
+[M11 對照報告](../output/pdf/m11-comparison/index.html) 比對正式 CLI `pdftext input.pdf` 的實際 stdout 與**手寫的預期文字**（依 fixture 意圖撰寫，不是由程式產生）；Poppler `pdftotext -raw`／`-layout` 只作參考並列。hash、命令與版本見 [manifest](../output/pdf/m11-comparison/manifest.json)，重跑方法見 [README](../output/pdf/m11-comparison/README.md)。
+
+![M11 原始 PDF 渲染](../output/pdf/m11-comparison/reading-page1.png)
+![M11 閱讀順序 overlay](../output/pdf/m11-comparison/reading-order1.png)
+
+`text-reading-order.pdf` 的字詞與行以打亂的順序繪製（`pdftotext -raw` 照繪製順序輸出，因此字詞錯亂）；本專案輸出：
+
+```text
+Reading order test
+Second line drawn first?
+Words are shown in reverse.
+Kept spaces:  two here.
+Kerned TJ segments
+2
+E = mc
+Invisible OCR layer text
+
+Page three after an empty page.
+```
+
+- 閱讀順序、原有的雙空白、TJ 間距補空白、Tr=3 文字與空頁處理都符合預期；第 2 頁沒有文字，不產生額外空白行。
+- 上標 `2`（rise 5、8pt）超過 2pt 行容差，自成一行並排在 `E = mc` 之前；這是 v1.0 已知限制，overlay 中編號 18、19 如實呈現。
+- `font-winansi.pdf` 的 UTF-8（含 NBSP、soft hyphen、U+FFFD）逐 byte 相符，stderr 有一行 U+FFFD 警告。
+- 旋轉文字（`text-items-transform.pdf`）、`hello.pdf`、`compilerbook.pdf` 皆 exit 4、stdout 空白，stderr 記錄實際拒絕點。

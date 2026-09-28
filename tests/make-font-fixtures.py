@@ -95,7 +95,40 @@ ITEMS_CONTENT = b"\n".join([
     b"BT /F1 12 Tf 1 0 0 1 24 40 Tm 4 Ts (Rise 4) Tj ET",
 ])
 
+def helv_width(text, size):
+    return sum(HELVETICA_WINANSI[b - 32] for b in text) / 1000 * size
+
+
+def placed_words(words, x, y, size):
+    """Show each word as its own Tj at its natural position (word gap = one
+    space width), returning (x, y, word) triples for shuffling."""
+    out = []
+    for w in words:
+        out.append((x, y, w))
+        x += helv_width(w + b" ", size)
+    return out
+
+
+# M11 reading order: words and lines drawn out of order on two pages.
+_p1 = (placed_words([b"Reading", b"order", b"test"], 24, 200, 16) +
+       placed_words([b"Second", b"line", b"drawn", b"first?"], 24, 176, 12) +
+       placed_words([b"Words", b"are", b"shown", b"in", b"reverse."], 24, 158, 12))
+_order = [7, 11, 3, 10, 0, 6, 9, 2, 5, 8, 1, 4]
+READING_P1 = b"BT /F1 16 Tf\n" + b"\n".join(
+    b"/F1 %d Tf 1 0 0 1 %.3f %.3f Tm (%s) Tj" % (16 if y == 200 else 12, x, y, w)
+    for x, y, w in (_p1[i] for i in _order)) + (
+    b"\n1 0 0 1 24 130 Tm (Kept spaces:  two here.) Tj"
+    b"\n1 0 0 1 24 106 Tm [(Kerned) -400 (T) 80 (J) -300 (segments)] TJ"
+    b"\n1 0 0 1 24 82 Tm (E = mc) Tj /F1 8 Tf 5 Ts (2) Tj 0 Ts"
+    b"\n/F1 12 Tf 3 Tr 1 0 0 1 24 58 Tm (Invisible OCR layer text) Tj 0 Tr"
+    b"\nET")
+READING_P3 = b"BT /F1 14 Tf 1 0 0 1 24 200 Tm (Page three after an empty page.) Tj ET"
+
 FIXTURES = {
+    "text-reading-order.pdf": pdf([(b"<< /Font << /F1 9 0 R >> >>", READING_P1),
+                                   (b"<< /Font << /F1 9 0 R >> >>", b""),
+                                   (b"<< /Font << /F1 9 0 R >> >>", READING_P3)],
+                                  [HELVETICA]),
     "text-items-transform.pdf": pdf([(b"<< /Font << /F1 5 0 R >> >>", ITEMS_CONTENT)], [HELVETICA]),
     "font-winansi.pdf": pdf([(b"<< /Font << /F1 5 0 R /F2 6 0 R >> >>", WINANSI_CONTENT)],
                             [HELVETICA, COURIER]),

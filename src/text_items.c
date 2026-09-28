@@ -15,7 +15,7 @@ typedef struct {
     item_offsets *offsets;    /* Arena offsets; pointers are fixed up on success. */
     size_t offsets_cap;
     pdf_limits limits;
-    size_t page;
+    size_t page, page_offset;
     int have_font;            /* Last font name on this page, for sharing. */
     size_t font_at, font_len;
 } collector;
@@ -100,6 +100,7 @@ static int consume(void *context, const pdf_font_text_event *ev, pdf_error *e) {
     item.source_order = raw->source_order;
     item.sequence = out->len;
     item.offset = raw->offset;
+    item.page_offset = c->page_offset;
     item.x = raw->origin.x; item.y = raw->origin.y;
     item.dx = raw->advance.x; item.dy = raw->advance.y;
     item.width = raw->advance.x;
@@ -143,6 +144,7 @@ int pdf_text_items_extract(pdf_document *document, const pdf_limits *limits,
         pdf_contents_result data = {0};
         size_t offset = pdf_document_reference_offset(document, pages.items[i].reference);
         c.page = i + 1;
+        c.page_offset = offset;
         c.have_font = 0;
         ok = pdf_contents_read(&contents, &pages.items[i], &data, e) &&
              pdf_font_text_page_interpret(document, &pages.items[i], data.data, data.len,

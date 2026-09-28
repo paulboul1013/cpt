@@ -152,8 +152,8 @@ static void test_reference_leaves_and_aliases(void) {
      * FirstChar/LastChar/Widths/Encoding/element values through references. */
     const char *extras[] = {
         "<< /F1 6 0 R /F2 6 0 R /F3 7 0 R >>",
-        "<< /Type /Font /Subtype /TrueType /BaseFont /ABCDEF+Arial /FirstChar 8 0 R "
-        "/LastChar 9 0 R /Widths 10 0 R /Encoding 11 0 R >>",
+        ("<< /Type /Font /Subtype /TrueType /BaseFont /ABCDEF+Arial /FirstChar 8 0 R "
+         "/LastChar 9 0 R /Widths 10 0 R /Encoding 11 0 R >>"),
         "6 0 R", "65", "66", "[600 12 0 R]", "/WinAnsiEncoding", "625.5"};
     const pdf_font *f = load(&x, "<< /Font 5 0 R >>", extras, 8, NULL, &e);
     assert(f);

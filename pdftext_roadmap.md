@@ -1,6 +1,6 @@
 # pdftext：架構與 Roadmap
 
-> 本文件是架構、後續 milestone 與版本邊界的權威來源。M2 Object Parser 已於 2026-08-24 通過 release acceptance；其已完成規格與驗收結果見 [M2 驗收記錄](pdftext_m2_acceptance.md)。M3 Indirect Object Parser、M4 traditional xref／trailer、M5 Document／Resolver／Pages Tree 、M6 Contents／FlateDecode 與 M7 Content Interpreter 已完成；下一個 milestone 是 M8 Text State／Geometry。
+> 本文件是架構、milestone 與版本邊界的權威來源。M2 Object Parser 已於 2026-08-24 通過 release acceptance（見 [M2 驗收記錄](pdftext_m2_acceptance.md)）；M3–M11 已依序完成，各節末尾有完成狀態與驗收紀錄。2026-09-28 通過 [Release Gate](#16-release-gate)，版本為 v1.0.0。
 
 ## 1. Roadmap 定位
 
@@ -76,7 +76,7 @@ Roadmap 的 milestone 編號已統一如下；舊文件中 M4–M8 的命名曾�
 
 每個 milestone 都必須有 fixture、golden output、malformed input、build gate 與 sanitizer 驗證；不能只以「程式可以跑」作為完成條件。
 
-M0–M7 已形成目前的 object、indirect object、traditional xref、resolver、頁樹、Contents 解碼與 Content Interpreter 基線；M8–M11 是後續規劃。目前 CLI 尚不能擷取完整 PDF 的文字。
+M0–M11 已全部完成：`pdftext input.pdf` 依單欄、水平閱讀順序輸出 UTF-8 純文字，各層都有 debug dump 模式。
 
 ## 3. M3：Indirect Object Parser
 
@@ -393,28 +393,47 @@ width 依 glyph width、font size 與 horizontal scale 計算。
 - 整份輸出只保留一個結尾 newline。
 - 沒有文字的 page 不輸出空白行。
 - 整份 PDF 沒有文字時輸出 no extractable text layer。
-- 正常文字只輸出 stdout。
-- diagnostics 與 debug dump 輸出 stderr。
+- 正常文字只輸出 stdout（或 `-o` 指定的檔案）。
+- `--dump-*` 的內容是該模式要求的輸出，寫 stdout；錯誤、警告與提示寫 stderr。
 - 先暫存整份 page output，成功後才寫 stdout。
 - unsupported font/filter 或 malformed page 會讓整份文件失敗；未來另以 --best-effort opt-in。
 
 ### CLI
 
-    pdftext [options] input.pdf
+    pdftext [-o output.txt] input.pdf
+    pdftext MODE input.pdf
 
 支援：
 
-- --help
-- --version
-- --dump-header
-- --dump-xref
-- --dump-trailer
-- --dump-object N
-- --dump-pages
-- --dump-content
-- --dump-text-items
+- --help、--version
+- -o FILE：純文字寫入 FILE 而非 stdout，只能用於純文字模式
+- --dump-header、--dump-xref、--dump-trailer、--dump-object N
+- --dump-pages、--dump-contents、--dump-content、--dump-text-items
+- --dump-objects（原本不帶選項的 M2 物件 dump）、--object、--indirect（單一物件語法除錯）
 
-一次只允許一個 dump mode；dump 與正常文字輸出互斥。
+一次只允許一個模式；dump 與正常文字輸出互斥。
+
+### M11 政策（實作契約）
+
+- **CLI**：不帶模式即純文字模式。舊的無選項物件 dump 改名 `--dump-objects`，行為不變。`--help` 寫 stdout、exit 0；`--version` 印版本（開發期 `1.0.0-dev`，Release Gate 通過後為 `1.0.0`）。`--dump-header` 印 header 版本；`--dump-trailer` 印 trailer dictionary；`--dump-object N` 以 xref 的 generation 解析 object N。未知選項、缺檔名、多個模式、N 非正整數、`-o` 搭配 dump 模式、`-o` 重複：usage 寫 stderr、exit 1。
+- **`-o FILE`**：在 FILE 同一目錄建立隱藏暫存檔（`.pdftext-XXXXXX`），完整寫入、fsync 並關閉成功後 rename 成 FILE；任何失敗刪除暫存檔、不改動原有 FILE，錯誤為 io（exit 2）。新檔權限依 umask。FILE 若是 symlink，會被替換成一般檔案（rename 語意），不寫入其指向的檔案。FILE 不可以 `-` 開頭（請寫 `./-name`），`-o` 出現在 `--` 之後視為檔名。stdout 不輸出文字。所有模式成功後若 stdout 寫入失敗（例如磁碟滿、pipe 關閉）一律 exit 2。
+- **字級基準**：所有容差與門檻使用 M10 的 `effective_size`。
+- **分行**：每頁內依 y 由大到小（同 y 依 sequence）排序後分群；item 與該行錨點（行內第一個 item）的 y 差不超過 `max(1.5, min(錨點字級, item 字級) × 0.25)` 即併入，否則開新行。行內依 x 由小到大，x 相同依 sequence。不偵測多欄；rise 不特別處理。
+- **補空白**：同行相鄰 item 的空隙 = 後者 x −（前者 x + 前者 width）；大於前者 `effective_size × 0.25` 時插入一個 U+0020。前者以 U+0020／U+00A0 結尾或後者以其開頭時不插入；空隙不足或為負時直接相接。
+- **文字內容**：UTF-8 原樣輸出（含 NBSP、soft hyphen、U+FFFD），不 normalize、不刪行尾空白。
+- **Tr=3**：不可見文字照常輸出。
+- **非水平文字**：任一 item `horizontal=0`（旋轉、鏡像、負 Tz）即整份 unsupported、exit 4，stderr 指出頁碼與 decoded offset，無任何文字輸出。
+- **U+FFFD**：照常輸出；stderr 另印一行 `pdftext: warning: N undecodable bytes replaced with U+FFFD`，exit 0。
+- **無文字**：沒有任何 item 時 stdout（或 `-o` 檔案）為空，stderr 印 `pdftext: no extractable text layer`，exit 0。
+- **輸出格式**：每行後接 `\n`；頁與頁之間一個空白行；無文字的頁不輸出；整份以恰好一個 `\n` 結尾。整份組好後才寫出，大小受 `max_total_decoded_size` 限制。
+
+### M11 完成狀態
+
+`src/reading_order.[ch]` 依上述政策分行、排序、補空白並組成純文字，另提供行分群的 debug dump；`src/main.c` 改為表驅動的選項解析，加入 `-o` 原子寫入、`--help`、`--version`、`--dump-header`、`--dump-trailer`、`--dump-object N`，舊的無選項模式改名 `--dump-objects`。輸入不是一般檔案（例如目錄）時回報 io。所有模式成功後若 stdout 寫入失敗一律 exit 2。
+
+驗收：GCC 與 clang 的 `make -B test`、`make -B asan` 全部通過，零 warning。CLI fixtures 由 75 筆增至 87 筆（12 筆 `text-*`），新增 reading order 單元測試（容差與門檻邊界、錨點不串接、同座標、rise、空白保留、重疊、多頁與空頁、輸出上限、非水平文字）與 CLI 行為測試（usage、help／version、`-o` 成功／失敗／長檔名／目錄／`-` 開頭、U+FFFD 警告、`/dev/full`、三種新 dump 模式）。[視覺驗收](docs/pdf-visual-comparison.md#m11-完成驗收) 以手寫預期文字核對閱讀順序，並與 Poppler `pdftotext` 參考並列。兩個獨立 subagent：code review 無 blocker，minor 項目已修正；對抗式驗證以 3,000 份隨機 PDF（約 148,600 items）對照獨立 Python 實作逐 byte 一致，另有 6,600 份損壞輸入與約 55 種 CLI 參數組合，零 sanitizer 報告。
+
+已知限制：不偵測多欄；上下標超過行容差會自成一行；剛好等於 ¼ em 的間距不補空白；排序依浮點座標，極小的數值誤差可能改變邊界上的分行。舊的除錯模式（`--dump-xref`、`--dump-objects` 等）是串流輸出，失敗前可能已印出部分內容；全有或全無只保證於純文字、`--dump-content` 與 `--dump-text-items`。
 
 ## 12. v1.0 發布範圍
 
@@ -545,11 +564,13 @@ Makefile 必須允許 CC、CFLAGS、LDFLAGS、LDLIBS 覆寫。測試使用 POSIX
 
 只有下列條件全部滿足才算 v1.0：
 
-- [ ] M0–M11 的 milestone acceptance 全部通過。
-- [ ] legal fixtures 與 golden outputs 全部通過。
-- [ ] malformed 與 unsupported fixtures 的 exit code 正確。
-- [ ] make 零 warning。
-- [ ] make test 通過。
-- [ ] make asan 通過。
-- [ ] v1.0 out-of-scope feature 不會被靜默當成成功。
-- [ ] README、CLI help、error/exit-code 文件與本 roadmap 一致。
+- [x] M0–M11 的 milestone acceptance 全部通過。
+- [x] legal fixtures 與 golden outputs 全部通過。
+- [x] malformed 與 unsupported fixtures 的 exit code 正確。
+- [x] make 零 warning。
+- [x] make test 通過。
+- [x] make asan 通過。
+- [x] v1.0 out-of-scope feature 不會被靜默當成成功。
+- [x] README、CLI help、error/exit-code 文件與本 roadmap 一致。
+
+2026-09-28 全部勾選：M0–M2 見 [M2 驗收記錄](pdftext_m2_acceptance.md)，M3–M11 見各節完成狀態；87 筆 CLI fixtures 與全部單元／golden 測試通過；malformed／unsupported 的 exit code 由 fixtures 驗證；GCC 與 clang 零 warning；`make test`、`make asan` 通過；範圍外功能（xref stream、非零 Rotate、非水平文字、`/ToUnicode` 等）回報 unsupported 而非成功；[README](README.md)、`--help` 與本 roadmap 一致。`--version` 為 `pdftext 1.0.0`。

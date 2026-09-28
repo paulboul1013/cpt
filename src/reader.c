@@ -1,4 +1,7 @@
+#define _POSIX_C_SOURCE 200809L
 #include "reader.h"
+
+#include <sys/stat.h>
 
 #include <stdint.h>
 #include <stdio.h>
@@ -33,6 +36,14 @@ int reader_open_with_limits(pdf_reader *reader, const char *filename,
     if (fp==NULL) {
         pdf_error_set(error, PDF_ERROR_IO, 0, "reader",
                       "could not open input file");
+        return 0;
+    }
+
+    struct stat info;
+    if (fstat(fileno(fp), &info) != 0 || !S_ISREG(info.st_mode)) {
+        pdf_error_set(error, PDF_ERROR_IO, 0, "reader",
+                      "input is not a regular file");
+        fclose(fp);
         return 0;
     }
 

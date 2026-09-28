@@ -75,3 +75,15 @@ items-missing-resource|malformed|items:tests/fixtures/font-missing-resource.pdf|
 items-hello|unsupported|items:tests/hello.pdf|4|-|tests/golden/items-hello.stderr
 items-rotate|unsupported|items:tests/fixtures/rotate-negative.pdf|4|-|tests/golden/items-rotate.stderr
 items-transform|success|items:tests/fixtures/text-items-transform.pdf|0|tests/golden/items-transform.stdout|-
+text-reading|success|text:tests/fixtures/text-reading-order.pdf|0|tests/golden/text-reading.stdout|-
+text-winansi|success|text:tests/fixtures/font-winansi.pdf|0|tests/golden/text-winansi.stdout|tests/golden/text-winansi.stderr
+text-pages|success|text:tests/fixtures/font-pages.pdf|0|tests/golden/text-pages.stdout|-
+text-geometry|success|text:tests/fixtures/geometry-pages.pdf|0|tests/golden/text-geometry.stdout|-
+text-visual|success|text:tests/fixtures/visual-m7-text.pdf|0|tests/golden/text-visual.stdout|-
+text-flate|success|text:tests/fixtures/geometry-flate.pdf|0|tests/golden/text-flate.stdout|-
+text-no-text|success|text:tests/fixtures/pages-multi.pdf|0|-|tests/golden/text-no-text.stderr
+text-rotated|unsupported|text:tests/fixtures/text-items-transform.pdf|4|-|tests/golden/text-rotated.stderr
+text-hello|unsupported|text:tests/hello.pdf|4|-|tests/golden/text-hello.stderr
+text-later-failure|unsupported|text:tests/fixtures/font-later-failure.pdf|4|-|tests/golden/text-later-failure.stderr
+text-missing-resource|malformed|text:tests/fixtures/font-missing-resource.pdf|3|-|tests/golden/text-missing-resource.stderr
+text-not-pdf|malformed|text:tests/numbers.txt|3|-|tests/golden/text-not-pdf.stderr

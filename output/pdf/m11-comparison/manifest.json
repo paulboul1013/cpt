@@ -1,0 +1,382 @@
+{
+  "dpi": 120,
+  "versions": {
+    "pdftoppm": "pdftoppm version 24.02.0\nCopyright 2005-2024 The Poppler Developers - http://poppler.freedesktop.org\nCopyright 1996-2011, 2022 Glyph & Cog, LLC"
+  },
+  "binaries": {
+    "pdftext": "410b7a1770431cf6b7dc456fb1e0ae8812d16a1ccc3097e6bbe2178452e14390"
+  },
+  "cases": [
+    {
+      "name": "reading",
+      "source": "tests/fixtures/text-reading-order.pdf",
+      "sha256": "86f1e6b70e3bcb97e8e0c2a95892ca0ec4d54f67877c3b7c4b1a6edf7bff4e1d",
+      "commands": [
+        {
+          "command": [
+            "pdftoppm",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-singlefile",
+            "-r",
+            "120",
+            "-png",
+            "tests/fixtures/text-reading-order.pdf",
+            "output/pdf/m11-comparison/reading-page1"
+          ],
+          "exit": 0,
+          "stdout": "reading-render1.stdout",
+          "stderr": "reading-render1.stderr"
+        },
+        {
+          "command": [
+            "pdftoppm",
+            "-f",
+            "3",
+            "-l",
+            "3",
+            "-singlefile",
+            "-r",
+            "120",
+            "-png",
+            "tests/fixtures/text-reading-order.pdf",
+            "output/pdf/m11-comparison/reading-page3"
+          ],
+          "exit": 0,
+          "stdout": "reading-render3.stdout",
+          "stderr": "reading-render3.stderr"
+        },
+        {
+          "command": [
+            "pdftotext",
+            "-raw",
+            "-enc",
+            "UTF-8",
+            "tests/fixtures/text-reading-order.pdf",
+            "-"
+          ],
+          "exit": 0,
+          "stdout": "reading-raw.stdout",
+          "stderr": "reading-raw.stderr"
+        },
+        {
+          "command": [
+            "pdftotext",
+            "-layout",
+            "-enc",
+            "UTF-8",
+            "tests/fixtures/text-reading-order.pdf",
+            "-"
+          ],
+          "exit": 0,
+          "stdout": "reading-layout.stdout",
+          "stderr": "reading-layout.stderr"
+        },
+        {
+          "command": [
+            "./pdftext",
+            "tests/fixtures/text-reading-order.pdf"
+          ],
+          "exit": 0,
+          "stdout": "reading-text.stdout",
+          "stderr": "reading-text.stderr"
+        },
+        {
+          "command": [
+            "./pdftext",
+            "--dump-text-items",
+            "tests/fixtures/text-reading-order.pdf"
+          ],
+          "exit": 0,
+          "stdout": "reading-items.stdout",
+          "stderr": "reading-items.stderr"
+        }
+      ],
+      "expected_match": true
+    },
+    {
+      "name": "winansi",
+      "source": "tests/fixtures/font-winansi.pdf",
+      "sha256": "89cf909c90d089cc3860783556b559b8e23882cc4e11318bd09150d8caf2b14a",
+      "commands": [
+        {
+          "command": [
+            "pdftoppm",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-singlefile",
+            "-r",
+            "120",
+            "-png",
+            "tests/fixtures/font-winansi.pdf",
+            "output/pdf/m11-comparison/winansi-page1"
+          ],
+          "exit": 0,
+          "stdout": "winansi-render1.stdout",
+          "stderr": "winansi-render1.stderr"
+        },
+        {
+          "command": [
+            "pdftotext",
+            "-raw",
+            "-enc",
+            "UTF-8",
+            "tests/fixtures/font-winansi.pdf",
+            "-"
+          ],
+          "exit": 0,
+          "stdout": "winansi-raw.stdout",
+          "stderr": "winansi-raw.stderr"
+        },
+        {
+          "command": [
+            "pdftotext",
+            "-layout",
+            "-enc",
+            "UTF-8",
+            "tests/fixtures/font-winansi.pdf",
+            "-"
+          ],
+          "exit": 0,
+          "stdout": "winansi-layout.stdout",
+          "stderr": "winansi-layout.stderr"
+        },
+        {
+          "command": [
+            "./pdftext",
+            "tests/fixtures/font-winansi.pdf"
+          ],
+          "exit": 0,
+          "stdout": "winansi-text.stdout",
+          "stderr": "winansi-text.stderr"
+        },
+        {
+          "command": [
+            "./pdftext",
+            "--dump-text-items",
+            "tests/fixtures/font-winansi.pdf"
+          ],
+          "exit": 0,
+          "stdout": "winansi-items.stdout",
+          "stderr": "winansi-items.stderr"
+        }
+      ],
+      "expected_match": true
+    },
+    {
+      "name": "rotated",
+      "source": "tests/fixtures/text-items-transform.pdf",
+      "sha256": "b3711835779436f66b36e078ba40da0b851265d96a1691b55fbf3ae6e5bfdc47",
+      "commands": [
+        {
+          "command": [
+            "pdftoppm",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-singlefile",
+            "-r",
+            "120",
+            "-png",
+            "tests/fixtures/text-items-transform.pdf",
+            "output/pdf/m11-comparison/rotated-page1"
+          ],
+          "exit": 0,
+          "stdout": "rotated-render1.stdout",
+          "stderr": "rotated-render1.stderr"
+        },
+        {
+          "command": [
+            "pdftotext",
+            "-raw",
+            "-enc",
+            "UTF-8",
+            "tests/fixtures/text-items-transform.pdf",
+            "-"
+          ],
+          "exit": 0,
+          "stdout": "rotated-raw.stdout",
+          "stderr": "rotated-raw.stderr"
+        },
+        {
+          "command": [
+            "pdftotext",
+            "-layout",
+            "-enc",
+            "UTF-8",
+            "tests/fixtures/text-items-transform.pdf",
+            "-"
+          ],
+          "exit": 0,
+          "stdout": "rotated-layout.stdout",
+          "stderr": "rotated-layout.stderr"
+        },
+        {
+          "command": [
+            "./pdftext",
+            "tests/fixtures/text-items-transform.pdf"
+          ],
+          "exit": 4,
+          "stdout": "rotated-text.stdout",
+          "stderr": "rotated-text.stderr"
+        },
+        {
+          "command": [
+            "./pdftext",
+            "--dump-text-items",
+            "tests/fixtures/text-items-transform.pdf"
+          ],
+          "exit": 0,
+          "stdout": "rotated-items.stdout",
+          "stderr": "rotated-items.stderr"
+        }
+      ]
+    },
+    {
+      "name": "hello",
+      "source": "tests/hello.pdf",
+      "sha256": "137bfd835346e04270cb07c95749b058802cc5a02b376d7091b7618adefb4f67",
+      "commands": [
+        {
+          "command": [
+            "pdftoppm",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-singlefile",
+            "-r",
+            "120",
+            "-png",
+            "tests/hello.pdf",
+            "output/pdf/m11-comparison/hello-page1"
+          ],
+          "exit": 0,
+          "stdout": "hello-render1.stdout",
+          "stderr": "hello-render1.stderr"
+        },
+        {
+          "command": [
+            "pdftotext",
+            "-raw",
+            "-enc",
+            "UTF-8",
+            "tests/hello.pdf",
+            "-"
+          ],
+          "exit": 0,
+          "stdout": "hello-raw.stdout",
+          "stderr": "hello-raw.stderr"
+        },
+        {
+          "command": [
+            "pdftotext",
+            "-layout",
+            "-enc",
+            "UTF-8",
+            "tests/hello.pdf",
+            "-"
+          ],
+          "exit": 0,
+          "stdout": "hello-layout.stdout",
+          "stderr": "hello-layout.stderr"
+        },
+        {
+          "command": [
+            "./pdftext",
+            "tests/hello.pdf"
+          ],
+          "exit": 4,
+          "stdout": "hello-text.stdout",
+          "stderr": "hello-text.stderr"
+        },
+        {
+          "command": [
+            "./pdftext",
+            "--dump-text-items",
+            "tests/hello.pdf"
+          ],
+          "exit": 4,
+          "stdout": "hello-items.stdout",
+          "stderr": "hello-items.stderr"
+        }
+      ]
+    },
+    {
+      "name": "compilerbook",
+      "source": "tests/compilerbook.pdf",
+      "sha256": "a48c8a537f9ee862d3caa1f2f893d713ffeb23ba8143420b7c0e02a2ca0e8733",
+      "commands": [
+        {
+          "command": [
+            "pdftoppm",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-singlefile",
+            "-r",
+            "120",
+            "-png",
+            "tests/compilerbook.pdf",
+            "output/pdf/m11-comparison/compilerbook-page1"
+          ],
+          "exit": 0,
+          "stdout": "compilerbook-render1.stdout",
+          "stderr": "compilerbook-render1.stderr"
+        },
+        {
+          "command": [
+            "pdftotext",
+            "-raw",
+            "-enc",
+            "UTF-8",
+            "tests/compilerbook.pdf",
+            "-"
+          ],
+          "exit": 0,
+          "stdout": "compilerbook-raw.stdout",
+          "stderr": "compilerbook-raw.stderr"
+        },
+        {
+          "command": [
+            "pdftotext",
+            "-layout",
+            "-enc",
+            "UTF-8",
+            "tests/compilerbook.pdf",
+            "-"
+          ],
+          "exit": 0,
+          "stdout": "compilerbook-layout.stdout",
+          "stderr": "compilerbook-layout.stderr"
+        },
+        {
+          "command": [
+            "./pdftext",
+            "tests/compilerbook.pdf"
+          ],
+          "exit": 4,
+          "stdout": "compilerbook-text.stdout",
+          "stderr": "compilerbook-text.stderr"
+        },
+        {
+          "command": [
+            "./pdftext",
+            "--dump-text-items",
+            "tests/compilerbook.pdf"
+          ],
+          "exit": 4,
+          "stdout": "compilerbook-items.stdout",
+          "stderr": "compilerbook-items.stderr"
+        }
+      ]
+    }
+  ],
+  "pass": true
+}
