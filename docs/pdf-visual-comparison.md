@@ -1,5 +1,7 @@
 # PDF 畫面與實際解析結果對照
 
+> 各節是該 milestone 驗收當下的快照：「尚未實作」「尚未進入」等描述指當時狀態。v1.0 現況以 [roadmap](../pdftext_roadmap.md) 與最後的「M11 完成驗收」為準。
+
 [開啟左右對照報告](../output/pdf/m7-comparison/index.html)：左側是原始 PDF 第 1 頁的實際渲染，右側是本專案 CLI、M7 visitor 診斷 trace 與 Poppler 參考文字。點擊圖片可查看完整解析度。
 
 本節保留 M7 基線；最新 M8 實作與座標驗收見下方「M8 完成驗收」。M7 基線的三種證據分開標示：
@@ -72,7 +74,7 @@ content: unsupported error at byte 7437: decoded byte 4: content operator is not
 
 ## 現有 compilerbook.pdf
 
-來源：本機 `tests/compilerbook.pdf`，原本未追蹤；只渲染及提取第 1 頁參考，不複製整本 PDF 到報告，也不自動加入 git。
+來源：本機 `tests/compilerbook.pdf`，已列入 `.gitignore`，不隨 repo 散布；重跑對照前需自行放置此檔。只渲染及提取第 1 頁參考，不複製整本 PDF 到報告。
 
 ![compilerbook.pdf 第 1 頁實際渲染](../output/pdf/m7-comparison/compilerbook-page1.png)
 

@@ -1,6 +1,8 @@
 # pdftext：M2 Object Parser 驗收記錄
 
 > M2 已於 2026-08-24 完成 release acceptance。本文件保留當時的實作邊界、核心契約與驗收證據；後續架構與下一個 M3 規劃以 [架構與 Roadmap](pdftext_roadmap.md) 為準。
+>
+> 本文件描述的 CLI 是 M2 當時的介面：M11 起不帶選項改為純文字輸出，舊的無選項物件 dump 改名為 `--dump-objects`；現行 CLI 見 [README](README.md)。
 
 ## 1. 文件定位
 

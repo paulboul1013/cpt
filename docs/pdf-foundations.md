@@ -49,8 +49,8 @@ trailer << /Root 1 0 R ... >>
 
 ## 3. xref、更新與兩種儲存方式
 
-- **傳統 xref table** 記錄物件編號、generation、offset，以及使用中／已釋放狀態；`trailer` 在表格之後。這是目前 `pdftext` M4 的範圍。
-- **xref stream** 從 PDF 1.5 起可將交叉參照資訊放進 stream；不能假設每個有效 PDF 都有純文字 `xref` 關鍵字。PDF 1.5 起的 **object stream** 還能容納多個非 stream 物件。
+- **傳統 xref table** 記錄物件編號、generation、offset，以及使用中／已釋放狀態；`trailer` 在表格之後。`pdftext` v1.0 只支援這種形式（M4 起）。
+- **xref stream** 從 PDF 1.5 起可將交叉參照資訊放進 stream（`pdftext` v1.0 回報 unsupported）；不能假設每個有效 PDF 都有純文字 `xref` 關鍵字。PDF 1.5 起的 **object stream** 還能容納多個非 stream 物件。
 - **增量更新**把新的物件、xref 與 trailer 加在檔尾；新 trailer 的 `/Prev` 指向前一版 xref。讀取時須從最新版本往前追，並以較新的物件定義為準。舊位元組仍可能存在於檔案中。
 
 [來源：PDF Association《PDF Basics Cheat Sheet》第 1–2 頁](https://pdfa.org/wp-content/uploads/2023/08/PDF-Basics-CheatSheet.pdf)、[Adobe《PDF Reference 1.7》§3.4.5、§3.4.6、§3.4.7](https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/pdfreference1.7old.pdf)

@@ -1,0 +1,12 @@
+# Build outputs
+/pdftext
+/pdftext-asan
+/tests/*-test
+/tests/*-test-asan
+
+# Local visual-comparison input (not redistributed; see docs/pdf-visual-comparison.md)
+/tests/compilerbook.pdf
+
+# Windows download markers and local tool caches
+*:Zone.Identifier
+/.understand-anything/

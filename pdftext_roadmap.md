@@ -415,7 +415,7 @@ width 依 glyph width、font size 與 horizontal scale 計算。
 
 ### M11 政策（實作契約）
 
-- **CLI**：不帶模式即純文字模式。舊的無選項物件 dump 改名 `--dump-objects`，行為不變。`--help` 寫 stdout、exit 0；`--version` 印版本（開發期 `1.0.0-dev`，Release Gate 通過後為 `1.0.0`）。`--dump-header` 印 header 版本；`--dump-trailer` 印 trailer dictionary；`--dump-object N` 以 xref 的 generation 解析 object N。未知選項、缺檔名、多個模式、N 非正整數、`-o` 搭配 dump 模式、`-o` 重複：usage 寫 stderr、exit 1。
+- **CLI**：不帶模式即純文字模式。舊的無選項物件 dump 改名 `--dump-objects`，行為不變。`--help` 寫 stdout、exit 0；`--version` 印 `pdftext 1.0.0`。`--dump-header` 印 header 版本；`--dump-trailer` 印 trailer dictionary；`--dump-object N` 以 xref 的 generation 解析 object N。未知選項、缺檔名、多個模式、N 非正整數、`-o` 搭配 dump 模式、`-o` 重複：usage 寫 stderr、exit 1。
 - **`-o FILE`**：在 FILE 同一目錄建立隱藏暫存檔（`.pdftext-XXXXXX`），完整寫入、fsync 並關閉成功後 rename 成 FILE；任何失敗刪除暫存檔、不改動原有 FILE，錯誤為 io（exit 2）。新檔權限依 umask。FILE 若是 symlink，會被替換成一般檔案（rename 語意），不寫入其指向的檔案。FILE 不可以 `-` 開頭（請寫 `./-name`），`-o` 出現在 `--` 之後視為檔名。stdout 不輸出文字。所有模式成功後若 stdout 寫入失敗（例如磁碟滿、pipe 關閉）一律 exit 2。
 - **字級基準**：所有容差與門檻使用 M10 的 `effective_size`。
 - **分行**：每頁內依 y 由大到小（同 y 依 sequence）排序後分群；item 與該行錨點（行內第一個 item）的 y 差不超過 `max(1.5, min(錨點字級, item 字級) × 0.25)` 即併入，否則開新行。行內依 x 由小到大，x 相同依 sequence。不偵測多欄；rise 不特別處理。

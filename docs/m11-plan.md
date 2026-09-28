@@ -1,5 +1,7 @@
 # M11 實作計畫：Reading Order、純文字輸出與正式 CLI
 
+> 已完成（v1.0.0，2026-09-28）。下方「建議政策」是計畫原文，其中 `1.0.0-dev` 等過渡描述已由結果取代；現行行為以 [roadmap M11](../pdftext_roadmap.md#11-m11reading-order-與-cli) 與程式為準。
+
 ## 目標與授權範圍
 
 使用者已確認下方全部建議政策（特別確認 D2 非水平文字整份失敗、A5 dump 寫 stdout），並追加 `-o FILE` 原子寫入。範圍以 [roadmap M11](../pdftext_roadmap.md#11-m11reading-order-與-cli)、[v1.0 發布範圍](../pdftext_roadmap.md#12-v10-發布範圍)、[Common Contracts](../pdftext_roadmap.md#14-common-contracts) 與 [Release Gate](../pdftext_roadmap.md#16-release-gate) 為準。上游介面是 [text_items.h](../src/text_items.h)（M10，`989a986`）。
