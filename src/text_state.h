@@ -50,6 +50,9 @@ int pdf_text_state_snapshot(const pdf_text_state *, pdf_text_snapshot *);
  * failure partial diagnostic bytes may exist: call only after staged success.
  * Error offset is event decoded offset; no content/file offset translation. */
 int pdf_text_event_dump(FILE *, const pdf_text_event *, size_t page, pdf_error *);
+/* Shared M8 page policy: reject nonzero effective Rotate (and NULL page) at
+ * page_offset. Used by every page-level geometry entry, including M9. */
+int pdf_text_page_check(const pdf_page *, size_t page_offset, pdf_error *);
 /* Fresh state per page; borrowed decoded Contents (already concatenated by M6).
  * Reject nonzero effective Rotate at page_offset; caller passes Page ref offset.
  * No page dictionary parsing, decoding, stdout, or rollback of prior events. */

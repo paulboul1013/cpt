@@ -310,6 +310,24 @@ Raw PDF string 是編碼後的 bytes，不等於 UTF-8；文字必須經 font de
 
 沒有可用 metrics 時回報 unsupported font metrics，不猜測固定寬度；暫不支援 kerning。
 
+### M9 支援政策（實作契約）
+
+- **Simple Font 範圍**：水平、單 byte 的 `/Type1` 與 `/TrueType`。`/Type3`（FontMatrix／CharProcs 不適用 width_1000 seam）、`/MMType1`、Type0／CIDFont 與未知 subtype 為 unsupported。Font dictionary 需 `/Type /Font`、name `/Subtype`、name `/BaseFont`；缺欄位、錯型或 stream 當 dictionary 為 malformed。`/BaseFont` 為 Symbol／ZapfDingbats（含六個大寫字母加 `+` 的 subset prefix）為 unsupported；BaseFont 不當作 resource name 或 cache key。
+- **Encoding**：`/WinAnsiEncoding` name，或 `/BaseEncoding /WinAnsiEncoding` 且無 `/Differences` 的 dictionary（`/Type` 若存在須為 `/Encoding`）。含 `/Differences`（即使空 array）、缺 BaseEncoding、MacRoman／MacExpert／Standard／其他 encoding 為 unsupported，錯型 malformed；明示的 unsupported encoding 不退回 ASCII。無 `/Encoding` 時採專案 ASCII fallback：0x20–0x7E 直接映射、其餘 U+FFFD，診斷標為 `ascii-fallback`，不宣稱讀懂 font builtin encoding。
+- **WinAnsi → Unicode**：固定 256-code 表（PDF Reference Appendix D + Adobe Glyph List），不用 locale／iconv。0x80–0x9F 依 WinAnsi 字符；0x7F、0x81、0x8D、0x8F、0x90、0x9D 映成 U+2022；0x00–0x1F 為 U+FFFD。0xA0 保留 U+00A0、0xAD 保留 U+00AD，不做正規化。每 byte 一個 scalar，不展開 ligature、不做 normalization、kerning 或 synthetic space。
+- **`/ToUnicode`、symbolic、embedded program**：font 有 `/ToUnicode` 即 unsupported；`/FontDescriptor /Flags` 若存在須為 integer，Symbolic bit（4）設定即 unsupported。不讀 FontFile／FontFile2／FontFile3、cmap 或 OS 字型；也不內建 Standard 14 AFM。
+- **字寬**：`/FirstChar`、`/LastChar`、`/Widths` 三者同時存在，`0 <= FirstChar <= LastChar <= 255`，Widths 恰好 `LastChar-FirstChar+1` 個有限數值；部分缺少、錯型或長度不符為 malformed，三者皆缺為 unsupported font metrics。範圍內用 `Widths[code-FirstChar]`；範圍外若有 FontDescriptor，用 explicit `/MissingWidth`，省略則為規格 default 0（provenance `descriptor-default-zero`）；沒有 descriptor 為 unsupported font metrics。零與負寬度合法。字寬永遠以原始 code 查找，與 UTF-8 長度無關；M8 的 Tw 仍只施於原始 0x20。
+- **Reference 與定位**：所有欄位可 direct 或 indirect，ref chain 以 `max_nesting_depth` 限制並偵測 cycle（malformed）。Font library 錯誤定位最近的 indirect object，否則 Resources／Page；整頁 bridge 由 M7 包成 Page offset，訊息保留 `decoded byte N: font byte M`。
+- **輸出 budget**：單一 string 的 UTF-8 長度上限沿用 `max_token_size`；整份文件暫存 UTF-8 累積上限沿用 `max_total_decoded_size`，與 M6 decoded contents 各自計數；decoded event 總數跨頁以 `max_container_entries` 限制；resource name binding cache 亦以其限制。
+
+### M9 完成狀態與交接
+
+`src/font.[ch]` 以每頁 font context 解析 `/Resources /Font`（length-aware name、direct／indirect 欄位、有界 ref chain 與 cycle 偵測、transactional name／indirect-ref cache），提供常數時間 width（含 provenance）與 caller-owned UTF-8 decode。`src/font_text.[ch]` 是整頁 bridge：同一 M7 operation 序列交給 M8，成功 Tf／Q 後重新選取 active font，metrics 與 decode 使用同一 handle，輸出借用的 decoded event（raw geometry + UTF-8 + replacement count）；Rotate 檢查抽成共用 `pdf_text_page_check`。`--dump-content` 等既有 CLI 不變，未新增產品純文字模式。
+
+驗收：`make -B test`、`make -B asan`（ASan／UBSan／LeakSanitizer）全部通過，編譯器零 warning。新增 font 單元測試（policy／error 分類與定位、ref cycle／depth、cache 與 token 限制、256 codes WinAnsi 全表、MissingWidth provenance）、bridge 整合測試（手算案例 1–6、q/Q 巢狀、跨 Contents stream、Tf 必驗證、文件級 UTF-8／event budget、consumer 錯誤保留）與 staged probe goldens；真實 adapter 下的 M8 fixtures raw geometry 與 M8 golden 逐 byte 相同。[視覺驗收](docs/pdf-visual-comparison.md#m9-完成驗收) 以 Poppler 實際渲染字型的 advance 與 cp1252 獨立核對 13 個 strings 的 bytes／Unicode／geometry，並人工查看 overlay。獨立 subagent code review 無 blocker，minor 項目已修正。
+
+尚未覆蓋：allocation-failure injection（沒有 malloc fault 注入設施）；本機沒有逗號小數 locale，locale 測試會明示 skip。M10 應消費 `pdf_font_text_event`（複製所需欄位），不重新解析字型；glyph bbox、閱讀順序與純文字 CLI 仍屬 M10／M11。
+
 ## 10. M10：TextItem
 
 不要在 Tj 或 TJ 直接寫 stdout。第一版以文字顯示操作為粒度：

@@ -195,15 +195,20 @@ int pdf_text_state_visit(void *context,const pdf_content_operation *op,pdf_error
     }
 }
 
-int pdf_text_page_interpret(const pdf_page *page,const unsigned char *data,size_t len,
-    const pdf_limits *limits,size_t page_offset,pdf_text_metrics metrics,void *mc,
-    pdf_text_consumer consumer,void *cc,pdf_error *e) {
+int pdf_text_page_check(const pdf_page *page,size_t page_offset,pdf_error *e) {
     if (!e || e->code!=PDF_ERROR_NONE) return 0;
     if (!page) { pdf_error_set(e,PDF_ERROR_IO,page_offset,"text-state","missing page"); return 0; }
     if (page->rotation != 0) {
         pdf_error_set(e,PDF_ERROR_UNSUPPORTED,page_offset,"text-state","unsupported page rotation");
         return 0;
     }
+    return 1;
+}
+
+int pdf_text_page_interpret(const pdf_page *page,const unsigned char *data,size_t len,
+    const pdf_limits *limits,size_t page_offset,pdf_text_metrics metrics,void *mc,
+    pdf_text_consumer consumer,void *cc,pdf_error *e) {
+    if (!pdf_text_page_check(page,page_offset,e)) return 0;
     pdf_text_state *s=pdf_text_state_create(limits,metrics,mc,consumer,cc,e);
     if (!s) return 0;
     pdf_content_result result;

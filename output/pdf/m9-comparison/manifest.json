@@ -1,0 +1,1063 @@
+{
+  "dpi": 120,
+  "tolerance": {
+    "absolute": 1e-08,
+    "relative": 1e-09,
+    "visual_pixels": 2
+  },
+  "adapter": "real M9 font adapter (src/font.c) through tests/font-text-test staged probe",
+  "versions": {
+    "pdftoppm": "pdftoppm version 24.02.0\nCopyright 2005-2024 The Poppler Developers - http://poppler.freedesktop.org\nCopyright 1996-2011, 2022 Glyph & Cog, LLC"
+  },
+  "render_fonts": {
+    "Helvetica": "/usr/share/fonts/opentype/urw-base35/NimbusSans-Regular.otf",
+    "Courier": "/usr/share/fonts/opentype/urw-base35/NimbusMonoPS-Regular.otf"
+  },
+  "afm_reference": "/mnt/c/Users/USER/AppData/Local/Programs/Python/Python311/Lib/site-packages/matplotlib/mpl-data/fonts/afm/phvr8a.afm",
+  "width_check": {
+    "codes": 224,
+    "mismatches": []
+  },
+  "binaries": {
+    "pdftext": "09eb30836bd1ce40f41e82af38afca9449c786810baec78872ff4c8f0031cbc4",
+    "tests/font-text-test": "9cbb1964e93ef9edb67ba9bb12a2034dcc33a43ce06130cd4acfdc83514aee4f"
+  },
+  "cases": [
+    {
+      "name": "winansi",
+      "source": "tests/fixtures/font-winansi.pdf",
+      "sha256": "89cf909c90d089cc3860783556b559b8e23882cc4e11318bd09150d8caf2b14a",
+      "commands": [
+        {
+          "command": [
+            "pdftoppm",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-singlefile",
+            "-r",
+            "120",
+            "-png",
+            "tests/fixtures/font-winansi.pdf",
+            "output/pdf/m9-comparison/winansi-page1"
+          ],
+          "exit": 0,
+          "stdout": "winansi-render1.stdout",
+          "stderr": "winansi-render1.stderr"
+        },
+        {
+          "command": [
+            "pdfinfo",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-box",
+            "tests/fixtures/font-winansi.pdf"
+          ],
+          "exit": 0,
+          "stdout": "winansi-info.stdout",
+          "stderr": "winansi-info.stderr"
+        },
+        {
+          "command": [
+            "pdftotext",
+            "-raw",
+            "-enc",
+            "UTF-8",
+            "tests/fixtures/font-winansi.pdf",
+            "-"
+          ],
+          "exit": 0,
+          "stdout": "winansi-reference.stdout",
+          "stderr": "winansi-reference.stderr"
+        },
+        {
+          "command": [
+            "./pdftext",
+            "--dump-content",
+            "tests/fixtures/font-winansi.pdf"
+          ],
+          "exit": 0,
+          "stdout": "winansi-cpt.stdout",
+          "stderr": "winansi-cpt.stderr"
+        },
+        {
+          "command": [
+            "./tests/font-text-test",
+            "tests/fixtures/font-winansi.pdf"
+          ],
+          "exit": 0,
+          "stdout": "winansi-trace.stdout",
+          "stderr": "winansi-trace.stderr"
+        }
+      ],
+      "page_attributes": "Custom Metadata: no\nMetadata Stream: no\nTagged:          no\nUserProperties:  no\nSuspects:        no\nForm:            none\nJavaScript:      no\nPages:           1\nEncrypted:       no\nPage    1 size:  400 x 240 pts\nPage    1 rot:   0\nPage    1 MediaBox:      0.00     0.00   400.00   240.00\nPage    1 CropBox:       0.00     0.00   400.00   240.00\nPage    1 BleedBox:      0.00     0.00   400.00   240.00\nPage    1 TrimBox:       0.00     0.00   400.00   240.00\nPage    1 ArtBox:        0.00     0.00   400.00   240.00\nFile size:       2622 bytes\nOptimized:       no\nPDF version:     1.4\n",
+      "comparison": [
+        {
+          "page": 1,
+          "raw_hex": "48656c766574696361204156415769696c2030313233",
+          "expected_utf8": "48656c766574696361204156415769696c2030313233",
+          "actual_utf8": "48656c766574696361204156415769696c2030313233",
+          "replacements": 0,
+          "width_sources": [
+            "widths"
+          ],
+          "expected": [
+            24,
+            204,
+            189.054,
+            0,
+            18,
+            0,
+            0,
+            18,
+            24,
+            204
+          ],
+          "actual": [
+            24.0,
+            204.0,
+            189.054,
+            0.0,
+            18.0,
+            0.0,
+            0.0,
+            18.0,
+            24.0,
+            204.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "bytes_ok": true,
+          "unicode_ok": true,
+          "geometry_ok": true,
+          "pass": true
+        },
+        {
+          "page": 1,
+          "raw_hex": "80209171922093649420962097",
+          "expected_utf8": "e282ac20e2809871e2809920e2809c64e2809d20e2809320e28094",
+          "actual_utf8": "e282ac20e2809871e2809920e2809c64e2809d20e2809320e28094",
+          "replacements": 0,
+          "width_sources": [
+            "widths"
+          ],
+          "expected": [
+            24,
+            176,
+            87.13600000000001,
+            0,
+            16,
+            0,
+            0,
+            16,
+            24,
+            176
+          ],
+          "actual": [
+            24.0,
+            176.0,
+            87.136,
+            0.0,
+            16.0,
+            0.0,
+            0.0,
+            16.0,
+            24.0,
+            176.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            -1.4210854715202004e-14,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "bytes_ok": true,
+          "unicode_ok": true,
+          "geometry_ok": true,
+          "pass": true
+        },
+        {
+          "page": 1,
+          "raw_hex": "636166e9208c75767265209c756620952085",
+          "expected_utf8": "636166c3a920c5927576726520c593756620e280a220e280a6",
+          "actual_utf8": "636166c3a920c5927576726520c593756620e280a220e280a6",
+          "replacements": 0,
+          "width_sources": [
+            "widths"
+          ],
+          "expected": [
+            24,
+            150,
+            145.20000000000002,
+            0,
+            16,
+            0,
+            0,
+            16,
+            24,
+            150
+          ],
+          "actual": [
+            24.0,
+            150.0,
+            145.2,
+            0.0,
+            16.0,
+            0.0,
+            0.0,
+            16.0,
+            24.0,
+            150.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            -2.842170943040401e-14,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "bytes_ok": true,
+          "unicode_ok": true,
+          "geometry_ok": true,
+          "pass": true
+        },
+        {
+          "page": 1,
+          "raw_hex": "7f818d8f909d",
+          "expected_utf8": "e280a2e280a2e280a2e280a2e280a2e280a2",
+          "actual_utf8": "e280a2e280a2e280a2e280a2e280a2e280a2",
+          "replacements": 0,
+          "width_sources": [
+            "widths"
+          ],
+          "expected": [
+            24,
+            124,
+            33.599999999999994,
+            0,
+            16,
+            0,
+            0,
+            16,
+            24,
+            124
+          ],
+          "actual": [
+            24.0,
+            124.0,
+            33.6,
+            0.0,
+            16.0,
+            0.0,
+            0.0,
+            16.0,
+            24.0,
+            124.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            7.105427357601002e-15,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "bytes_ok": true,
+          "unicode_ok": true,
+          "geometry_ok": true,
+          "pass": true
+        },
+        {
+          "page": 1,
+          "raw_hex": "412042a043ad44",
+          "expected_utf8": "412042c2a043c2ad44",
+          "actual_utf8": "412042c2a043c2ad44",
+          "replacements": 0,
+          "width_sources": [
+            "widths"
+          ],
+          "expected": [
+            24,
+            98,
+            63.672000000000004,
+            0,
+            16,
+            0,
+            0,
+            16,
+            24,
+            98
+          ],
+          "actual": [
+            24.0,
+            98.0,
+            63.672,
+            0.0,
+            16.0,
+            0.0,
+            0.0,
+            16.0,
+            24.0,
+            98.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            -7.105427357601002e-15,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "bytes_ok": true,
+          "unicode_ok": true,
+          "geometry_ok": true,
+          "pass": true
+        },
+        {
+          "page": 1,
+          "raw_hex": "410042",
+          "expected_utf8": "41efbfbd42",
+          "actual_utf8": "41efbfbd42",
+          "replacements": 1,
+          "width_sources": [
+            "descriptor-default-zero",
+            "widths"
+          ],
+          "expected": [
+            24,
+            72,
+            21.344,
+            0,
+            16,
+            0,
+            0,
+            16,
+            24,
+            72
+          ],
+          "actual": [
+            24.0,
+            72.0,
+            21.344,
+            0.0,
+            16.0,
+            0.0,
+            0.0,
+            16.0,
+            24.0,
+            72.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "bytes_ok": true,
+          "unicode_ok": true,
+          "geometry_ok": true,
+          "pass": true
+        },
+        {
+          "page": 1,
+          "raw_hex": "57",
+          "expected_utf8": "57",
+          "actual_utf8": "57",
+          "replacements": 0,
+          "width_sources": [
+            "widths"
+          ],
+          "expected": [
+            45.344,
+            72,
+            15.104,
+            0,
+            16,
+            0,
+            0,
+            16,
+            45.344,
+            72
+          ],
+          "actual": [
+            45.344,
+            72.0,
+            15.104,
+            0.0,
+            16.0,
+            0.0,
+            0.0,
+            16.0,
+            45.344,
+            72.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "bytes_ok": true,
+          "unicode_ok": true,
+          "geometry_ok": true,
+          "pass": true
+        },
+        {
+          "page": 1,
+          "raw_hex": "41",
+          "expected_utf8": "41",
+          "actual_utf8": "41",
+          "replacements": 0,
+          "width_sources": [
+            "widths"
+          ],
+          "expected": [
+            59.168,
+            72,
+            10.672,
+            0,
+            16,
+            0,
+            0,
+            16,
+            59.168,
+            72
+          ],
+          "actual": [
+            59.168,
+            72.0,
+            10.672,
+            0.0,
+            16.0,
+            0.0,
+            0.0,
+            16.0,
+            59.168,
+            72.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "bytes_ok": true,
+          "unicode_ok": true,
+          "geometry_ok": true,
+          "pass": true
+        },
+        {
+          "page": 1,
+          "raw_hex": "56",
+          "expected_utf8": "56",
+          "actual_utf8": "56",
+          "replacements": 0,
+          "width_sources": [
+            "widths"
+          ],
+          "expected": [
+            71.76,
+            72,
+            10.672,
+            0,
+            16,
+            0,
+            0,
+            16,
+            71.76,
+            72
+          ],
+          "actual": [
+            71.76,
+            72.0,
+            10.672,
+            0.0,
+            16.0,
+            0.0,
+            0.0,
+            16.0,
+            71.76,
+            72.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "bytes_ok": true,
+          "unicode_ok": true,
+          "geometry_ok": true,
+          "pass": true
+        },
+        {
+          "page": 1,
+          "raw_hex": "436f7572696572204153434949",
+          "expected_utf8": "436f7572696572204153434949",
+          "actual_utf8": "436f7572696572204153434949",
+          "replacements": 0,
+          "width_sources": [
+            "widths"
+          ],
+          "expected": [
+            24,
+            44,
+            93.6,
+            0,
+            12,
+            0,
+            0,
+            12,
+            24,
+            44
+          ],
+          "actual": [
+            24.0,
+            44.0,
+            93.6,
+            0.0,
+            12.0,
+            0.0,
+            0.0,
+            12.0,
+            24.0,
+            44.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "bytes_ok": true,
+          "unicode_ok": true,
+          "geometry_ok": true,
+          "pass": true
+        },
+        {
+          "page": 1,
+          "raw_hex": "526573746f7265642048656c766574696361",
+          "expected_utf8": "526573746f7265642048656c766574696361",
+          "actual_utf8": "526573746f7265642048656c766574696361",
+          "replacements": 0,
+          "width_sources": [
+            "widths"
+          ],
+          "expected": [
+            24,
+            20,
+            101.364,
+            0,
+            12,
+            0,
+            0,
+            12,
+            24,
+            20
+          ],
+          "actual": [
+            24.0,
+            20.0,
+            101.364,
+            0.0,
+            12.0,
+            0.0,
+            0.0,
+            12.0,
+            24.0,
+            20.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "bytes_ok": true,
+          "unicode_ok": true,
+          "geometry_ok": true,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "name": "pages",
+      "source": "tests/fixtures/font-pages.pdf",
+      "sha256": "8676d6552e3354a19bde647bcaa5be8c6e39427363fb2c94faa402b801714952",
+      "commands": [
+        {
+          "command": [
+            "pdftoppm",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-singlefile",
+            "-r",
+            "120",
+            "-png",
+            "tests/fixtures/font-pages.pdf",
+            "output/pdf/m9-comparison/pages-page1"
+          ],
+          "exit": 0,
+          "stdout": "pages-render1.stdout",
+          "stderr": "pages-render1.stderr"
+        },
+        {
+          "command": [
+            "pdftoppm",
+            "-f",
+            "2",
+            "-l",
+            "2",
+            "-singlefile",
+            "-r",
+            "120",
+            "-png",
+            "tests/fixtures/font-pages.pdf",
+            "output/pdf/m9-comparison/pages-page2"
+          ],
+          "exit": 0,
+          "stdout": "pages-render2.stdout",
+          "stderr": "pages-render2.stderr"
+        },
+        {
+          "command": [
+            "pdfinfo",
+            "-f",
+            "1",
+            "-l",
+            "2",
+            "-box",
+            "tests/fixtures/font-pages.pdf"
+          ],
+          "exit": 0,
+          "stdout": "pages-info.stdout",
+          "stderr": "pages-info.stderr"
+        },
+        {
+          "command": [
+            "pdftotext",
+            "-raw",
+            "-enc",
+            "UTF-8",
+            "tests/fixtures/font-pages.pdf",
+            "-"
+          ],
+          "exit": 0,
+          "stdout": "pages-reference.stdout",
+          "stderr": "pages-reference.stderr"
+        },
+        {
+          "command": [
+            "./pdftext",
+            "--dump-content",
+            "tests/fixtures/font-pages.pdf"
+          ],
+          "exit": 0,
+          "stdout": "pages-cpt.stdout",
+          "stderr": "pages-cpt.stderr"
+        },
+        {
+          "command": [
+            "./tests/font-text-test",
+            "tests/fixtures/font-pages.pdf"
+          ],
+          "exit": 0,
+          "stdout": "pages-trace.stdout",
+          "stderr": "pages-trace.stderr"
+        }
+      ],
+      "page_attributes": "Custom Metadata: no\nMetadata Stream: no\nTagged:          no\nUserProperties:  no\nSuspects:        no\nForm:            none\nJavaScript:      no\nPages:           2\nEncrypted:       no\nPage    1 size:  400 x 240 pts\nPage    1 rot:   0\nPage    2 size:  400 x 240 pts\nPage    2 rot:   0\nPage    1 MediaBox:      0.00     0.00   400.00   240.00\nPage    1 CropBox:       0.00     0.00   400.00   240.00\nPage    1 BleedBox:      0.00     0.00   400.00   240.00\nPage    1 TrimBox:       0.00     0.00   400.00   240.00\nPage    1 ArtBox:        0.00     0.00   400.00   240.00\nPage    2 MediaBox:      0.00     0.00   400.00   240.00\nPage    2 CropBox:       0.00     0.00   400.00   240.00\nPage    2 BleedBox:      0.00     0.00   400.00   240.00\nPage    2 TrimBox:       0.00     0.00   400.00   240.00\nPage    2 ArtBox:        0.00     0.00   400.00   240.00\nFile size:       2400 bytes\nOptimized:       no\nPDF version:     1.4\n",
+      "comparison": [
+        {
+          "page": 1,
+          "raw_hex": "53616d65206e616d65204157",
+          "expected_utf8": "53616d65206e616d65204157",
+          "actual_utf8": "53616d65206e616d65204157",
+          "replacements": 0,
+          "width_sources": [
+            "widths"
+          ],
+          "expected": [
+            24,
+            120,
+            145.6,
+            0,
+            20,
+            0,
+            0,
+            20,
+            24,
+            120
+          ],
+          "actual": [
+            24.0,
+            120.0,
+            145.6,
+            0.0,
+            20.0,
+            0.0,
+            0.0,
+            20.0,
+            24.0,
+            120.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "bytes_ok": true,
+          "unicode_ok": true,
+          "geometry_ok": true,
+          "pass": true
+        },
+        {
+          "page": 2,
+          "raw_hex": "53616d65206e616d65204157",
+          "expected_utf8": "53616d65206e616d65204157",
+          "actual_utf8": "53616d65206e616d65204157",
+          "replacements": 0,
+          "width_sources": [
+            "widths"
+          ],
+          "expected": [
+            24,
+            120,
+            144.0,
+            0,
+            20,
+            0,
+            0,
+            20,
+            24,
+            120
+          ],
+          "actual": [
+            24.0,
+            120.0,
+            144.0,
+            0.0,
+            20.0,
+            0.0,
+            0.0,
+            20.0,
+            24.0,
+            120.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "bytes_ok": true,
+          "unicode_ok": true,
+          "geometry_ok": true,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "name": "geometry",
+      "source": "tests/fixtures/geometry-raw.pdf",
+      "sha256": "3983955cc8bd88127258193d3fe7e6479ab66b19d9f90d20d2181eeb3513928b",
+      "commands": [
+        {
+          "command": [
+            "pdftoppm",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-singlefile",
+            "-r",
+            "120",
+            "-png",
+            "tests/fixtures/geometry-raw.pdf",
+            "output/pdf/m9-comparison/geometry-page1"
+          ],
+          "exit": 0,
+          "stdout": "geometry-render1.stdout",
+          "stderr": "geometry-render1.stderr"
+        },
+        {
+          "command": [
+            "pdfinfo",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-box",
+            "tests/fixtures/geometry-raw.pdf"
+          ],
+          "exit": 0,
+          "stdout": "geometry-info.stdout",
+          "stderr": "geometry-info.stderr"
+        },
+        {
+          "command": [
+            "pdftotext",
+            "-raw",
+            "-enc",
+            "UTF-8",
+            "tests/fixtures/geometry-raw.pdf",
+            "-"
+          ],
+          "exit": 0,
+          "stdout": "geometry-reference.stdout",
+          "stderr": "geometry-reference.stderr"
+        },
+        {
+          "command": [
+            "./pdftext",
+            "--dump-content",
+            "tests/fixtures/geometry-raw.pdf"
+          ],
+          "exit": 0,
+          "stdout": "geometry-cpt.stdout",
+          "stderr": "geometry-cpt.stderr"
+        },
+        {
+          "command": [
+            "./tests/font-text-test",
+            "tests/fixtures/geometry-raw.pdf"
+          ],
+          "exit": 0,
+          "stdout": "geometry-trace.stdout",
+          "stderr": "geometry-trace.stderr"
+        }
+      ],
+      "page_attributes": "Custom Metadata: no\nMetadata Stream: no\nTagged:          no\nUserProperties:  no\nSuspects:        no\nForm:            none\nJavaScript:      no\nPages:           1\nEncrypted:       no\nPage    1 size:  400 x 300 pts\nPage    1 rot:   0\nPage    1 MediaBox:      0.00     0.00   400.00   300.00\nPage    1 CropBox:       0.00     0.00   400.00   300.00\nPage    1 BleedBox:      0.00     0.00   400.00   300.00\nPage    1 TrimBox:       0.00     0.00   400.00   300.00\nPage    1 ArtBox:        0.00     0.00   400.00   300.00\nFile size:       1354 bytes\nOptimized:       no\nPDF version:     1.4\n",
+      "m8_raw_equal": true,
+      "courier_render_width_600": true
+    },
+    {
+      "name": "hello",
+      "source": "tests/hello.pdf",
+      "sha256": "137bfd835346e04270cb07c95749b058802cc5a02b376d7091b7618adefb4f67",
+      "commands": [
+        {
+          "command": [
+            "pdftoppm",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-singlefile",
+            "-r",
+            "120",
+            "-png",
+            "tests/hello.pdf",
+            "output/pdf/m9-comparison/hello-page1"
+          ],
+          "exit": 0,
+          "stdout": "hello-render1.stdout",
+          "stderr": "hello-render1.stderr"
+        },
+        {
+          "command": [
+            "pdfinfo",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-box",
+            "tests/hello.pdf"
+          ],
+          "exit": 0,
+          "stdout": "hello-info.stdout",
+          "stderr": "hello-info.stderr"
+        },
+        {
+          "command": [
+            "pdftotext",
+            "-raw",
+            "-enc",
+            "UTF-8",
+            "tests/hello.pdf",
+            "-"
+          ],
+          "exit": 0,
+          "stdout": "hello-reference.stdout",
+          "stderr": "hello-reference.stderr"
+        },
+        {
+          "command": [
+            "./pdftext",
+            "--dump-content",
+            "tests/hello.pdf"
+          ],
+          "exit": 4,
+          "stdout": "hello-cpt.stdout",
+          "stderr": "hello-cpt.stderr"
+        },
+        {
+          "command": [
+            "./tests/font-text-test",
+            "tests/hello.pdf"
+          ],
+          "exit": 4,
+          "stdout": "hello-trace.stdout",
+          "stderr": "hello-trace.stderr"
+        }
+      ],
+      "page_attributes": "Creator:         Writer\nProducer:        LibreOffice 24.8.1.2 (X86_64) / LibreOffice Community\nCreationDate:    Sun Aug  9 15:21:04 2026 CST\nCustom Metadata: no\nMetadata Stream: no\nTagged:          yes\nUserProperties:  no\nSuspects:        no\nForm:            none\nJavaScript:      no\nPages:           1\nEncrypted:       no\nPage    1 size:  595.304 x 841.89 pts (A4)\nPage    1 rot:   0\nPage    1 MediaBox:      0.00     0.00   595.30   841.89\nPage    1 CropBox:       0.00     0.00   595.30   841.89\nPage    1 BleedBox:      0.00     0.00   595.30   841.89\nPage    1 TrimBox:       0.00     0.00   595.30   841.89\nPage    1 ArtBox:        0.00     0.00   595.30   841.89\nFile size:       9222 bytes\nOptimized:       no\nPDF version:     1.7\n"
+    },
+    {
+      "name": "compilerbook",
+      "source": "tests/compilerbook.pdf",
+      "sha256": "a48c8a537f9ee862d3caa1f2f893d713ffeb23ba8143420b7c0e02a2ca0e8733",
+      "commands": [
+        {
+          "command": [
+            "pdftoppm",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-singlefile",
+            "-r",
+            "120",
+            "-png",
+            "tests/compilerbook.pdf",
+            "output/pdf/m9-comparison/compilerbook-page1"
+          ],
+          "exit": 0,
+          "stdout": "compilerbook-render1.stdout",
+          "stderr": "compilerbook-render1.stderr"
+        },
+        {
+          "command": [
+            "pdfinfo",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-box",
+            "tests/compilerbook.pdf"
+          ],
+          "exit": 0,
+          "stdout": "compilerbook-info.stdout",
+          "stderr": "compilerbook-info.stderr"
+        },
+        {
+          "command": [
+            "pdftotext",
+            "-raw",
+            "-enc",
+            "UTF-8",
+            "tests/compilerbook.pdf",
+            "-"
+          ],
+          "exit": 0,
+          "stdout": "compilerbook-reference.stdout",
+          "stderr": "compilerbook-reference.stderr"
+        },
+        {
+          "command": [
+            "./pdftext",
+            "--dump-content",
+            "tests/compilerbook.pdf"
+          ],
+          "exit": 4,
+          "stdout": "compilerbook-cpt.stdout",
+          "stderr": "compilerbook-cpt.stderr"
+        },
+        {
+          "command": [
+            "./tests/font-text-test",
+            "tests/compilerbook.pdf"
+          ],
+          "exit": 4,
+          "stdout": "compilerbook-trace.stdout",
+          "stderr": "compilerbook-trace.stderr"
+        }
+      ],
+      "page_attributes": "Title:           Introduction to Compilers and Language Design\nSubject:         \nKeywords:        compilers, programming languages, theory\nAuthor:          Douglas Thain\nCreator:         LaTeX with hyperref package\nProducer:        pdfTeX-1.40.19\nCreationDate:    Thu Aug 24 21:06:34 2023 CST\nModDate:         Thu Aug 24 21:06:34 2023 CST\nCustom Metadata: yes\nMetadata Stream: no\nTagged:          no\nUserProperties:  no\nSuspects:        no\nForm:            none\nJavaScript:      no\nPages:           247\nEncrypted:       no\nPage    1 size:  432 x 648 pts\nPage    1 rot:   0\nPage    1 MediaBox:      0.00     0.00   432.00   648.00\nPage    1 CropBox:       0.00     0.00   432.00   648.00\nPage    1 BleedBox:      0.00     0.00   432.00   648.00\nPage    1 TrimBox:       0.00     0.00   432.00   648.00\nPage    1 ArtBox:        0.00     0.00   432.00   648.00\nFile size:       1316545 bytes\nOptimized:       no\nPDF version:     1.5\n"
+    }
+  ],
+  "numeric_pass": true
+}

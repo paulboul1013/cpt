@@ -124,3 +124,29 @@ xref: unsupported error at byte 1306685: xref streams are unsupported
 新增頁涵蓋多行、Td 回到行起點、TJ 正負調整、Tc/Tw/Tz/Ts、非交換 cm 次序、q/Q 與不可見 Tr=3。兩份現有真實 PDF 均重新渲染與執行：hello.pdf 仍在 `w` 拒絕，compilerbook.pdf 仍在 xref stream 拒絕，exit 4 且 stdout 空白；報告記錄實際 stderr，未宣称相容。
 
 M8 的 snapshot／library JSON dump 是診斷資料，字串仍為 raw bytes／ASCII 預覽。M9 Unicode／真實 font adapter、M10 TextItem、M11 閱讀順序仍待實作。
+
+## M9 完成驗收
+
+[M9 左右對照報告](../output/pdf/m9-comparison/index.html) 使用**正式 M9 font adapter**（`src/font.c`、`src/font_text.c`），透過 `tests/font-text-test` staged probe 讀取實際 font dictionaries。來源 hash、binary hash、Poppler 版本、實際使用的字型檔、命令與 exit code 見 [manifest](../output/pdf/m9-comparison/manifest.json)；重跑方法見 [README](../output/pdf/m9-comparison/README.md)。
+
+- **預期寬度來源獨立**：以 fontTools 讀 Poppler 實際渲染用的字型檔（`fc-match Helvetica` → NimbusSans-Regular、`fc-match Courier` → NimbusMonoPS-Regular），不是讀 fixture 的 `/Widths`。[fixture 生成腳本](../tests/make-font-fixtures.py) 的 224 個 Helvetica WinAnsi widths 全部等於渲染字型；除 Euro 外也等於 Adobe Helvetica AFM（1990 版無 Euro）。
+- **預期 Unicode 來源獨立**：Python cp1252 codec 加上 PDF WinAnsi 的 bullet／控制字元政策，逐 byte 比較 UTF-8（含 NBSP、soft hyphen、U+FFFD）。Poppler `pdftotext` 只作外部參考。
+
+![M9 原始 PDF 渲染](../output/pdf/m9-comparison/winansi-page1.png)
+![M9 專案 origin 與 advance overlay](../output/pdf/m9-comparison/winansi-overlay1.png)
+
+| # | Raw hex | 專案 UTF-8（escaped） | Width 來源 | actual origin | actual advance |
+|---|---|---|---|---|---|
+| 1 | `48656c…313233` | `Helvetica AVAWiil 0123` | widths | (24,204) | 189.054 |
+| 2 | `80209171922093649420962097` | `€ ‘q’ “d” – —` | widths | (24,176) | 87.136 |
+| 3 | `636166e9208c75767265209c756620952085` | `café Œuvre œuf • …` | widths | (24,150) | 145.2 |
+| 4 | `7f818d8f909d` | `•` ×6 | widths | (24,124) | 33.6 |
+| 5 | `412042a043ad44`（Tw 5） | `A B C­D` | widths | (24,98) | 63.672 |
+| 6 | `410042` | `A�B` | widths、descriptor-default-zero | (24,72) | 21.344 |
+| 7–9 | TJ `[(W) 80 (A) -120 (V)]` | `W`、`A`、`V` | widths | (45.344／59.168／71.76, 72) | 15.104／10.672／10.672 |
+| 10 | `436f…4949`（F2，q 內） | `Courier ASCII`（ascii-fallback） | widths | (24,44) | 93.6 |
+| 11 | `5265…6361`（Q 後 F1） | `Restored Helvetica` | widths | (24,20) | 101.364 |
+
+全部 13 個 string（含 `font-pages.pdf` 兩頁同名 `/F1` 分別指向 Helvetica／Courier）的 raw bytes、UTF-8、origin、advance 與 rendering matrix 皆通過，容差 absolute 1e-8 + relative 1e-9。第 5 行證明 Tw 只加在原始 0x20，NBSP 以原始 code 查寬度但不加 Tw；第 6 行的 NUL 解成 U+FFFD，寬度來自 descriptor default zero。人工查看原始截圖與 overlay：每個 string 的基線、起點與 advance 終點都與實際字形對齊（2 px 內）。Poppler 也把 0x81 等 code 畫成 bullet，與本專案 Unicode 政策一致。
+
+`geometry-raw.pdf` 經真實 adapter 的 raw geometry 行與 M8 測試 adapter golden 逐 byte 相同。`hello.pdf` 仍在 `w` 拒絕、`compilerbook.pdf` 仍在 xref stream 拒絕：exit 4、stdout 空白，未因 M9 變成假成功。advance 終點不是 glyph ink bbox；trace 為 source order，閱讀順序屬 M11。M10 TextItem 尚未實作。
