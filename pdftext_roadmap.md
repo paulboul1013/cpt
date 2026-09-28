@@ -1,6 +1,6 @@
 # pdftext：架構與 Roadmap
 
-> 本文件是架構、milestone 與版本邊界的權威來源。M2 Object Parser 已於 2026-08-24 通過 release acceptance（見 [M2 驗收記錄](pdftext_m2_acceptance.md)）；M3–M11 已依序完成，各節末尾有完成狀態與驗收紀錄。2026-09-28 通過 [Release Gate](#16-release-gate)，版本為 v1.0.0。
+> 本文件是架構、milestone 與版本邊界的權威來源。M2 Object Parser 已於 2026-08-24 通過 release acceptance（驗收記錄見 commit `d7913a5`）；M3–M11 已依序完成，各節末尾有完成狀態與驗收紀錄。2026-09-28 通過 [Release Gate](#16-release-gate)，版本為 v1.0.0。
 
 ## 1. Roadmap 定位
 
@@ -82,7 +82,7 @@ M0–M11 已全部完成：`pdftext input.pdf` 依單欄、水平閱讀順序輸
 
 ### 開工門檻
 
-維持 [M2 已驗收的回歸基線](pdftext_m2_acceptance.md#9-m2-完成條件)（包含 `make test`、`make asan`），並先在 reader 驗證完整 PDF input 的 `%PDF-` header；M2 standalone object fixture 模式仍可獨立運作。
+維持 M2 已驗收的回歸基線（commit `d7913a5`，包含 `make test`、`make asan`），並先在 reader 驗證完整 PDF input 的 `%PDF-` header；M2 standalone object fixture 模式仍可獨立運作。
 
 ### 範圍
 
@@ -573,4 +573,4 @@ Makefile 必須允許 CC、CFLAGS、LDFLAGS、LDLIBS 覆寫。測試使用 POSIX
 - [x] v1.0 out-of-scope feature 不會被靜默當成成功。
 - [x] README、CLI help、error/exit-code 文件與本 roadmap 一致。
 
-2026-09-28 全部勾選：M0–M2 見 [M2 驗收記錄](pdftext_m2_acceptance.md)，M3–M11 見各節完成狀態；87 筆 CLI fixtures 與全部單元／golden 測試通過；malformed／unsupported 的 exit code 由 fixtures 驗證；GCC 與 clang 零 warning；`make test`、`make asan` 通過；範圍外功能（xref stream、非零 Rotate、非水平文字、`/ToUnicode` 等）回報 unsupported 而非成功；[README](README.md)、`--help` 與本 roadmap 一致。`--version` 為 `pdftext 1.0.0`。
+2026-09-28 全部勾選：M0–M2 見 commit `d7913a5` 的 M2 驗收記錄，M3–M11 見各節完成狀態；87 筆 CLI fixtures 與全部單元／golden 測試通過；malformed／unsupported 的 exit code 由 fixtures 驗證；GCC 與 clang 零 warning；`make test`、`make asan` 通過；範圍外功能（xref stream、非零 Rotate、非水平文字、`/ToUnicode` 等）回報 unsupported 而非成功；[README](README.md)、`--help` 與本 roadmap 一致。`--version` 為 `pdftext 1.0.0`。
