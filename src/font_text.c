@@ -2,7 +2,6 @@
 #include "font_text.h"
 
 #include <locale.h>
-#include <stdint.h>
 
 typedef struct {
     pdf_font_context *fonts;
@@ -124,32 +123,6 @@ static void hex(FILE *s, const unsigned char *d, size_t n) {
     for (size_t i = 0; i < n; i++) fprintf(s, "%02x", d[i]);
     fputc('"', s);
 }
-/* ASCII-only JSON preview of UTF-8 from pdf_font_decode. Bytes are bounds-
- * checked; a truncated or invalid sequence prints U+FFFD and advances one byte.
- * Supplementary scalars are emitted as JSON surrogate pairs. */
-static void preview(FILE *s, const unsigned char *d, size_t n) {
-    fputc('"', s);
-    for (size_t i = 0; i < n;) {
-        uint32_t cp = d[i];
-        size_t k = cp < 0x80 ? 1 : (cp & 0xE0) == 0xC0 ? 2 : (cp & 0xF0) == 0xE0 ? 3 :
-                   (cp & 0xF8) == 0xF0 ? 4 : 0;
-        for (size_t j = 1; k && j < k; j++)
-            if (i + j >= n || (d[i + j] & 0xC0) != 0x80) k = 0;
-        if (!k) { cp = 0xFFFD; k = 1; }
-        else if (k == 2) cp = (cp & 0x1Fu) << 6 | (d[i + 1] & 0x3Fu);
-        else if (k == 3) cp = (cp & 0x0Fu) << 12 | (d[i + 1] & 0x3Fu) << 6 | (d[i + 2] & 0x3Fu);
-        else if (k == 4) cp = (cp & 0x07u) << 18 | (d[i + 1] & 0x3Fu) << 12 |
-                              (d[i + 2] & 0x3Fu) << 6 | (d[i + 3] & 0x3Fu);
-        if (cp >= 0x20 && cp <= 0x7E && cp != '"' && cp != '\\') fputc((int)cp, s);
-        else if (cp >= 0x10000)
-            fprintf(s, "\\u%04x\\u%04x", (unsigned)(0xD800 + ((cp - 0x10000) >> 10)),
-                    (unsigned)(0xDC00 + ((cp - 0x10000) & 0x3FF)));
-        else fprintf(s, "\\u%04x", (unsigned)cp);
-        i += k;
-    }
-    fputc('"', s);
-}
-
 int pdf_font_text_event_dump(FILE *s, const pdf_font_text_event *v, size_t page, pdf_error *e) {
     if (!e || e->code != PDF_ERROR_NONE) return 0;
     if (!s || !v || !v->raw || !v->font || (!v->utf8 && v->utf8_len)) {
@@ -176,7 +149,7 @@ int pdf_font_text_event_dump(FILE *s, const pdf_font_text_event *v, size_t page,
             pdf_font_subtype_name(info.subtype), pdf_font_encoding_name(info.encoding), v->utf8_len);
     hex(s, v->utf8, v->utf8_len);
     fputs(",\"preview\":", s);
-    preview(s, v->utf8, v->utf8_len);
+    pdf_font_json_preview(s, v->utf8, v->utf8_len);
     fprintf(s, ",\"replacements\":%zu,\"widths\":[", v->replacements);
     const pdf_text_bytes *raw = &v->raw->bytes;
     for (size_t i = 0; ok && i < raw->len; i++) {

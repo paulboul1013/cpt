@@ -1,0 +1,793 @@
+{
+  "dpi": 120,
+  "tolerance": {
+    "absolute": 1e-06,
+    "relative": 1e-09,
+    "visual_pixels": 2
+  },
+  "versions": {
+    "pdftoppm": "pdftoppm version 24.02.0\nCopyright 2005-2024 The Poppler Developers - http://poppler.freedesktop.org\nCopyright 1996-2011, 2022 Glyph & Cog, LLC"
+  },
+  "render_fonts": {
+    "Helvetica": "/usr/share/fonts/opentype/urw-base35/NimbusSans-Regular.otf",
+    "Courier": "/usr/share/fonts/opentype/urw-base35/NimbusMonoPS-Regular.otf"
+  },
+  "binaries": {
+    "pdftext": "f4df4a3696fb66c7abf881ef7e87a10dfb8d3f2c855a15c635d0f5ffc5b7c768"
+  },
+  "cases": [
+    {
+      "name": "transform",
+      "source": "tests/fixtures/text-items-transform.pdf",
+      "sha256": "b3711835779436f66b36e078ba40da0b851265d96a1691b55fbf3ae6e5bfdc47",
+      "commands": [
+        {
+          "command": [
+            "pdftoppm",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-singlefile",
+            "-r",
+            "120",
+            "-png",
+            "tests/fixtures/text-items-transform.pdf",
+            "output/pdf/m10-comparison/transform-page1"
+          ],
+          "exit": 0,
+          "stdout": "transform-render.stdout",
+          "stderr": "transform-render.stderr"
+        },
+        {
+          "command": [
+            "pdfinfo",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-box",
+            "tests/fixtures/text-items-transform.pdf"
+          ],
+          "exit": 0,
+          "stdout": "transform-info.stdout",
+          "stderr": "transform-info.stderr"
+        },
+        {
+          "command": [
+            "pdftotext",
+            "-raw",
+            "-enc",
+            "UTF-8",
+            "tests/fixtures/text-items-transform.pdf",
+            "-"
+          ],
+          "exit": 0,
+          "stdout": "transform-reference.stdout",
+          "stderr": "transform-reference.stderr"
+        },
+        {
+          "command": [
+            "./pdftext",
+            "--dump-text-items",
+            "tests/fixtures/text-items-transform.pdf"
+          ],
+          "exit": 0,
+          "stdout": "transform-items.stdout",
+          "stderr": "transform-items.stderr"
+        }
+      ],
+      "comparison": [
+        {
+          "order": 0,
+          "text": "Normal 16pt",
+          "expected": [
+            24.0,
+            200.0,
+            87.13600000000001,
+            0.0,
+            87.13600000000001,
+            16.0,
+            16,
+            16.0
+          ],
+          "actual": [
+            24.0,
+            200.0,
+            87.136,
+            0.0,
+            87.136,
+            16.0,
+            16.0,
+            16.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            -1.4210854715202004e-14,
+            0.0,
+            -1.4210854715202004e-14,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "numbers_ok": true,
+          "text_ok": true,
+          "flags_ok": true,
+          "pass": true,
+          "horizontal": 1,
+          "mode": 0
+        },
+        {
+          "order": 1,
+          "text": "Scaled cm 1.5",
+          "expected": [
+            24.0,
+            165.0,
+            114.04800000000002,
+            0.0,
+            114.04800000000002,
+            18.0,
+            12,
+            18.0
+          ],
+          "actual": [
+            24.0,
+            165.0,
+            114.048,
+            0.0,
+            114.048,
+            18.0,
+            12.0,
+            18.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            -1.4210854715202004e-14,
+            0.0,
+            -1.4210854715202004e-14,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "numbers_ok": true,
+          "text_ok": true,
+          "flags_ok": true,
+          "pass": true,
+          "horizontal": 1,
+          "mode": 0
+        },
+        {
+          "order": 2,
+          "text": "Rotated 90",
+          "expected": [
+            380.0,
+            30.0,
+            0.0,
+            68.488,
+            0.0,
+            14.0,
+            14,
+            14.0
+          ],
+          "actual": [
+            380.0,
+            30.0,
+            0.0,
+            68.488,
+            0.0,
+            14.0,
+            14.0,
+            14.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "numbers_ok": true,
+          "text_ok": true,
+          "flags_ok": true,
+          "pass": true,
+          "horizontal": 0,
+          "mode": 0
+        },
+        {
+          "order": 3,
+          "text": "Invisible Tr3",
+          "expected": [
+            24.0,
+            130.0,
+            75.46000000000001,
+            0.0,
+            75.46000000000001,
+            14.0,
+            14,
+            14.0
+          ],
+          "actual": [
+            24.0,
+            130.0,
+            75.46,
+            0.0,
+            75.46,
+            14.0,
+            14.0,
+            14.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            -1.4210854715202004e-14,
+            0.0,
+            -1.4210854715202004e-14,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "numbers_ok": true,
+          "text_ok": true,
+          "flags_ok": true,
+          "pass": true,
+          "horizontal": 1,
+          "mode": 3
+        },
+        {
+          "order": 4,
+          "text": "Kern",
+          "expected": [
+            24.0,
+            100.0,
+            29.568,
+            0.0,
+            29.568,
+            14.0,
+            14,
+            14.0
+          ],
+          "actual": [
+            24.0,
+            100.0,
+            29.568,
+            0.0,
+            29.568,
+            14.0,
+            14.0,
+            14.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "numbers_ok": true,
+          "text_ok": true,
+          "flags_ok": true,
+          "pass": true,
+          "horizontal": 1,
+          "mode": 0
+        },
+        {
+          "order": 5,
+          "text": "ed",
+          "expected": [
+            57.768,
+            100.0,
+            15.568000000000001,
+            0.0,
+            15.568000000000001,
+            14.0,
+            14,
+            14.0
+          ],
+          "actual": [
+            57.768,
+            100.0,
+            15.568,
+            0.0,
+            15.568,
+            14.0,
+            14.0,
+            14.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            -1.7763568394002505e-15,
+            0.0,
+            -1.7763568394002505e-15,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "numbers_ok": true,
+          "text_ok": true,
+          "flags_ok": true,
+          "pass": true,
+          "horizontal": 1,
+          "mode": 0
+        },
+        {
+          "order": 6,
+          "text": "TJ",
+          "expected": [
+            70.536,
+            100.0,
+            15.554,
+            0.0,
+            15.554,
+            14.0,
+            14,
+            14.0
+          ],
+          "actual": [
+            70.536,
+            100.0,
+            15.554,
+            0.0,
+            15.554,
+            14.0,
+            14.0,
+            14.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "numbers_ok": true,
+          "text_ok": true,
+          "flags_ok": true,
+          "pass": true,
+          "horizontal": 1,
+          "mode": 0
+        },
+        {
+          "order": 8,
+          "text": "After empty",
+          "expected": [
+            24.0,
+            70.0,
+            71.58200000000001,
+            0.0,
+            71.58200000000001,
+            14.0,
+            14,
+            14.0
+          ],
+          "actual": [
+            24.0,
+            70.0,
+            71.582,
+            0.0,
+            71.582,
+            14.0,
+            14.0,
+            14.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            -1.4210854715202004e-14,
+            0.0,
+            -1.4210854715202004e-14,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "numbers_ok": true,
+          "text_ok": true,
+          "flags_ok": true,
+          "pass": true,
+          "horizontal": 1,
+          "mode": 0
+        },
+        {
+          "order": 9,
+          "text": "Rise 4",
+          "expected": [
+            24,
+            44,
+            34.008,
+            0.0,
+            34.008,
+            12.0,
+            12,
+            12.0
+          ],
+          "actual": [
+            24.0,
+            44.0,
+            34.008,
+            0.0,
+            34.008,
+            12.0,
+            12.0,
+            12.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "numbers_ok": true,
+          "text_ok": true,
+          "flags_ok": true,
+          "pass": true,
+          "horizontal": 1,
+          "mode": 0
+        }
+      ]
+    },
+    {
+      "name": "winansi",
+      "source": "tests/fixtures/font-winansi.pdf",
+      "sha256": "89cf909c90d089cc3860783556b559b8e23882cc4e11318bd09150d8caf2b14a",
+      "commands": [
+        {
+          "command": [
+            "pdftoppm",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-singlefile",
+            "-r",
+            "120",
+            "-png",
+            "tests/fixtures/font-winansi.pdf",
+            "output/pdf/m10-comparison/winansi-page1"
+          ],
+          "exit": 0,
+          "stdout": "winansi-render.stdout",
+          "stderr": "winansi-render.stderr"
+        },
+        {
+          "command": [
+            "pdfinfo",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-box",
+            "tests/fixtures/font-winansi.pdf"
+          ],
+          "exit": 0,
+          "stdout": "winansi-info.stdout",
+          "stderr": "winansi-info.stderr"
+        },
+        {
+          "command": [
+            "pdftotext",
+            "-raw",
+            "-enc",
+            "UTF-8",
+            "tests/fixtures/font-winansi.pdf",
+            "-"
+          ],
+          "exit": 0,
+          "stdout": "winansi-reference.stdout",
+          "stderr": "winansi-reference.stderr"
+        },
+        {
+          "command": [
+            "./pdftext",
+            "--dump-text-items",
+            "tests/fixtures/font-winansi.pdf"
+          ],
+          "exit": 0,
+          "stdout": "winansi-items.stdout",
+          "stderr": "winansi-items.stderr"
+        }
+      ],
+      "comparison": [
+        {
+          "order": 0,
+          "text": "Helvetica AVAWiil 0123",
+          "expected": [
+            24.0,
+            204.0,
+            189.054,
+            0.0,
+            189.054,
+            18.0,
+            18,
+            18.0
+          ],
+          "actual": [
+            24.0,
+            204.0,
+            189.054,
+            0.0,
+            189.054,
+            18.0,
+            18.0,
+            18.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "numbers_ok": true,
+          "text_ok": true,
+          "flags_ok": true,
+          "pass": true,
+          "horizontal": 1,
+          "mode": 0
+        },
+        {
+          "order": 1,
+          "text": "€ ‘q’ “d” – —",
+          "expected": [
+            24.0,
+            176.0,
+            87.13600000000001,
+            0.0,
+            87.13600000000001,
+            16.0,
+            16,
+            16.0
+          ],
+          "actual": [
+            24.0,
+            176.0,
+            87.136,
+            0.0,
+            87.136,
+            16.0,
+            16.0,
+            16.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            -1.4210854715202004e-14,
+            0.0,
+            -1.4210854715202004e-14,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "numbers_ok": true,
+          "text_ok": true,
+          "flags_ok": true,
+          "pass": true,
+          "horizontal": 1,
+          "mode": 0
+        },
+        {
+          "order": 2,
+          "text": "café Œuvre œuf • …",
+          "expected": [
+            24.0,
+            150.0,
+            145.20000000000002,
+            0.0,
+            145.20000000000002,
+            16.0,
+            16,
+            16.0
+          ],
+          "actual": [
+            24.0,
+            150.0,
+            145.2,
+            0.0,
+            145.2,
+            16.0,
+            16.0,
+            16.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            -2.842170943040401e-14,
+            0.0,
+            -2.842170943040401e-14,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "numbers_ok": true,
+          "text_ok": true,
+          "flags_ok": true,
+          "pass": true,
+          "horizontal": 1,
+          "mode": 0
+        },
+        {
+          "order": 3,
+          "text": "••••••",
+          "expected": [
+            24.0,
+            124.0,
+            33.599999999999994,
+            0.0,
+            33.599999999999994,
+            16.0,
+            16,
+            16.0
+          ],
+          "actual": [
+            24.0,
+            124.0,
+            33.6,
+            0.0,
+            33.6,
+            16.0,
+            16.0,
+            16.0
+          ],
+          "delta": [
+            0.0,
+            0.0,
+            7.105427357601002e-15,
+            0.0,
+            7.105427357601002e-15,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "numbers_ok": true,
+          "text_ok": true,
+          "flags_ok": true,
+          "pass": true,
+          "horizontal": 1,
+          "mode": 0
+        }
+      ]
+    },
+    {
+      "name": "hello",
+      "source": "tests/hello.pdf",
+      "sha256": "137bfd835346e04270cb07c95749b058802cc5a02b376d7091b7618adefb4f67",
+      "commands": [
+        {
+          "command": [
+            "pdftoppm",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-singlefile",
+            "-r",
+            "120",
+            "-png",
+            "tests/hello.pdf",
+            "output/pdf/m10-comparison/hello-page1"
+          ],
+          "exit": 0,
+          "stdout": "hello-render.stdout",
+          "stderr": "hello-render.stderr"
+        },
+        {
+          "command": [
+            "pdfinfo",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-box",
+            "tests/hello.pdf"
+          ],
+          "exit": 0,
+          "stdout": "hello-info.stdout",
+          "stderr": "hello-info.stderr"
+        },
+        {
+          "command": [
+            "pdftotext",
+            "-raw",
+            "-enc",
+            "UTF-8",
+            "tests/hello.pdf",
+            "-"
+          ],
+          "exit": 0,
+          "stdout": "hello-reference.stdout",
+          "stderr": "hello-reference.stderr"
+        },
+        {
+          "command": [
+            "./pdftext",
+            "--dump-text-items",
+            "tests/hello.pdf"
+          ],
+          "exit": 4,
+          "stdout": "hello-items.stdout",
+          "stderr": "hello-items.stderr"
+        }
+      ]
+    },
+    {
+      "name": "compilerbook",
+      "source": "tests/compilerbook.pdf",
+      "sha256": "a48c8a537f9ee862d3caa1f2f893d713ffeb23ba8143420b7c0e02a2ca0e8733",
+      "commands": [
+        {
+          "command": [
+            "pdftoppm",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-singlefile",
+            "-r",
+            "120",
+            "-png",
+            "tests/compilerbook.pdf",
+            "output/pdf/m10-comparison/compilerbook-page1"
+          ],
+          "exit": 0,
+          "stdout": "compilerbook-render.stdout",
+          "stderr": "compilerbook-render.stderr"
+        },
+        {
+          "command": [
+            "pdfinfo",
+            "-f",
+            "1",
+            "-l",
+            "1",
+            "-box",
+            "tests/compilerbook.pdf"
+          ],
+          "exit": 0,
+          "stdout": "compilerbook-info.stdout",
+          "stderr": "compilerbook-info.stderr"
+        },
+        {
+          "command": [
+            "pdftotext",
+            "-raw",
+            "-enc",
+            "UTF-8",
+            "tests/compilerbook.pdf",
+            "-"
+          ],
+          "exit": 0,
+          "stdout": "compilerbook-reference.stdout",
+          "stderr": "compilerbook-reference.stderr"
+        },
+        {
+          "command": [
+            "./pdftext",
+            "--dump-text-items",
+            "tests/compilerbook.pdf"
+          ],
+          "exit": 4,
+          "stdout": "compilerbook-items.stdout",
+          "stderr": "compilerbook-items.stderr"
+        }
+      ]
+    }
+  ],
+  "numeric_pass": true
+}

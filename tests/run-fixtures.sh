@@ -124,6 +124,10 @@ do
 			fixture_mode=content
 			input=${input#content:}
 			;;
+		items:*)
+			fixture_mode=items
+			input=${input#items:}
+			;;
 		contents:*)
 			fixture_mode=contents
 			input=${input#contents:}
@@ -159,6 +163,12 @@ do
 		fi
 	elif [ "$fixture_mode" = content ]; then
 		if "$binary" --dump-content "$fixture_path" >"$actual_stdout" 2>"$actual_stderr"; then
+			actual_status=0
+		else
+			actual_status=$?
+		fi
+	elif [ "$fixture_mode" = items ]; then
+		if "$binary" --dump-text-items "$fixture_path" >"$actual_stdout" 2>"$actual_stderr"; then
 			actual_status=0
 		else
 			actual_status=$?

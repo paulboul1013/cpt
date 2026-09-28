@@ -65,3 +65,13 @@ content-later-failure|malformed|content:tests/fixtures/content-later-failure.pdf
 content-truncated-string|malformed|content:tests/fixtures/content-truncated-string.pdf|3|-|tests/golden/content-truncated-string.stderr
 visual-m7-text|success|content:tests/fixtures/visual-m7-text.pdf|0|tests/golden/visual-m7-text.stdout|-
 content-clipping|unsupported|content:tests/fixtures/content-clipping.pdf|4|-|tests/golden/content-clipping.stderr
+items-winansi|success|items:tests/fixtures/font-winansi.pdf|0|tests/golden/items-winansi.stdout|-
+items-pages|success|items:tests/fixtures/font-pages.pdf|0|tests/golden/items-pages.stdout|-
+items-geometry|success|items:tests/fixtures/geometry-raw.pdf|0|tests/golden/items-geometry.stdout|-
+items-visual|success|items:tests/fixtures/visual-m7-text.pdf|0|tests/golden/items-visual.stdout|-
+items-no-text|success|items:tests/fixtures/pages-multi.pdf|0|-|-
+items-later-failure|unsupported|items:tests/fixtures/font-later-failure.pdf|4|-|tests/golden/items-later-failure.stderr
+items-missing-resource|malformed|items:tests/fixtures/font-missing-resource.pdf|3|-|tests/golden/items-missing-resource.stderr
+items-hello|unsupported|items:tests/hello.pdf|4|-|tests/golden/items-hello.stderr
+items-rotate|unsupported|items:tests/fixtures/rotate-negative.pdf|4|-|tests/golden/items-rotate.stderr
+items-transform|success|items:tests/fixtures/text-items-transform.pdf|0|tests/golden/items-transform.stdout|-

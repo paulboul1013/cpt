@@ -83,7 +83,20 @@ WINANSI_CONTENT = b"\n".join([
     b"/F1 12 Tf q /F2 12 Tf Q BT 1 0 0 1 24 20 Tm (Restored Helvetica) Tj ET",
 ])
 
+# M10 TextItem transforms: user-space scaling, 90-degree rotation, invisible
+# text, TJ segments, an empty string and rise.
+ITEMS_CONTENT = b"\n".join([
+    b"BT /F1 16 Tf 1 0 0 1 24 200 Tm (Normal 16pt) Tj ET",
+    b"q 1.5 0 0 1.5 0 0 cm BT /F1 12 Tf 1 0 0 1 16 110 Tm (Scaled cm 1.5) Tj ET Q",
+    b"q 0 1 -1 0 380 30 cm BT /F1 14 Tf 1 0 0 1 0 0 Tm (Rotated 90) Tj ET Q",
+    b"BT /F1 14 Tf 3 Tr 1 0 0 1 24 130 Tm (Invisible Tr3) Tj 0 Tr ET",
+    b"BT /F1 14 Tf 1 0 0 1 24 100 Tm [(Kern) -300 (ed) 200 (TJ)] TJ ET",
+    b"BT /F1 14 Tf 1 0 0 1 24 70 Tm () Tj (After empty) Tj ET",
+    b"BT /F1 12 Tf 1 0 0 1 24 40 Tm 4 Ts (Rise 4) Tj ET",
+])
+
 FIXTURES = {
+    "text-items-transform.pdf": pdf([(b"<< /Font << /F1 5 0 R >> >>", ITEMS_CONTENT)], [HELVETICA]),
     "font-winansi.pdf": pdf([(b"<< /Font << /F1 5 0 R /F2 6 0 R >> >>", WINANSI_CONTENT)],
                             [HELVETICA, COURIER]),
     # Same /F1 name, different font dictionaries on two pages.

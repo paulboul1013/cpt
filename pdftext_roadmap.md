@@ -350,6 +350,26 @@ Raw PDF string 是編碼後的 bytes，不等於 UTF-8；文字必須經 font de
 
 width 依 glyph width、font size 與 horizontal scale 計算。
 
+### M10 TextItem 政策（實作契約）
+
+- **來源**：每個 M9 decoded event 一個 item；raw bytes 長度為 0 的 string 不產生 item（其 Tf 仍由 M9 驗證），頁內 source order 因此可不連續。TJ 數字只影響後續 origin。
+- **可見性**：Tr=3 不可見文字照樣產生 item 並保存 rendering mode；是否輸出屬 M11 政策。
+- **位置與寬度**：起點 x/y 為 M8 origin（default user space，已套 CTM 與 rise）。保存帶號 advance 向量 `(dx,dy)`，`width = dx`，不取絕對值。
+- **高度**：`em_height = hypot(c,d)`，即 rendering matrix 第二欄長度；等於 user space 的有效字級（含 CTM 縮放、不含 rise）。專案不讀 ascent／descent／FontBBox，em_height **不是 glyph bbox**。
+- **字級**：保存 Tf 名目 `font_size` 與 `effective_size`（= em_height）；M11 的 line tolerance 使用 effective_size。
+- **方向**：`horizontal = 1` 當 rendering matrix 的 `|b|`、`|c|` 不超過 `1e-9 × max(|a|,|d|)` 且 `a > 0`、`d > 0`；M10 不拒絕非水平 item，由 M11 決定。
+- **其他欄位**：length-aware 複製的 font resource name（可含 NUL）、replacement 次數、M9 subtype／encoding 標記、1-based page、頁內 source order、全文件遞增 sequence、decoded operation offset。不保存 font handle 或任何 borrowed 指標。
+- **所有權與失敗**：`pdf_text_items` 由 caller 擁有並持有全部 bytes；整份文件全有或全無，失敗時集合為空、保留原始 error。item 數受 `max_container_entries` 限制；UTF-8 總量沿用 M9 的 `max_total_decoded_size` 計數，font name bytes 另行計數並受同一上限。
+- **CLI**：`--dump-text-items` 是 debug mode，整份成功後才輸出，每 item 一行 JSON（page／source order 排列，不是閱讀順序）；沒有 item 時 stdout 空且 exit 0。「no extractable text layer」只屬 M11 純文字模式。
+
+### M10 完成狀態與交接
+
+`src/text_items.[ch]` 消費 M9 bridge 的 borrowed decoded event，複製成 caller-owned 的 `pdf_text_items`：item 陣列加一塊 byte arena，建構期以 offset 暫存，全部成功後才轉成指標；失敗時集合歸零並保留原始 error。`pdftext --dump-text-items` 在記憶體中格式化全部 item，成功後一次寫出 stdout。JSON preview helper 移至 `pdf_font_json_preview` 共用；連結加入 libm（`hypot`）。
+
+驗收：`make -B test`、`make -B asan` 全部通過，編譯器零 warning；CLI fixtures 由 65 筆增至 75 筆（10 筆 `items-*`：正常、無文字、後頁失敗、缺 resource、Rotate、hello.pdf）。新增 TextItem 測試涵蓋計畫的 6 個核對案例、負 Tc／負 Tz、名稱含 NUL、兩頁同名字型、200 items 的 arena growth、item／UTF-8／font-name 限制與全有或全無；M8 geometry fixtures 轉成 items 後與既有數值一致。[視覺驗收](docs/pdf-visual-comparison.md#m10-完成驗收) 以獨立矩陣計算與渲染字型寬度核對 13 個 items，並人工查看 em 框 overlay。兩個獨立 subagent：code review 無 blocker（含 realloc 逐一失敗注入 probe），minor 項目已修正；對抗式驗證跑約 4,600 份隨機 PDF 與約 31,000 個 item 的 Python oracle，零 sanitizer 報告、零差異。
+
+交接 M11：消費 `pdf_text_items`（不重跑解析），以 page → 行（effective_size 為 line tolerance 基準）→ x 排序，source order／sequence 作 tie-breaker；需決定 Tr=3、`horizontal=0` 與 replacement 在純文字模式的政策，再實作 synthetic space 與正式 CLI。
+
 ## 11. M11：Reading Order 與 CLI
 
 ### Reading order
@@ -403,7 +423,7 @@ v1.0 必須完成 M0–M11，並支援：
 - C11。
 - Linux。
 - GCC 與 Clang。
-- libc 與 zlib；qpdf 不列入正式 dependency。
+- libc（含 C 標準 math library libm）與 zlib；qpdf 不列入正式 dependency。
 - 未加密 PDF。
 - traditional xref table。
 - 無 incremental update。

@@ -93,6 +93,10 @@ const char *pdf_font_subtype_name(pdf_font_subtype);
 const char *pdf_font_encoding_name(pdf_font_encoding);
 const char *pdf_font_width_source_name(pdf_font_width_source);
 const char *pdf_font_missing_name(pdf_font_missing);
+/* Write a quoted, ASCII-only JSON string previewing UTF-8 bytes: printable
+ * ASCII literal, everything else \\uXXXX (surrogate pairs above the BMP).
+ * Truncated/invalid sequences print U+FFFD per byte; never reads past len. */
+void pdf_font_json_preview(FILE *, const unsigned char *, size_t);
 /* One JSON diagnostic line. Names are hex with explicit lengths; numbers use a
  * thread-local C numeric locale. Partial bytes may be written on I/O failure. */
 int pdf_font_dump(FILE *, const pdf_font *, pdf_error *);

@@ -150,3 +150,24 @@ M8 的 snapshot／library JSON dump 是診斷資料，字串仍為 raw bytes／A
 全部 13 個 string（含 `font-pages.pdf` 兩頁同名 `/F1` 分別指向 Helvetica／Courier）的 raw bytes、UTF-8、origin、advance 與 rendering matrix 皆通過，容差 absolute 1e-8 + relative 1e-9。第 5 行證明 Tw 只加在原始 0x20，NBSP 以原始 code 查寬度但不加 Tw；第 6 行的 NUL 解成 U+FFFD，寬度來自 descriptor default zero。人工查看原始截圖與 overlay：每個 string 的基線、起點與 advance 終點都與實際字形對齊（2 px 內）。Poppler 也把 0x81 等 code 畫成 bullet，與本專案 Unicode 政策一致。
 
 `geometry-raw.pdf` 經真實 adapter 的 raw geometry 行與 M8 測試 adapter golden 逐 byte 相同。`hello.pdf` 仍在 `w` 拒絕、`compilerbook.pdf` 仍在 xref stream 拒絕：exit 4、stdout 空白，未因 M9 變成假成功。advance 終點不是 glyph ink bbox；trace 為 source order，閱讀順序屬 M11。M10 TextItem 尚未實作。
+
+## M10 完成驗收
+
+[M10 對照報告](../output/pdf/m10-comparison/index.html) 比對正式 CLI `pdftext --dump-text-items` 的實際輸出。預期值由 [capture.py](../output/pdf/m10-comparison/capture.py) 以自己的矩陣乘法與 Poppler 渲染字型的 advance 獨立計算；hash、命令與版本見 [manifest](../output/pdf/m10-comparison/manifest.json)，重跑方法見 [README](../output/pdf/m10-comparison/README.md)。
+
+![M10 原始 PDF 渲染](../output/pdf/m10-comparison/transform-page1.png)
+![M10 TextItem em 框 overlay](../output/pdf/m10-comparison/transform-overlay.png)
+
+框從 baseline origin 沿 advance 向量延伸，高度為 `em_height`（有效 em 大小，**不是 glyph ink bbox**）；數字為 sequence。
+
+| seq | order | 文字 | x, y | width | em_height | 說明 |
+|---|---|---|---|---|---|---|
+| 1 | 0 | Normal 16pt | 24, 200 | 87.136 | 16 | 基準 |
+| 2 | 1 | Scaled cm 1.5 | 24, 165 | 114.048 | 18 | 名目 12、有效 18 |
+| 3 | 2 | Rotated 90 | 380, 30 | 0（advance `(0, 68.488)`） | 14 | 保留，`horizontal=0` |
+| 4 | 3 | Invisible Tr3 | 24, 130 | 75.46 | 14 | Tr=3 保留，畫面無字形 |
+| 5–7 | 4–6 | Kern／ed／TJ | 24／57.768／70.536, 100 | 29.568／15.568／15.554 | 14 | TJ 三段，數字不產生 item |
+| 8 | 8 | After empty | 24, 70 | 71.582 | 14 | 空字串不產生 item，order 7 空缺 |
+| 9 | 9 | Rise 4 | 24, 44 | 34.008 | 12 | rise 移動 origin，不改 em_height |
+
+`text-items-transform.pdf` 的 9 個 items 與 `font-winansi.pdf` 前 4 個 items 的 UTF-8、origin、advance、width、em_height、字級、mode、horizontal 與 order 全部通過（absolute 1e-6，dump 為九位小數）。人工查看 overlay：每個框的起點與終點都對齊實際字形的基線與 advance（2 px 內），旋轉項目的框沿旋轉後的基線。`hello.pdf`、`compilerbook.pdf` 仍 exit 4、stdout 空白。items 依 source order 排列；閱讀順序、synthetic space 與純文字輸出屬 M11。

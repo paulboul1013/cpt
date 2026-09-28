@@ -2,7 +2,7 @@ CC = gcc
 CPPFLAGS =
 CFLAGS = -std=c11 -Wall -Wextra -Wpedantic -g
 LDFLAGS =
-LDLIBS = -lz
+LDLIBS = -lz -lm
 
 TARGET = pdftext
 ASAN_TARGET := $(TARGET)-asan
@@ -55,7 +55,8 @@ SRC = \
 	src/matrix.c \
 	src/text_state.c \
 	src/font.c \
-	src/font_text.c
+	src/font_text.c \
+	src/text_items.c
 HDR = \
 	src/reader.h \
 	src/lexer.h \
@@ -74,7 +75,8 @@ HDR = \
 	src/matrix.h \
 	src/text_state.h \
 	src/font.h \
-	src/font_text.h
+	src/font_text.h \
+	src/text_items.h
 TEST_INPUT = tests/numbers.txt
 OWNERSHIP_SRC = tests/ownership_test.c
 ERROR_SRC = tests/error_test.c
@@ -122,6 +124,7 @@ test: tests/content-lexer-test tests/content-interpreter-test $(TARGET) $(OWNERS
 	./tests/font-test
 	./tests/font-text-test
 	sh tests/run-font-fixtures.sh ./tests/font-text-test
+	./tests/text-items-test
 
 asan: tests/content-lexer-test-asan tests/content-interpreter-test-asan $(ASAN_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_ASAN_TARGET) $(OBJECT_ASAN_TARGET) $(LIMITS_ASAN_TARGET) $(READER_ASAN_TARGET) $(INDIRECT_ASAN_TARGET) $(XREF_ASAN_TARGET) $(DOCUMENT_ASAN_TARGET) $(PAGES_ASAN_TARGET) $(CONTENTS_ASAN_TARGET)
 	$(call CHECK_NUMBERS_OUTPUT,$(ASAN_TARGET))
@@ -146,6 +149,7 @@ asan: tests/content-lexer-test-asan tests/content-interpreter-test-asan $(ASAN_T
 	./tests/font-test-asan
 	./tests/font-text-test-asan
 	sh tests/run-font-fixtures.sh ./tests/font-text-test-asan
+	./tests/text-items-test-asan
 
 $(ASAN_TARGET): $(SRC) $(HDR)
 	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $(SRC) $(LDLIBS) -o $@
@@ -217,7 +221,7 @@ $(CONTENTS_ASAN_TARGET): $(CONTENTS_SRC) $(SRC) $(HDR)
 	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $(CONTENTS_SRC) src/contents.c src/filter.c src/pages.c src/document.c src/xref.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c $(LDLIBS) -o $@
 
 clean:
-	$(RM) tests/matrix-test tests/matrix-test-asan tests/text-state-test tests/text-state-test-asan tests/geometry-test tests/geometry-test-asan tests/font-test tests/font-test-asan tests/font-text-test tests/font-text-test-asan tests/content-lexer-test tests/content-interpreter-test tests/content-lexer-test-asan tests/content-interpreter-test-asan $(TARGET) $(ASAN_TARGET) $(OWNERSHIP_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_TARGET) $(LEXER_ASAN_TARGET) $(INDIRECT_TARGET) $(INDIRECT_ASAN_TARGET) $(XREF_TARGET) $(XREF_ASAN_TARGET) $(DOCUMENT_TARGET) $(DOCUMENT_ASAN_TARGET) $(PAGES_TARGET) $(PAGES_ASAN_TARGET) $(CONTENTS_TARGET) $(CONTENTS_ASAN_TARGET)
+	$(RM) tests/matrix-test tests/matrix-test-asan tests/text-state-test tests/text-state-test-asan tests/geometry-test tests/geometry-test-asan tests/font-test tests/font-test-asan tests/font-text-test tests/font-text-test-asan tests/text-items-test tests/text-items-test-asan tests/content-lexer-test tests/content-interpreter-test tests/content-lexer-test-asan tests/content-interpreter-test-asan $(TARGET) $(ASAN_TARGET) $(OWNERSHIP_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_TARGET) $(LEXER_ASAN_TARGET) $(INDIRECT_TARGET) $(INDIRECT_ASAN_TARGET) $(XREF_TARGET) $(XREF_ASAN_TARGET) $(DOCUMENT_TARGET) $(DOCUMENT_ASAN_TARGET) $(PAGES_TARGET) $(PAGES_ASAN_TARGET) $(CONTENTS_TARGET) $(CONTENTS_ASAN_TARGET)
 
 CONTENT_TEST_SRC = src/content_interpreter.c src/content_lexer.c src/lexer.c src/reader.c src/object.c src/error.c src/limits.c
 
@@ -272,3 +276,9 @@ tests/font-text-test-asan: tests/font_text_test.c tests/pdf_builder.h $(SRC) $(H
 	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $< $(GEOMETRY_TEST_SRC) $(LDLIBS) -o $@
 test: tests/font-text-test
 asan: tests/font-text-test-asan
+tests/text-items-test: tests/text_items_test.c tests/pdf_builder.h $(SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $< $(GEOMETRY_TEST_SRC) $(LDLIBS) -o $@
+tests/text-items-test-asan: tests/text_items_test.c tests/pdf_builder.h $(SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $< $(GEOMETRY_TEST_SRC) $(LDLIBS) -o $@
+test: tests/text-items-test
+asan: tests/text-items-test-asan

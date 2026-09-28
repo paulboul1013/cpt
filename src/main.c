@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include "reader.h"
 #include "lexer.h"
 #include "parser.h"
@@ -8,6 +9,7 @@
 #include "pages.h"
 #include "contents.h"
 #include "content_interpreter.h"
+#include "text_items.h"
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -57,6 +59,31 @@ static int dump_content_pages(pdf_document *document, const pdf_pages *pages,
     return success;
 }
 
+/* Debug mode: extract and format everything in memory, then write stdout
+ * once, so no partial JSON is emitted on extraction or formatting failure. */
+static int dump_text_items(pdf_document *document, pdf_error *error) {
+    pdf_text_items items = {0};
+    if (!pdf_text_items_extract(document, NULL, &items, error)) return 0;
+    char *buffer = NULL;
+    size_t size = 0;
+    FILE *stage = open_memstream(&buffer, &size);
+    int ok = stage != NULL;
+    if (!ok) pdf_error_set(error, PDF_ERROR_OUT_OF_MEMORY, 0, "text-items", "cannot stage text items");
+    for (size_t i = 0; ok && i < items.len; i++)
+        ok = pdf_text_item_dump(stage, &items.items[i], error);
+    if (stage && fclose(stage) != 0 && ok) {
+        pdf_error_set(error, PDF_ERROR_OUT_OF_MEMORY, 0, "text-items", "cannot stage text items");
+        ok = 0;
+    }
+    pdf_text_items_free(&items);
+    if (ok && (fwrite(buffer, 1, size, stdout) != size || fflush(stdout) != 0)) {
+        pdf_error_set(error, PDF_ERROR_IO, 0, "text-items", "cannot write text items");
+        ok = 0;
+    }
+    free(buffer);
+    return ok;
+}
+
 int main(int argc,char *argv[]) {
     
     int standalone_object = 0;
@@ -65,6 +92,7 @@ int main(int argc,char *argv[]) {
     int dump_pages = 0;
     int dump_contents = 0;
     int dump_content = 0;
+    int dump_items = 0;
     const char *filename = NULL;
 
     if (argc == 2) {
@@ -84,15 +112,18 @@ int main(int argc,char *argv[]) {
     } else if (argc == 3 && strcmp(argv[1], "--dump-content") == 0) {
         dump_content = 1;
         filename = argv[2];
+    } else if (argc == 3 && strcmp(argv[1], "--dump-text-items") == 0) {
+        dump_items = 1;
+        filename = argv[2];
     } else if (argc == 3 && strcmp(argv[1], "--dump-contents") == 0) {
         dump_contents = 1;
         filename = argv[2];
     } else {
-        fprintf(stderr,"usage: %s [--object|--indirect|--dump-xref|--dump-pages|--dump-contents|--dump-content] input-file\n",argv[0]);
+        fprintf(stderr,"usage: %s [--object|--indirect|--dump-xref|--dump-pages|--dump-contents|--dump-content|--dump-text-items] input-file\n",argv[0]);
         return 1;
     }
 
-    if (dump_pages || dump_contents || dump_content) {
+    if (dump_pages || dump_contents || dump_content || dump_items) {
         pdf_document document;
         pdf_pages pages = {0};
         pdf_error error;
@@ -101,8 +132,11 @@ int main(int argc,char *argv[]) {
             pdf_error_print(&error, stderr);
             return pdf_error_exit_code(&error);
         }
-        int loaded = pdf_pages_load(&document, &pages, &error);
-        if (loaded && dump_content) {
+        int loaded = dump_items ? dump_text_items(&document, &error)
+                                : pdf_pages_load(&document, &pages, &error);
+        if (dump_items) {
+            /* Output already written by dump_text_items after full success. */
+        } else if (loaded && dump_content) {
             loaded = dump_content_pages(&document, &pages, &error);
         } else if (loaded && dump_contents) {
             size_t *lengths = NULL;
