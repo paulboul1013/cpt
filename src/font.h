@@ -5,27 +5,34 @@
 
 #include "pages.h"
 
-/* M9 Simple Font support: horizontal, single-byte /Type1 and /TrueType fonts
+/* Horizontal, single-byte /Type1 and /TrueType fonts
  * with explicit /FirstChar /LastChar /Widths. Encodings: /WinAnsiEncoding (name
  * or an /Encoding dictionary whose /BaseEncoding is /WinAnsiEncoding and that
  * has no /Differences), or no /Encoding at all (project ASCII fallback: only
- * 0x20-0x7E map, not a claim about the font's builtin encoding). Everything
- * else (Type3, MMType1, Type0/CID, Differences, ToUnicode, Symbol/ZapfDingbats,
- * symbolic descriptors, other encodings, missing metrics) is unsupported.
+ * 0x20-0x7E map, not a claim about the font's builtin encoding).
+ * Also supports /Type0 /Identity-H with one CIDFontType0/2 descendant, /W and
+ * /DW metrics and a required ToUnicode stream. Simple Fonts may also provide
+ * ToUnicode. Other encodings, Type3, Differences and symbolic Simple Fonts
+ * remain unsupported unless ToUnicode supplies the mapping for a symbolic
+ * descriptor. Symbol/ZapfDingbats base fonts remain unsupported.
  * Embedded font programs are never read. */
 
 typedef struct pdf_font_context pdf_font_context;
 typedef struct pdf_font pdf_font;
 
-typedef enum { PDF_FONT_TYPE1, PDF_FONT_TRUETYPE } pdf_font_subtype;
+typedef enum { PDF_FONT_TYPE1, PDF_FONT_TRUETYPE, PDF_FONT_TYPE0 } pdf_font_subtype;
 typedef enum {
     PDF_FONT_ENCODING_ASCII_FALLBACK, /* No /Encoding: 0x20-0x7E only. */
-    PDF_FONT_ENCODING_WIN_ANSI        /* Name or BaseEncoding dictionary. */
+    PDF_FONT_ENCODING_WIN_ANSI,       /* Name or BaseEncoding dictionary. */
+    PDF_FONT_ENCODING_IDENTITY_H,
+    PDF_FONT_ENCODING_TO_UNICODE      /* Simple Font with ToUnicode. */
 } pdf_font_encoding;
 typedef enum {
     PDF_FONT_WIDTH_TABLE,              /* Widths[code - FirstChar]. */
     PDF_FONT_WIDTH_MISSING,            /* Explicit descriptor /MissingWidth. */
-    PDF_FONT_WIDTH_DESCRIPTOR_DEFAULT_ZERO /* Descriptor without /MissingWidth. */
+    PDF_FONT_WIDTH_DESCRIPTOR_DEFAULT_ZERO, /* Descriptor without /MissingWidth. */
+    PDF_FONT_WIDTH_CID_W,
+    PDF_FONT_WIDTH_CID_DW
 } pdf_font_width_source;
 typedef enum {
     PDF_FONT_MISSING_NONE,         /* No descriptor: out-of-range is unsupported. */
@@ -59,11 +66,14 @@ typedef struct {
 
 /* One context per page. Borrows document and page Resources (may be NULL):
  * both must outlive the context. Copies limits (NULL = defaults). page_offset
- * locates errors that have no closer object. Allocation failure returns NULL
+ * locates errors that have no closer object. cmap_decoded_bytes optionally
+ * borrows a cumulative counter shared across page contexts, capped by
+ * max_total_decoded_size; NULL uses a context-local counter. The counter must
+ * outlive the context. Allocation failure returns NULL
  * with an out-of-memory error at page_offset. */
 pdf_font_context *pdf_font_context_create(pdf_document *, const pdf_object *resources,
                                           size_t page_offset, const pdf_limits *,
-                                          pdf_error *);
+                                          size_t *cmap_decoded_bytes, pdf_error *);
 /* Accepts NULL; frees every handle and binding. */
 void pdf_font_context_destroy(pdf_font_context *);
 /* Resolve a length-aware /Resources /Font name (may contain NUL). Returns a
@@ -77,12 +87,18 @@ void pdf_font_context_destroy(pdf_font_context *);
 const pdf_font *pdf_font_context_resolve(pdf_font_context *, const unsigned char *name,
                                          size_t len, pdf_error *);
 
-/* Constant-time width in 1000 text-space units for a raw code byte. source may
- * be NULL. Out-of-range codes without a descriptor are unsupported. */
-int pdf_font_width(const pdf_font *, unsigned char code, double *width_1000,
+/* Read one raw character code, consuming one Simple Font byte or two
+ * Identity-H bytes. Truncated codes are malformed. No Unicode mapping here. */
+int pdf_font_read_code(const pdf_font *, const unsigned char *, size_t,
+                        unsigned *code, size_t *consumed, pdf_error *);
+/* Width in 1000 text-space units, indexed by raw code/CID, not Unicode.
+ * source may be NULL. Out-of-range Simple Font codes without a descriptor
+ * are unsupported. CID fonts use W or DW (default 1000). */
+int pdf_font_width(const pdf_font *, unsigned code, double *width_1000,
                    pdf_font_width_source *source, pdf_error *);
-/* Decode raw bytes to caller-owned UTF-8. One Unicode scalar per byte;
- * unmapped bytes become U+FFFD. Output length is limited by max_token_size.
+/* Decode raw bytes to caller-owned UTF-8. ToUnicode can map one character to
+ * several Unicode scalars. Unmapped characters become one U+FFFD.
+ * Output length is limited by max_token_size.
  * Empty input succeeds with len 0. Widths are never consulted. */
 int pdf_font_decode(const pdf_font *, const unsigned char *, size_t,
                     pdf_font_utf8 *, pdf_error *);

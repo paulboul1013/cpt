@@ -1,5 +1,7 @@
 # pdftext：架構與 Roadmap
 
+> 目前實作已新增[中文 PDF 文字提取](../chinese-text.md)：Type0／Identity-H、CIDFontType0／CIDFontType2、ToUnicode 與 CID 字寬。下方 v1.0 範圍與各 milestone 驗收保留發布當時紀錄；目前支援範圍另見 [README](../../README.md#目前支援範圍)。
+
 > 本文件是架構、milestone 與版本邊界的權威來源。M2 Object Parser 已於 2026-08-24 通過 release acceptance（驗收記錄見 commit `d7913a5`）；M3–M11 已依序完成，各節末尾有完成狀態與驗收紀錄。2026-09-28 通過 [Release Gate](#16-release-gate)，版本為 v1.0.0。
 
 ## 1. Roadmap 定位
@@ -216,7 +218,7 @@ Document 由 reader、xref、trailer、object cache 與 limits 組成。cache en
 ### 錯誤政策
 
 - 完全未知的 operator：清除該次 operands，debug mode 警告。
-- 已知但未實作的標準 operator 一律保守回報 unsupported（包括 BI、Do、gs、path／clipping／color、marked content 與 compatibility operators）；不將它們當成完全未知 operator 略過。ID／EI 單獨出現、indirect reference 與 stream operand：malformed。
+- 已知但未實作的標準 operator 一律保守回報 unsupported（包括 BI、下述子集以外的 path、cs／CS／scn／SCN 以外的 color、未支援的 marked content 與 compatibility operators）；不將它們當成完全未知 operator 略過。Do 的資源政策見下述 Image 子集。ID／EI 單獨出現、indirect reference 與 stream operand：malformed。
 - 已知 operator operand 不足或型別錯誤：malformed content stream。
 - text-positioning／text-showing operators 必須位於 BT/ET 內；text-state operators（如 Tf）可在外設定並跨文字物件保留。BT 重設 text matrix 與 line matrix（PDF Reference 1.7 §5.2–5.3）。
 - q/Q 不平衡、BT/ET 不平衡或 nested BT：報 malformed content stream。q、Q、cm 僅可在 BT/ET 外。
@@ -231,6 +233,65 @@ M7 已完成。`src/content_lexer.[ch]` 透過共用 lexer 的 borrowed-buffer �
 `--dump-content input.pdf` 依頁序輸出 `PAGES N` 與 `PAGE i OPS n TEXT_SHOWS n`；`OPS` 僅計入已支援並驗證成功的操作。全頁成功後才寫 stdout，後頁失敗也沒有部分摘要。完全未知操作僅透過 debug warning callback 通知，CLI 不回顯任意 operator／string bytes；既有 `--dump-contents` 仍只顯示解碼 byte length。
 
 驗收：新增兩組 C 單元測試與 15 筆靜態 PDF fixtures（全套共 63 筆），涵蓋 raw／Flate／Contents array、原始 string bytes、型別／參數／狀態錯誤、未知／unsupported、token／container／nesting／q 限制、callback 中止與後頁失敗無 stdout。`make -B test`、`make -B asan` 全數通過，編譯器零 warning；ASan／UBSan／LeakSanitizer 在沙箱外完成。兩位獨立 reviewer 覆核無阻擋問題，另通過 100,000 組隨機 content input 的 sanitizer probe。
+
+### 後續 gs／ExtGState 子集
+
+2026-10-21 新增 `gs`：M7 接受一個 name operand，BT／ET 內外皆可使用，
+僅做語法驗證並計入 OPS。正式 bridge 另由 `extgstate.[ch]` 查找本頁繼承的
+Resources，完整驗證提取安全子集後繼續，不改變字型、矩陣或文字參數。
+裸 M8 沒有 resource resolver，仍明確拒絕 `gs`。
+
+接受可省略的 `/Type /ExtGState`、有限且介於 0..1 的 `SM`、boolean `SA`、
+`SMask /None`、`AIS false`、`CA`／`ca` 等於 1。已知欄位可為 direct／indirect；
+ref-chain 有循環與深度檢查，stream 不當作 dictionary。合法形狀的 `Font`、
+非 1 alpha、soft mask dictionary、`AIS true` 及未知 key 回報 unsupported；
+錯型／超範圍回報 malformed。詳見 [gs 交接與驗收](../agents/gs-handoff.md)。
+
+### 後續 cs／CS 語法支援
+
+`cs` 與 `CS` 各接受一個 name operand，BT／ET 內外皆可使用，計入 OPS。
+參數不足、多餘或型別錯誤為 malformed。名稱可含 NUL，沿用 M7 的 token／operand
+資源上限。M8 與正式 bridge 均略過其色彩效果，不查詢 ColorSpace 資源、不保留
+色彩狀態，不改變字元解碼、文字參數或矩陣。此政策沿用不可見文字也會提取的契約。
+另支援下述 `scn`／`SCN` 與 path／Image 子集；其他色彩指令維持原先拒絕政策。
+驗收與真實檔案的新停止點見 [色彩空間指令的文字提取政策](../color-space-text.md)。
+
+### 後續 scn／SCN 語法支援
+
+`scn` 與 `SCN` 接受至少一個 operand：一個以上的 number、尾端可選的 pattern
+name，或單獨的 pattern name。BT／ET 內外均可使用，計入 OPS；缺參數或型別／順序
+錯誤為 malformed。沿用 token、operand 數量與容器上限，不限制為固定 RGB 分量數。
+M8 與正式 bridge 略過色彩效果，不保留色彩狀態、不查詢 ColorSpace／Pattern，
+也不驗證所選色彩空間的分量數或值域。文字、字寬、矩陣與 Unicode 解碼保持一致。
+這是文字提取政策，不執行 pattern stream，也不宣稱完整色彩或圖案渲染支援。
+受控中英文 PDF 與原始 `test_git.pdf` 的復測見 [色彩指令驗收](../color-space-text.md#scnscn-文字提取支援)。
+
+### 後續 BDC／EMC 空 ActualText 子集
+
+目前另支援 [BDC／EMC 空 ActualText 子集](../agents/bdc-emc-handoff.md)：
+M7 驗證 name＋dictionary／name 的語法、同頁配對、BT／ET 正確巢狀與深度上限。
+裸 M8 將 marker 當幾何 no-op，保留全部 raw string events。
+正式 M9 bridge 只接受 `/Span` inline dictionary，缺省 ActualText 為 PASS，
+零 byte literal／hex ActualText 為 SUPPRESS；被抑制區段仍執行字型、字寬與位移，
+計入 raw event／CMap 上限，不解碼 Unicode、不發布 event、不增加 UTF-8 計數。
+非空 payload、named Properties、其他 tag／key 與 BMC／MP／DP 維持 unsupported；
+錯型 ActualText 與不平衡／交叉作用域為 malformed。這不是完整 Tagged PDF 支援。
+
+### 後續路徑與 Image XObject 子集
+
+2026-10-22 補上 `test_git.pdf` 剩餘的 17 種指令：`w J M j d m l h W* n re f Do W S c B*`。
+M7 驗證參數、線條樣式範圍與 current point。路徑不屬於 q/Q 保存的狀態；
+path／paint／clip／Do 僅能在 BT／ET 外。空 dash array 的 phase 必須為 0，
+非空 array 必須由非負數值構成且不能全為 0，phase 可為負數。
+
+M8 接受已驗證的繪圖指令，不改變文字參數或 CTM；來源文字不依 clipping 可見性過濾。
+M9 呼叫 `xobject.[ch]` 驗證具名 Image stream、可選 Type、Subtype 與正整數 Width／Height。
+資源表與欄位參照各自有循環及深度限制，錯誤保留物件 offset。影像資料不解碼、不做 OCR；
+Form／PS／其他 subtype 為 unsupported，不以 no-op 掩蓋可能存在的 Form 文字。
+純 M7 的 Do 僅驗證 name；裸 M8 因無資源解析器而拒絕 Do。
+
+原檔全部 479 頁、33 種與 1,037,334 次指令已通過；正式 CLI 產生 325,374 bytes，
+177,267 個 TextItem，無未映射字元。測試、邊界與重跑方式見 [路徑與影像支援](../drawing-text.md)。
 
 ## 8. M8：Text State 與 Geometry
 
@@ -474,6 +535,8 @@ v1.0 不支援：
 ## 13. v1.1 與後續
 
 ### v1.1 候選
+
+已實作的中文功能涵蓋下列候選項目的水平 Identity-H 子集：ToUnicode bfchar／bfrange、Type0／CIDFont 與中文 Unicode。尚未支援的 Encoding CMap、直書及其他候選項目仍維持後續規劃。
 
 - /ToUnicode 的 beginbfchar。
 - /ToUnicode 的 beginbfrange。

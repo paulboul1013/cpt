@@ -170,12 +170,12 @@ static void test_failures_are_all_or_nothing(void) {
     pdf_text_items items;
     pdf_error e;
     const char *abc[] = {FONT(ABC)};
-    /* Case 6: later page /ToUnicode discards earlier items. */
+    /* Case 6: malformed later-page /ToUnicode discards earlier items. */
     test_page pages[2] = {{"<< /Font << /F1 7 0 R >> >>", "BT /F1 10 Tf (A) Tj ET", NULL, NULL},
                           {"<< /Font << /F1 8 0 R >> >>", "BT /F1 10 Tf (A) Tj ET", NULL, NULL}};
     const char *later[] = {FONT(ABC), FONT(ABC " /ToUnicode 5 0 R")};
     assert(!extract_pages(pages, 2, later, 2, NULL, &items, &e));
-    assert(e.code == PDF_ERROR_UNSUPPORTED && strstr(e.message, "ToUnicode"));
+    assert(e.code == PDF_ERROR_MALFORMED && strstr(e.message, "ToUnicode"));
     assert(items.items == NULL && items.len == 0 && items.bytes == NULL);
     /* Item count limit. */
     pdf_limits limits;

@@ -1,5 +1,13 @@
 # PDF 畫面與實際解析結果對照
 
+現行 `test_git.pdf` 已完成全部 479 頁、33 種指令的文字提取，見
+[全書驗收](../output/pdf/test-git-support/README.md)。報告包含原檔 hash、實際 CLI 輸出、
+Poppler 逐頁字元比較與第 3、22、479 頁的渲染／基線及 advance 對照。
+下方歷史案例中的 path／Do 拒絕紀錄保留當時狀態，現行支援邊界見
+[路徑與影像支援](drawing-text.md)。
+
+新增中文驗收見 [中文文字與實際 PDF 畫面對照](../output/pdf/chinese-comparison/README.md)，包含嵌入中文字型的 PDF、實際 PNG、本工具文字／TextItem 與 Poppler 參考。
+
 > 各節是該 milestone 驗收當下的快照：「尚未實作」「尚未進入」等描述指當時狀態。v1.0 現況以 [roadmap](archive/pdftext_roadmap.md) 與最後的「M11 完成驗收」為準。
 
 [開啟左右對照報告](../output/pdf/m7-comparison/index.html)：左側是原始 PDF 第 1 頁的實際渲染，右側是本專案 CLI、M7 visitor 診斷 trace 與 Poppler 參考文字。點擊圖片可查看完整解析度。
@@ -175,6 +183,11 @@ M8 的 snapshot／library JSON dump 是診斷資料，字串仍為 raw bytes／A
 `text-items-transform.pdf` 的 9 個 items 與 `font-winansi.pdf` 前 4 個 items 的 UTF-8、origin、advance、width、em_height、字級、mode、horizontal 與 order 全部通過（absolute 1e-6，dump 為九位小數）。人工查看 overlay：每個框的起點與終點都對齊實際字形的基線與 advance（2 px 內），旋轉項目的框沿旋轉後的基線。`hello.pdf`、`compilerbook.pdf` 仍 exit 4、stdout 空白。items 依 source order 排列；閱讀順序、synthetic space 與純文字輸出屬 M11。
 
 ## M11 完成驗收
+
+後續新增 [BDC／EMC 空 ActualText 對照](../output/pdf/marked-comparison/README.md)：
+同一畫面的 ABCA，BC 位於空替代文字區段時只提取 A A；raw geometry 保留全部事件，
+段後 x=45.6、TextItem order 缺口與連續 sequence 均由實際 trace 核對。
+歷史案例中的 BDC／EMC 拒絕描述保留當時結果，現行子集見 README 與交接驗收。
 
 [M11 對照報告](../output/pdf/m11-comparison/index.html) 比對正式 CLI `pdftext input.pdf` 的實際 stdout 與**手寫的預期文字**（依 fixture 意圖撰寫，不是由程式產生）；Poppler `pdftotext -raw`／`-layout` 只作參考並列。hash、命令與版本見 [manifest](../output/pdf/m11-comparison/manifest.json)，重跑方法見 [README](../output/pdf/m11-comparison/README.md)。
 

@@ -1,0 +1,75 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 400 240] >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /Resources << /Font << /F1 5 0 R >> /XObject << /Im 8 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 208 >>
+stream
+1 w 0 J 10 M 2 j [] 0 d 0 0 m 20 0 l 20 20 l h W* n 0 0 1 1 re f 0 0 m 1 2 3 4 5 6 c B* 0 0 10 10 re W S q 10 0 0 10 100 100 cm /Im Do Q BT /F1 12 Tf 1 0 0 1 24 200 Tm <00010002> Tj [<0003> -100 <0004>] TJ ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type0 /BaseFont /Chinese /Encoding /Identity-H /DescendantFonts [6 0 R] /ToUnicode 7 0 R >>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /CIDFontType2 /BaseFont /Chinese /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> /DW 1000 /W [1 [1000 900 800]] >>
+endobj
+7 0 obj
+<< /Length 486 >>
+stream
+/CIDInit /ProcSet findresource begin
+12 dict begin
+begincmap
+/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def
+/CMapName /Chinese-UCS def
+/CMapType 2 def
+1 begincodespacerange
+<0000> <FFFF>
+endcodespacerange
+6 beginbfchar
+<0001> <4E2D>
+<0002> <6587>
+<0005> <4F60597D>
+<0006> <D840DC00>
+<0020> <0020>
+<2020> <4EBA>
+endbfchar
+2 beginbfrange
+<0003> <0004> [<6E2C> <8A66>]
+<0100> <0101> <0041>
+endbfrange
+endcmap
+CMapName currentdict /CMap defineresource pop
+end end
+
+endstream
+endobj
+8 0 obj
+<< /Type /XObject /Subtype /Image /Width 1 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8 /Length 1 >>
+stream
+x
+endstream
+endobj
+xref
+0 9
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000145 00000 n 
+0000000272 00000 n 
+0000000531 00000 n 
+0000000663 00000 n 
+0000000843 00000 n 
+0000001380 00000 n 
+trailer
+<< /Size 9 /Root 1 0 R >>
+startxref
+1524
+%%EOF

@@ -13,6 +13,8 @@
 | 設計跨模組介面、錯誤、資源上限或驗收方式 | [Common Contracts](docs/archive/pdftext_roadmap.md#14-common-contracts)、[Architecture Rules](docs/archive/pdftext_roadmap.md#15-architecture-rules) |
 | 回查某個 milestone 的原始計畫與實作紀錄 | [M5](docs/archive/m5-plan.md)、[M6](docs/archive/m6-plan.md)、[M7](docs/archive/m7-plan.md)、[M8](docs/archive/m8-plan.md)、[M9](docs/archive/m9-plan.md)、[M10](docs/archive/m10-plan.md)、[M11](docs/archive/m11-plan.md) plan；現行行為以 roadmap、程式與測試為準 |
 | 對照 PDF 實際畫面與解析結果 | [docs/pdf-visual-comparison.md](docs/pdf-visual-comparison.md)、`output/pdf/m*-comparison/` |
+| 實作 `BDC`／`EMC`、空 `ActualText` 抑制與後續替代文字支援 | [BDC／EMC 交接文件](docs/agents/bdc-emc-handoff.md) |
+| 接續 `gs`／ExtGState 支援、處理 `test_git.pdf` 的首個阻擋點 | [gs 交接文件](docs/agents/gs-handoff.md) |
 | 處理 GitHub issue 或標籤 | [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md)、[docs/agents/triage-labels.md](docs/agents/triage-labels.md) |
 
 ## 再定位程式

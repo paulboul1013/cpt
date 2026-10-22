@@ -119,14 +119,19 @@ static int show_string(pdf_text_state *s,const pdf_object *o,size_t segment,pdf_
         !pdf_matrix_point(event.rendering_matrix,(pdf_point){0,0},&event.origin))
         return numeric_failure(s,e);
     double total=0;
-    for (size_t i=0;i<bytes->len;i++) {
+    for (size_t i=0;i<bytes->len;) {
         double w=NAN;
-        int ok=s->metrics(s->metrics_context,event.state.font,bytes->data[i],&w,e);
+        size_t consumed=0;
+        pdf_text_bytes remaining={bytes->data+i,bytes->len-i};
+        int ok=s->metrics(s->metrics_context,event.state.font,remaining,&consumed,&w,e);
         if (!ok || e->code!=PDF_ERROR_NONE) return fail(s,e,PDF_ERROR_UNSUPPORTED,"unsupported font metrics");
-        double dx=(w/1000*s->g.size+s->g.character+(bytes->data[i]==0x20?s->g.word:0))*s->g.scale;
+        if (!consumed || consumed>remaining.len)
+            return fail(s,e,PDF_ERROR_MALFORMED,"invalid metrics character length");
+        double dx=(w/1000*s->g.size+s->g.character+(consumed==1 && bytes->data[i]==0x20?s->g.word:0))*s->g.scale;
         if (!isfinite(w) || !isfinite(dx) || !isfinite(total+dx)) return numeric_failure(s,e);
         total+=dx;
         if (!advance_text(s,dx,e)) return 0;
+        i+=consumed;
     }
     event.after=s->tm;
     if (!pdf_matrix_vector(basis,(pdf_point){total,0},&event.advance)) return numeric_failure(s,e);
@@ -172,6 +177,24 @@ int pdf_text_state_visit(void *context,const pdf_content_operation *op,pdf_error
     switch(op->kind) {
         case PDF_CONTENT_BT: s->tm=s->lm=pdf_matrix_identity(); return 1;
         case PDF_CONTENT_ET: return 1;
+        /* Raw geometry retains every string; M9 owns ActualText policy. */
+        case PDF_CONTENT_BDC: case PDF_CONTENT_EMC: return 1;
+        /* Color selection does not affect extracted text or geometry. */
+        case PDF_CONTENT_CS: case PDF_CONTENT_CS_STROKE:
+        case PDF_CONTENT_SCN: case PDF_CONTENT_SCN_STROKE: return 1;
+        /* Source-text extraction does not filter glyphs by painted paths or
+         * clipping. These validated operators never alter text state or CTM. */
+        case PDF_CONTENT_LINE_WIDTH: case PDF_CONTENT_LINE_CAP:
+        case PDF_CONTENT_LINE_JOIN: case PDF_CONTENT_MITER_LIMIT: case PDF_CONTENT_DASH:
+        case PDF_CONTENT_MOVE: case PDF_CONTENT_LINE: case PDF_CONTENT_CURVE:
+        case PDF_CONTENT_CLOSE: case PDF_CONTENT_RECT: case PDF_CONTENT_CLIP:
+        case PDF_CONTENT_CLIP_EVEN_ODD: case PDF_CONTENT_END_PATH:
+        case PDF_CONTENT_STROKE: case PDF_CONTENT_FILL:
+        case PDF_CONTENT_FILL_STROKE_EVEN_ODD: return 1;
+        case PDF_CONTENT_DO:
+            return fail(s,e,PDF_ERROR_UNSUPPORTED,"Do requires XObject resource validation");
+        case PDF_CONTENT_GS:
+            return fail(s,e,PDF_ERROR_UNSUPPORTED,"gs requires ExtGState resource validation");
         case PDF_CONTENT_TC: s->g.character=n[0]; return 1;
         case PDF_CONTENT_TW: s->g.word=n[0]; return 1;
         case PDF_CONTENT_TZ: s->g.scale=n[0]/100; return 1;

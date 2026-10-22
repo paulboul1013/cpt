@@ -1,0 +1,1 @@
+gcc  -std=c11 -Wall -Wextra -Wpedantic -g  src/main.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c src/xref.c src/document.c src/pages.c src/contents.c src/filter.c src/content_lexer.c src/content_interpreter.c src/matrix.c src/text_state.c src/font.c src/cmap.c src/font_text.c src/text_items.c src/reading_order.c -lz -lm -o pdftext

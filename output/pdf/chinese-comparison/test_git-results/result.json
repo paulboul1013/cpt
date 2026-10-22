@@ -1,0 +1,67 @@
+{
+  "input": "output/pdf/chinese-comparison/test_git.pdf",
+  "input_bytes": 36959295,
+  "input_sha256": "d87fdaa38f27e0a1f84601a83729506f065be9f2ce0990faee9b43642dd2ef70",
+  "commands": {
+    "build": {
+      "command": [
+        "make",
+        "-B",
+        "pdftext"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.484,
+      "stdout_bytes": 366,
+      "stderr_bytes": 0
+    },
+    "extract": {
+      "command": [
+        "./pdftext",
+        "/home/paulboul/cpt/output/pdf/chinese-comparison/test_git.pdf"
+      ],
+      "exit_code": 4,
+      "elapsed_seconds": 0.316,
+      "stdout_bytes": 0,
+      "stderr_bytes": 91
+    },
+    "items": {
+      "command": [
+        "./pdftext",
+        "--dump-text-items",
+        "/home/paulboul/cpt/output/pdf/chinese-comparison/test_git.pdf"
+      ],
+      "exit_code": 4,
+      "elapsed_seconds": 0.868,
+      "stdout_bytes": 0,
+      "stderr_bytes": 91
+    },
+    "poppler": {
+      "command": [
+        "pdftotext",
+        "-enc",
+        "UTF-8",
+        "/home/paulboul/cpt/output/pdf/chinese-comparison/test_git.pdf",
+        "-"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.718,
+      "stdout_bytes": 325654,
+      "stderr_bytes": 0
+    },
+    "fonts": {
+      "command": [
+        "pdffonts",
+        "/home/paulboul/cpt/output/pdf/chinese-comparison/test_git.pdf"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.166,
+      "stdout_bytes": 28388,
+      "stderr_bytes": 0
+    }
+  },
+  "binary_sha256": "a183a53bb09c8b5480fe40dcc5a4c0f3e55d9479195a971b1b4c75a271e8c22d",
+  "first_page_decoded_prefix_hex": "2f475361206773202f435370206373202f4353702043530a302e30363030303030303020302030202d302e3036303030303030302038352e3031393939393920",
+  "poppler_first_text_page": 3,
+  "poppler_contains_cjk": true,
+  "unchanged_input": true
+}

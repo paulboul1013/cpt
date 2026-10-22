@@ -10,6 +10,17 @@ static int run(pdf_text_state *s, const char *input, pdf_error *e) {
     return pdf_content_interpret((const unsigned char *)input, strlen(input), NULL,
                                   123, pdf_text_state_visit, NULL, s, &r, e);
 }
+static void color_spaces(void) {
+    pdf_error e; pdf_error_init(&e);
+    pdf_text_state *s = pdf_text_state_create(NULL, NULL, NULL, NULL, NULL, &e);
+    assert(s && run(s, "/DeviceRGB cs 0 0 0 scn /DeviceGray CS 1 SCN "
+        "BT /Unresolved#00 cs 1 2 3 4 5 6 7 scn /Pattern CS /P#00 SCN ET", &e));
+    pdf_text_snapshot v;
+    assert(pdf_text_state_snapshot(s, &v));
+    assert(!v.font_set && v.saved_depth == 0);
+    near(v.hscale, 1); near(v.ctm.a, 1); near(v.text_matrix.e, 0);
+    pdf_text_state_destroy(s);
+}
 static void lifecycle(void) {
     pdf_error e; pdf_error_init(&e);
     pdf_text_state *s = pdf_text_state_create(NULL,NULL,NULL,NULL,NULL,&e);
@@ -33,8 +44,8 @@ static void lifecycle(void) {
 static pdf_text_event events[32];
 static unsigned char strings[32][32];
 static size_t count, metrics_calls;
-static int width(void *ctx,pdf_text_bytes font,unsigned char code,double *out,pdf_error *e) {
-    (void)ctx; (void)e; (void)code;
+static int width(void *ctx,pdf_text_bytes font,pdf_text_bytes bytes,size_t *consumed,double *out,pdf_error *e) {
+    (void)ctx; (void)e; (void)bytes; *consumed=1;
     assert(font.len); metrics_calls++; *out=500; return 1;
 }
 static int collect(void *ctx,const pdf_text_event *ev,pdf_error *e) {
@@ -63,9 +74,12 @@ static void geometry(void) {
     for(size_t i=0;i<count;i++) assert(events[i].source_order==i);
     pdf_text_state_destroy(s);
 }
-static int bad_metrics(void *ctx,pdf_text_bytes font,unsigned char code,double *w,pdf_error *e) {
-    (void)font; (void)e;
+static int bad_metrics(void *ctx,pdf_text_bytes font,pdf_text_bytes bytes,size_t *consumed,double *w,pdf_error *e) {
+    (void)font; (void)e; *consumed=1;
+    unsigned char code=bytes.data[0];
     int mode=*(int *)ctx;
+    if(mode==4) *consumed=0;
+    if(mode==5) *consumed=bytes.len+1;
     if(mode==1 && code=='B') return 0;
     *w=mode==2?INFINITY:500;
     if(mode==3) pdf_error_set(e,PDF_ERROR_RESOURCE_LIMIT,999,"metrics","budget exhausted");
@@ -91,12 +105,12 @@ static void failures(void) {
     assert(count==1);
     assert(!run(s,"BT (X) Tj ET",&e)); assert(e.code==PDF_ERROR_UNSUPPORTED);
     pdf_text_state_destroy(s);
-    for(int mode=1;mode<=3;mode++) {
+    for(int mode=1;mode<=5;mode++) {
         pdf_error_clear(&e); count=0;
         s=pdf_text_state_create(NULL,bad_metrics,&mode,collect,NULL,&e);
         assert(!run(s,"/F 12 Tf BT (A) Tj (AB) Tj ET",&e));
         assert(count==(mode==1?1:0));
-        assert(e.code==(mode==1?PDF_ERROR_UNSUPPORTED:mode==2?PDF_ERROR_MALFORMED:PDF_ERROR_RESOURCE_LIMIT));
+        assert(e.code==(mode==1?PDF_ERROR_UNSUPPORTED:mode==3?PDF_ERROR_RESOURCE_LIMIT:PDF_ERROR_MALFORMED));
         pdf_text_state_destroy(s);
     }
     pdf_error_clear(&e);
@@ -190,4 +204,4 @@ static void debug_dump(void) {
     assert(strstr(text,"\"origin\":[30.000000000,40.000000000]"));
     assert(fclose(f)==0); pdf_text_state_destroy(s);
 }
-int main(void) { lifecycle(); geometry(); failures(); transforms_and_save(); raw_codes_and_boundaries(); debug_dump(); return 0; }
+int main(void) { color_spaces(); lifecycle(); geometry(); failures(); transforms_and_save(); raw_codes_and_boundaries(); debug_dump(); return 0; }

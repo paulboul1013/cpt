@@ -11,7 +11,15 @@ typedef enum {
     PDF_CONTENT_TJ, PDF_CONTENT_TJ_ARRAY, PDF_CONTENT_QUOTE,
     PDF_CONTENT_DOUBLE_QUOTE, PDF_CONTENT_SAVE, PDF_CONTENT_RESTORE,
     PDF_CONTENT_CM, PDF_CONTENT_TC, PDF_CONTENT_TW, PDF_CONTENT_TZ,
-    PDF_CONTENT_TL, PDF_CONTENT_TS, PDF_CONTENT_TR
+    PDF_CONTENT_TL, PDF_CONTENT_TS, PDF_CONTENT_TR, PDF_CONTENT_GS,
+    PDF_CONTENT_CS, PDF_CONTENT_CS_STROKE, PDF_CONTENT_BDC, PDF_CONTENT_EMC,
+    PDF_CONTENT_SCN, PDF_CONTENT_SCN_STROKE,
+    PDF_CONTENT_LINE_WIDTH, PDF_CONTENT_LINE_CAP, PDF_CONTENT_LINE_JOIN,
+    PDF_CONTENT_MITER_LIMIT, PDF_CONTENT_DASH,
+    PDF_CONTENT_MOVE, PDF_CONTENT_LINE, PDF_CONTENT_CURVE, PDF_CONTENT_CLOSE,
+    PDF_CONTENT_RECT, PDF_CONTENT_CLIP, PDF_CONTENT_CLIP_EVEN_ODD,
+    PDF_CONTENT_END_PATH, PDF_CONTENT_STROKE, PDF_CONTENT_FILL,
+    PDF_CONTENT_FILL_STROKE_EVEN_ODD, PDF_CONTENT_DO
 } pdf_content_operator;
 
 typedef struct {
@@ -24,7 +32,19 @@ typedef struct {
 /* Operands are type/arity checked and read-only; valid only during this call.
  * Return zero to stop; optionally set error's code/message. Prior callbacks are
  * not rolled back if a later operation fails: consumers must stage page output.
- * No font decoding or geometry is performed here. */
+ * No resource validation, font decoding or geometry is performed here; gs only
+ * checks its name operand. A document-aware consumer must validate ExtGState.
+ * cs/CS check one name operand; extraction ignores their color effects and
+ * does not resolve ColorSpace resources. scn/SCN check one or more operands:
+ * numbers with an optional final pattern name, or a pattern name alone.
+ * ColorSpace-dependent component counts/ranges and Pattern resources are not
+ * validated; extraction ignores color values. BDC checks name + dictionary/name,
+ * pairs EMC within the page and requires proper nesting with BT/ET. It does
+ * not interpret properties; BMC remains unsupported. Line styles validate
+ * ranges and dash arrays. Paths validate current-point requirements and are
+ * forbidden inside BT/ET, as is Do. The current path is not saved by q/Q.
+ * Path painting/clipping has no text-filtering semantics here. Do checks only
+ * a name operand; a document-aware consumer must resolve the XObject. */
 typedef int (*pdf_content_visitor)(void *context,
                                   const pdf_content_operation *operation,
                                   pdf_error *error);

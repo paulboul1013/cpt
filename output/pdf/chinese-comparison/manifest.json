@@ -1,0 +1,10 @@
+{
+  "input_sha256": "56cf8389825bbd8a61423cca26f95f56dcc0f73547b0fa567cdaa3a7dab9b1be",
+  "binary_sha256": "b82d9581f57285ee9784fe9a55600c2573d96361ece4539c625820338f6fe59d",
+  "font_sha256": "acb6440a713d880a13a21b468ba7cd43f5a2b2934972e51be791c880730777b8",
+  "expected_text": "中文提取測試",
+  "expected_advance": 144.0,
+  "actual_advance": 144.0,
+  "text_and_geometry_match": true,
+  "poppler_version": "pdftotext version 24.02.0\nCopyright 2005-2024 The Poppler Developers - http://poppler.freedesktop.org\nCopyright 1996-2011, 2022 Glyph & Cog, LLC"
+}

@@ -14,6 +14,9 @@ typedef struct {
     unsigned char utf8[32];
     size_t utf8_len, replacements, bytes_len;
     int mode;
+    pdf_text_snapshot state;
+    pdf_matrix after, rendering;
+    size_t order, segment;
 } record;
 typedef struct {
     record items[64];
@@ -50,6 +53,10 @@ static int collect(void *context, const pdf_font_text_event *ev, pdf_error *e) {
     assert(ev->utf8[ev->utf8_len] == 0);
     r->utf8_len = ev->utf8_len; r->replacements = ev->replacements;
     r->bytes_len = ev->raw->bytes.len; r->mode = ev->raw->state.rendering_mode;
+    r->state = ev->raw->state;
+    r->state.font.data = NULL; /* Other snapshot fields are values. */
+    r->after = ev->raw->after; r->rendering = ev->raw->rendering_matrix;
+    r->order = ev->raw->source_order; r->segment = ev->raw->segment_index;
     return 1;
 }
 
@@ -216,7 +223,7 @@ static void test_budgets_and_abort(void) {
     assert(e.code == PDF_ERROR_RESOURCE_LIMIT && strstr(e.message, "UTF-8") && c.len == 1);
     /* Event count is document-wide as well. */
     pdf_limits_default(&limits);
-    totals = (pdf_font_text_totals){0, limits.max_container_entries - 1};
+    totals = (pdf_font_text_totals){.events = limits.max_container_entries - 1};
     c = (collector){0}; c.abort_at = SIZE_MAX;
     assert(!run(path, &limits, &totals, &c, NULL, &e));
     assert(e.code == PDF_ERROR_RESOURCE_LIMIT && c.len == 1);
@@ -259,6 +266,147 @@ static void test_m8_fixtures(void) {
     }
 }
 
+static void test_gs_subset(void) {
+    collector c;
+    pdf_error e;
+    const char *fonts[] = {FONT(ABC)};
+    assert(run_one("<< /Font << /F1 5 0 R >> /ExtGState << /GSa "
+                   "<< /Type /ExtGState /SM .02 /SMask /None /AIS false /SA true /ca 1 /CA 1 >> >> >>",
+                   "/GSa gs BT /F1 12 Tf 1 0 0 1 24 200 Tm (ABC) Tj /GSa gs (A) Tj ET",
+                   fonts, 1, &c, &e, NULL));
+    assert(c.len == 2 && c.items[0].utf8_len == 3);
+    assert(memcmp(c.items[0].utf8, "ABC", 3) == 0);
+    near(c.items[0].advance, 23.4);
+    near(c.items[1].x, 47.4);
+}
+
+static void same_matrix(pdf_matrix a, pdf_matrix b) {
+    near(a.a, b.a); near(a.b, b.b); near(a.c, b.c);
+    near(a.d, b.d); near(a.e, b.e); near(a.f, b.f);
+}
+static void same_events(const collector *a, const collector *b) {
+    assert(a->len == b->len);
+    for (size_t i = 0; i < a->len; i++) {
+        const record *x = &a->items[i], *y = &b->items[i];
+        assert(x->utf8_len == y->utf8_len && x->bytes_len == y->bytes_len);
+        assert(memcmp(x->utf8, y->utf8, x->utf8_len) == 0);
+        assert(x->mode == y->mode && x->order == y->order && x->segment == y->segment);
+        near(x->x, y->x); near(x->y, y->y); near(x->advance, y->advance);
+        assert(x->state.font_set == y->state.font_set && x->state.font.len == y->state.font.len);
+        assert(x->state.saved_depth == y->state.saved_depth);
+        near(x->state.font_size, y->state.font_size);
+        near(x->state.char_spacing, y->state.char_spacing);
+        near(x->state.word_spacing, y->state.word_spacing);
+        near(x->state.hscale, y->state.hscale);
+        near(x->state.leading, y->state.leading); near(x->state.rise, y->state.rise);
+        same_matrix(x->state.ctm, y->state.ctm);
+        same_matrix(x->state.text_matrix, y->state.text_matrix);
+        same_matrix(x->state.line_matrix, y->state.line_matrix);
+        same_matrix(x->after, y->after); same_matrix(x->rendering, y->rendering);
+    }
+}
+
+static void test_gs_state_and_scope(void) {
+    collector control, actual;
+    pdf_error e;
+    const char *fonts[] = {FONT(ABC)};
+    const char *resources = "<< /Font << /F1 5 0 R /F2 " FONT("/FirstChar 65 /LastChar 67 /Widths [400 500 600]")
+        " >> /ExtGState << /GSa << /SM .02 /SA true /ca 1 >> /G#00 << >> >> >>";
+    const char *plain = "/F1 12 Tf 1 Tc 2 Tw 80 Tz 18 TL 3 Ts 2 Tr q 2 0 0 2 5 7 cm "
+        "q /F2 9 Tf BT 1 0 0 1 24 100 Tm (AB) Tj [(C) -120 (A)] TJ ET Q BT (ABC) Tj ET Q BT (A) Tj ET";
+    const char *gs = "/GSa gs /F1 12 Tf 1 Tc 2 Tw 80 Tz 18 TL 3 Ts 2 Tr q /GSa gs 2 0 0 2 5 7 cm "
+        "q /F2 9 Tf /G#00 gs BT 1 0 0 1 24 100 Tm (AB) Tj /GSa gs [(C) -120 (A)] TJ ET Q /GSa gs BT (ABC) Tj ET Q BT /GSa gs (A) Tj ET";
+    assert(run_one(resources, plain, fonts, 1, &control, &e, NULL));
+    assert(run_one(resources, gs, fonts, 1, &actual, &e, NULL));
+    same_events(&control, &actual);
+    /* gs validation neither invents a font nor resets the selected font. */
+    assert(!run_one(resources, "/GSa gs BT (A) Tj ET", fonts, 1, &actual, &e, NULL));
+    assert(e.code == PDF_ERROR_MALFORMED && actual.len == 0);
+    /* The M7/M8 state spans Contents streams, including a name gs split. */
+    const char *extras[] = {FONT(ABC), "<< >>", NULL};
+    const char *second = "gs (ABC) Tj ET Q";
+    char stream[128];
+    snprintf(stream, sizeof(stream), "<< /Length %zu >>\nstream\n%s\nendstream", strlen(second), second);
+    extras[2] = stream;
+    test_page page = {"<< /Font << /F1 5 0 R >> /ExtGState << /GSa 6 0 R >> >>",
+        "q /F1 12 Tf BT /GSa", NULL, "[4 0 R 7 0 R]"};
+    pdf_font_text_totals totals = {0};
+    actual = (collector){0}; actual.abort_at = SIZE_MAX;
+    assert(run(build_pdf(&page, 1, extras, 3, NULL), NULL, &totals, &actual, NULL, &e));
+    assert(actual.len == 1 && actual.items[0].utf8_len == 3);
+    near(actual.items[0].advance, 23.4);
+    assert(totals.events == 1 && totals.utf8_bytes == 3 && totals.cmap_bytes == 0);
+    /* Consumer failures after a validated gs keep their original cause. */
+    actual = (collector){0}; actual.abort_at = 0; actual.fail_with_limit = 1;
+    totals = (pdf_font_text_totals){0};
+    assert(!run(test_pdf_path, NULL, &totals, &actual, NULL, &e));
+    assert(e.code == PDF_ERROR_RESOURCE_LIMIT && strstr(e.message, "consumer budget"));
+    const char *pairs[][2] = {
+        {"tests/fixtures/gs-english-control.pdf", "tests/fixtures/gs-english.pdf"},
+        {"tests/fixtures/gs-chinese-control.pdf", "tests/fixtures/gs-chinese.pdf"}
+    };
+    for (size_t i = 0; i < 2; i++) {
+        control = (collector){0}; control.abort_at = SIZE_MAX;
+        actual = control;
+        totals = (pdf_font_text_totals){0};
+        assert(run(pairs[i][0], NULL, &totals, &control, NULL, &e));
+        pdf_font_text_totals expected = totals;
+        totals = (pdf_font_text_totals){0};
+        assert(run(pairs[i][1], NULL, &totals, &actual, NULL, &e));
+        same_events(&control, &actual);
+        assert(totals.events == expected.events && totals.utf8_bytes == expected.utf8_bytes &&
+               totals.cmap_bytes == expected.cmap_bytes);
+    }
+}
+
+static void test_color_space_extraction(void) {
+    collector control, actual;
+    pdf_error e;
+    const char *fonts[] = {FONT(ABC)};
+    const char *plain = "/F1 12 Tf 1 Tc 2 Tw 80 Tz 18 TL 3 Ts 2 Tr q 2 0 0 2 5 7 cm "
+        "q /F1 9 Tf BT 1 0 0 1 24 100 Tm (AB) Tj [(C) -120 (A)] TJ ET Q BT (ABC) Tj ET Q BT (A) Tj ET";
+    const char *color = "/Unresolved cs 0 0 0 scn /DeviceRGB CS 1 .5 0 SCN "
+        "/F1 12 Tf 1 Tc 2 Tw 80 Tz 18 TL 3 Ts 2 Tr "
+        "q /Pattern cs /Missing scn 2 0 0 2 5 7 cm q /F1 9 Tf /C#00 CS /P#00 SCN "
+        "BT 1 0 0 1 24 100 Tm (AB) Tj /CSp cs 0 0 0 1 /P scn /DeviceGray CS 0 SCN "
+        "[(C) -120 (A)] TJ ET Q /CSp CS 1 2 3 4 5 6 7 SCN BT (ABC) Tj ET "
+        "Q /Unresolved cs BT /DeviceCMYK CS 0 0 0 1 SCN (A) Tj ET";
+    assert(run_one(RES, plain, fonts, 1, &control, &e, NULL));
+    assert(run_one(RES, color, fonts, 1, &actual, &e, NULL));
+    same_events(&control, &actual);
+    assert(!run_one(RES, "/DeviceRGB cs 0 0 0 scn /DeviceGray CS 1 SCN BT (A) Tj ET", fonts, 1, &actual, &e, NULL));
+    assert(e.code == PDF_ERROR_MALFORMED && actual.len == 0);
+    /* Operands can end in one Contents stream and their operator start in the next. */
+    const char *second = "scn /DeviceRGB CS 0 0 0 SCN (ABC) Tj ET Q";
+    char stream[128];
+    snprintf(stream, sizeof(stream), "<< /Length %zu >>\nstream\n%s\nendstream", strlen(second), second);
+    const char *extras[] = {FONT(ABC), stream};
+    test_page page = {RES, "q /F1 12 Tf BT /Pattern cs 1 0 0 /P", NULL, "[4 0 R 6 0 R]"};
+    pdf_font_text_totals totals = {0};
+    actual = (collector){0}; actual.abort_at = SIZE_MAX;
+    assert(run(build_pdf(&page, 1, extras, 2, NULL), NULL, &totals, &actual, NULL, &e));
+    assert(actual.len == 1 && actual.items[0].utf8_len == 3);
+    near(actual.items[0].advance, 23.4);
+    const char *pairs[][2] = {
+        {"tests/fixtures/gs-english-control.pdf", "tests/fixtures/cs-english.pdf"},
+        {"tests/fixtures/gs-chinese-control.pdf", "tests/fixtures/cs-chinese.pdf"},
+        {"tests/fixtures/gs-english-control.pdf", "tests/fixtures/scn-english.pdf"},
+        {"tests/fixtures/gs-chinese-control.pdf", "tests/fixtures/scn-chinese.pdf"}
+    };
+    for (size_t i = 0; i < sizeof(pairs)/sizeof(*pairs); i++) {
+        control = (collector){0}; control.abort_at = SIZE_MAX;
+        actual = control;
+        totals = (pdf_font_text_totals){0};
+        assert(run(pairs[i][0], NULL, &totals, &control, NULL, &e));
+        pdf_font_text_totals expected = totals;
+        totals = (pdf_font_text_totals){0};
+        assert(run(pairs[i][1], NULL, &totals, &actual, NULL, &e));
+        same_events(&control, &actual);
+        assert(totals.events == expected.events && totals.utf8_bytes == expected.utf8_bytes &&
+               totals.cmap_bytes == expected.cmap_bytes);
+    }
+}
+
 static int probe(const char *path) {
     char *buffer = NULL;
     size_t size = 0;
@@ -283,6 +431,9 @@ int main(int argc, char **argv) {
     /* Honour the environment locale so runners can prove the dump ignores it. */
     if (argc == 2) { setlocale(LC_ALL, ""); return probe(argv[1]); }
     if (argc != 1) return 1;
+    test_color_space_extraction();
+    test_gs_subset();
+    test_gs_state_and_scope();
     test_numeric_cases();
     test_font_switching();
     test_tf_validation();

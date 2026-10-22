@@ -201,7 +201,7 @@ static int extract_text(const char *filename, const char *output) {
         }
     }
     if (ok && text.replacements)
-        fprintf(stderr, "pdftext: warning: %zu undecodable bytes replaced with U+FFFD\n", text.replacements);
+        fprintf(stderr, "pdftext: warning: %zu undecodable characters replaced with U+FFFD\n", text.replacements);
     if (ok && text.lines == 0) fputs("pdftext: no extractable text layer\n", stderr);
     pdf_plain_text_free(&text);
     return ok ? 0 : fail_with(&error);

@@ -1,5 +1,7 @@
 #define _POSIX_C_SOURCE 200809L
 #include "font.h"
+#include "cmap.h"
+#include "filter.h"
 
 #include <locale.h>
 #include <math.h>
@@ -20,6 +22,7 @@ static const uint16_t win_ansi_high[32] = {
 };
 #define REPLACEMENT 0xFFFDu
 
+typedef struct { unsigned lo, hi; double width; } cid_width;
 struct pdf_font {
     pdf_font_info info;
     unsigned char *name, *base;
@@ -27,6 +30,10 @@ struct pdf_font {
     size_t max_utf8;
     int has_reference;
     pdf_reference reference; /* Cache key when the /Font entry is indirect. */
+    pdf_cmap *unicode;
+    cid_width *cid_widths;
+    size_t cid_len, cid_cap;
+    double default_width;
 };
 typedef struct {
     unsigned char *name;
@@ -43,6 +50,8 @@ struct pdf_font_context {
     pdf_font **fonts;
     size_t font_len, font_cap;
     int failed;
+    size_t local_cmap_decoded_bytes, *cmap_decoded_bytes;
+    size_t font_storage_bytes;
 };
 
 static int fail_at(pdf_error *e, pdf_error_code code, size_t offset, const char *why) {
@@ -141,7 +150,7 @@ static const pdf_object *leaf_name(pdf_font_context *c, const pdf_object *o, siz
 
 pdf_font_context *pdf_font_context_create(pdf_document *document, const pdf_object *resources,
                                           size_t page_offset, const pdf_limits *limits,
-                                          pdf_error *e) {
+                                          size_t *cmap_decoded_bytes, pdf_error *e) {
     if (!e || e->code != PDF_ERROR_NONE) return NULL;
     if (!document) { fail_at(e, PDF_ERROR_IO, page_offset, "missing document"); return NULL; }
     pdf_font_context *c = calloc(1, sizeof(*c));
@@ -149,12 +158,14 @@ pdf_font_context *pdf_font_context_create(pdf_document *document, const pdf_obje
     c->document = document;
     c->resources = resources;
     c->page_offset = page_offset;
+    c->cmap_decoded_bytes = cmap_decoded_bytes ? cmap_decoded_bytes : &c->local_cmap_decoded_bytes;
     if (limits) c->limits = *limits; else pdf_limits_default(&c->limits);
     return c;
 }
 static void font_free(pdf_font *f) {
     if (!f) return;
-    free(f->name); free(f->base); free(f);
+    free(f->name); free(f->base);
+    pdf_cmap_free(f->unicode); free(f->cid_widths); free(f);
 }
 void pdf_font_context_destroy(pdf_font_context *c) {
     if (!c) return;
@@ -225,7 +236,7 @@ static int parse_descriptor(pdf_font_context *c, pdf_font *f, const pdf_object *
     if (flags) {
         int64_t value;
         if (!leaf_integer(c, flags, loc, &value, "/Flags must be an integer", e)) return 0;
-        if ((uint64_t)value & 4u)
+        if (((uint64_t)value & 4u) && !pdf_dict_get(font, "ToUnicode"))
             return fail_at(e, PDF_ERROR_UNSUPPORTED, loc, "unsupported symbolic font");
     }
     const pdf_object *missing = pdf_dict_get(d, "MissingWidth");
@@ -273,6 +284,138 @@ static int parse_widths(pdf_font_context *c, pdf_font *f, const pdf_object *font
     return 1;
 }
 
+static int cid_compare(const void *a, const void *b) {
+    unsigned x = ((const cid_width *)a)->lo, y = ((const cid_width *)b)->lo;
+    return (x > y) - (x < y);
+}
+static int cid_add(pdf_font_context *c, pdf_font *f, int64_t lo, int64_t hi,
+                    double width, size_t loc, pdf_error *e) {
+    if (lo < 0 || hi > 65535 || hi < lo)
+        return fail_at(e, PDF_ERROR_MALFORMED, loc, "invalid CID width range");
+    size_t limit = c->limits.max_container_entries;
+    if (limit > 65536) limit = 65536;
+    if (f->cid_len >= limit)
+        return fail_at(e, PDF_ERROR_RESOURCE_LIMIT, loc, "CID width count exceeds limit");
+    if (f->cid_len == f->cid_cap) {
+        size_t cap = f->cid_cap ? f->cid_cap * 2 : 16;
+        if (cap > limit) cap = limit;
+        cid_width *items = realloc(f->cid_widths, cap * sizeof(*items));
+        if (!items) return fail_at(e, PDF_ERROR_OUT_OF_MEMORY, loc, "cannot allocate CID widths");
+        f->cid_widths = items; f->cid_cap = cap;
+    }
+    f->cid_widths[f->cid_len++] = (cid_width){(unsigned)lo, (unsigned)hi, width};
+    return 1;
+}
+static int parse_cid_font(pdf_font_context *c, pdf_font *f, const pdf_object *font,
+                          size_t loc, pdf_error *e) {
+    const pdf_object *enc = pdf_dict_get(font, "Encoding");
+    if (!enc) return fail_at(e, PDF_ERROR_MALFORMED, loc, "Type0 font requires /Encoding");
+    size_t enc_loc = loc;
+    enc = leaf(c, enc, &enc_loc, NULL, e);
+    if (!enc) return 0;
+    if (!name_is(enc, "Identity-H"))
+        return fail_at(e, PDF_ERROR_UNSUPPORTED, enc_loc, "Type0 font requires supported /Identity-H encoding");
+    f->info.encoding = PDF_FONT_ENCODING_IDENTITY_H;
+    f->info.first_char = 0;
+    f->info.last_char = 65535;
+    const pdf_object *desc = pdf_dict_get(font, "DescendantFonts");
+    if (!desc) return fail_at(e, PDF_ERROR_MALFORMED, loc, "Type0 font requires /DescendantFonts");
+    desc = leaf(c, desc, &loc, NULL, e);
+    if (!desc) return 0;
+    if (desc->type != PDF_OBJECT_ARRAY || desc->value.array.len != 1)
+        return fail_at(e, PDF_ERROR_MALFORMED, loc, "/DescendantFonts must contain one CIDFont");
+    desc = leaf_dict(c, desc->value.array.items[0], &loc, "CIDFont must be a dictionary", e);
+    if (!desc) return 0;
+    const pdf_object *sub = pdf_dict_get(desc, "Subtype");
+    if (!sub || !(sub = leaf_name(c, sub, loc, "CIDFont requires /Subtype", e)))
+        return fail_at(e, PDF_ERROR_MALFORMED, loc, "CIDFont requires /Subtype");
+    if (!name_is(sub, "CIDFontType0") && !name_is(sub, "CIDFontType2"))
+        return fail_at(e, PDF_ERROR_UNSUPPORTED, loc, "unsupported CIDFont subtype");
+    const pdf_object *type = pdf_dict_get(desc, "Type");
+    if (!type || !(type = leaf_name(c, type, loc, "CIDFont requires /Type /Font", e)) || !name_is(type, "Font"))
+        return fail_at(e, PDF_ERROR_MALFORMED, loc, "CIDFont requires /Type /Font");
+    f->default_width = 1000;
+    const pdf_object *dw = pdf_dict_get(desc, "DW");
+    if (dw && !leaf_number(c, dw, loc, &f->default_width, "/DW must be a finite number", e)) return 0;
+    const pdf_object *w = pdf_dict_get(desc, "W");
+    if (!w) return 1;
+    w = leaf(c, w, &loc, NULL, e);
+    if (!w) return 0;
+    if (w->type != PDF_OBJECT_ARRAY)
+        return fail_at(e, PDF_ERROR_MALFORMED, loc, "/W must be an array");
+    const pdf_array *a = &w->value.array;
+    for (size_t i = 0; i < a->len;) {
+        int64_t lo;
+        if (!leaf_integer(c, a->items[i++], loc, &lo, "CID must be an integer", e)) return 0;
+        if (lo < 0 || lo > 65535 || i >= a->len)
+            return fail_at(e, PDF_ERROR_MALFORMED, loc, "invalid /W entry");
+        size_t entry_loc = loc;
+        const pdf_object *entry = leaf(c, a->items[i++], &entry_loc, NULL, e);
+        if (!entry) return 0;
+        if (entry->type == PDF_OBJECT_ARRAY) {
+            if (!entry->value.array.len || entry->value.array.len > 65536 - (size_t)lo)
+                return fail_at(e, PDF_ERROR_MALFORMED, entry_loc, "invalid CID width array length");
+            for (size_t j = 0; j < entry->value.array.len; j++) {
+                double width;
+                if (!leaf_number(c, entry->value.array.items[j], entry_loc, &width,
+                                 "CID width must be a finite number", e) ||
+                    !cid_add(c, f, lo + (int64_t)j, lo + (int64_t)j, width, entry_loc, e)) return 0;
+            }
+        } else {
+            if (entry->type != PDF_OBJECT_INT || i >= a->len)
+                return fail_at(e, PDF_ERROR_MALFORMED, entry_loc, "invalid CID width range");
+            double width;
+            if (!leaf_number(c, a->items[i++], loc, &width, "CID width must be a finite number", e) ||
+                !cid_add(c, f, lo, entry->value.integer, width, loc, e)) return 0;
+        }
+    }
+    if (f->cid_len > 1) qsort(f->cid_widths, f->cid_len, sizeof(*f->cid_widths), cid_compare);
+    for (size_t i = 1; i < f->cid_len; i++)
+        if (f->cid_widths[i].lo <= f->cid_widths[i - 1].hi)
+            return fail_at(e, PDF_ERROR_MALFORMED, loc, "overlapping CID width ranges");
+    return 1;
+}
+static int parse_unicode(pdf_font_context *c, pdf_font *f, const pdf_object *font,
+                         size_t loc, pdf_error *e) {
+    const pdf_object *entry = pdf_dict_get(font, "ToUnicode");
+    if (!entry) return f->info.subtype != PDF_FONT_TYPE0 ||
+        fail_at(e, PDF_ERROR_UNSUPPORTED, loc, "Type0 font requires /ToUnicode");
+    int stream = 0;
+    const pdf_object *dict = leaf(c, entry, &loc, &stream, e);
+    if (!dict) return 0;
+    if (!stream || dict->type != PDF_OBJECT_DICT)
+        return fail_at(e, PDF_ERROR_MALFORMED, loc, "/ToUnicode must reference a stream");
+    if (pdf_dict_get(dict, "UseCMap"))
+        return fail_at(e, PDF_ERROR_UNSUPPORTED, loc, "unsupported /ToUnicode /UseCMap");
+    /* leaf() resolved the stream into document-owned data. Resolve its final
+     * reference once more through the cache to obtain the stream slice. */
+    const pdf_object *ref = entry;
+    const pdf_indirect_object *resolved = NULL;
+    for (size_t hops = 0; ref && ref->type == PDF_OBJECT_REF && hops < c->limits.max_nesting_depth; hops++) {
+        resolved = pdf_resolve(c->document, ref->value.reference, e);
+        if (!resolved) return 0;
+        ref = resolved->body;
+    }
+    if (resolved->stream.len > c->limits.max_stream_size)
+        return fail_at(e, PDF_ERROR_RESOURCE_LIMIT, loc, "ToUnicode raw stream exceeds limit");
+    pdf_bytes bytes = {0};
+    if (*c->cmap_decoded_bytes > c->limits.max_total_decoded_size)
+        return fail_at(e, PDF_ERROR_RESOURCE_LIMIT, loc, "ToUnicode decoded total exceeds limit");
+    size_t max = c->limits.max_total_decoded_size - *c->cmap_decoded_bytes;
+    if (max > c->limits.max_decoded_stream_size) max = c->limits.max_decoded_stream_size;
+    if (!pdf_filter_decode(resolved, max, loc, &bytes, e)) return 0;
+    *c->cmap_decoded_bytes += bytes.len;
+    f->unicode = pdf_cmap_parse(bytes.data, bytes.len, f->info.subtype == PDF_FONT_TYPE0 ? 2 : 1,
+                               &c->limits, loc, e);
+    free(bytes.data);
+    if (!f->unicode) return 0;
+    size_t storage = pdf_cmap_storage_size(f->unicode) + f->cid_cap * sizeof(*f->cid_widths);
+    if (storage > c->limits.max_total_decoded_size - c->font_storage_bytes)
+        return fail_at(e, PDF_ERROR_RESOURCE_LIMIT, loc, "font CMap storage exceeds limit");
+    c->font_storage_bytes += storage;
+    return 1;
+}
+
 static pdf_font *parse_font(pdf_font_context *c, const pdf_object *entry, size_t loc,
                             const unsigned char *name, size_t len, pdf_error *e) {
     const pdf_object *font = leaf_dict(c, entry, &loc, "font resource must be a dictionary", e);
@@ -293,18 +436,19 @@ static pdf_font *parse_font(pdf_font_context *c, const pdf_object *entry, size_t
     else if (name_is(subtype, "TrueType")) f->info.subtype = PDF_FONT_TRUETYPE;
     else if (name_is(subtype, "Type3")) { fail_at(e, PDF_ERROR_UNSUPPORTED, loc, "unsupported font subtype /Type3"); goto fail; }
     else if (name_is(subtype, "MMType1")) { fail_at(e, PDF_ERROR_UNSUPPORTED, loc, "unsupported font subtype /MMType1"); goto fail; }
-    else if (name_is(subtype, "Type0")) { fail_at(e, PDF_ERROR_UNSUPPORTED, loc, "unsupported font subtype /Type0"); goto fail; }
+    else if (name_is(subtype, "Type0")) f->info.subtype = PDF_FONT_TYPE0;
     else { fail_at(e, PDF_ERROR_UNSUPPORTED, loc, "unsupported font subtype"); goto fail; }
     if (!base) { fail_at(e, PDF_ERROR_MALFORMED, loc, "font requires a /BaseFont name"); goto fail; }
     if (!(base = leaf_name(c, base, loc, "font requires a /BaseFont name", e))) goto fail;
     if (is_symbolic_base(&base->value.name)) {
         fail_at(e, PDF_ERROR_UNSUPPORTED, loc, "unsupported Symbol/ZapfDingbats font"); goto fail;
     }
-    if (pdf_dict_get(font, "ToUnicode")) {
-        fail_at(e, PDF_ERROR_UNSUPPORTED, loc, "unsupported /ToUnicode CMap"); goto fail;
-    }
-    if (!parse_encoding(c, f, font, loc, e) || !parse_descriptor(c, f, font, loc, e) ||
-        !parse_widths(c, f, font, loc, e)) goto fail;
+    if (f->info.subtype == PDF_FONT_TYPE0) {
+        if (!parse_cid_font(c, f, font, loc, e)) goto fail;
+    } else if (!parse_encoding(c, f, font, loc, e) || !parse_descriptor(c, f, font, loc, e) ||
+               !parse_widths(c, f, font, loc, e)) goto fail;
+    if (!parse_unicode(c, f, font, loc, e)) goto fail;
+    if (f->unicode && f->info.subtype != PDF_FONT_TYPE0) f->info.encoding = PDF_FONT_ENCODING_TO_UNICODE;
     f->name = copy_bytes(name, len);
     f->base = copy_bytes(base->value.name.data, base->value.name.len);
     if (!f->name || !f->base) { fail_at(e, PDF_ERROR_OUT_OF_MEMORY, loc, "cannot copy font names"); goto fail; }
@@ -393,10 +537,34 @@ const pdf_font *pdf_font_context_resolve(pdf_font_context *c, const unsigned cha
     return font;
 }
 
-int pdf_font_width(const pdf_font *f, unsigned char code, double *width,
+int pdf_font_read_code(const pdf_font *f, const unsigned char *data, size_t len,
+                        unsigned *code, size_t *consumed, pdf_error *e) {
+    if (!e || e->code != PDF_ERROR_NONE) return 0;
+    if (!f || !data || !code || !consumed)
+        return fail_at(e, PDF_ERROR_IO, 0, "invalid character input");
+    size_t n = f->info.subtype == PDF_FONT_TYPE0 ? 2 : 1;
+    if (len < n) return fail_at(e, PDF_ERROR_MALFORMED, f->info.offset, "truncated font character code");
+    *code = n == 1 ? data[0] : (unsigned)data[0] << 8 | data[1];
+    *consumed = n;
+    return 1;
+}
+int pdf_font_width(const pdf_font *f, unsigned code, double *width,
                    pdf_font_width_source *source, pdf_error *e) {
     if (!e || e->code != PDF_ERROR_NONE) return 0;
     if (!f || !width) return fail_at(e, PDF_ERROR_IO, 0, "invalid width lookup");
+    if (code > (f->info.subtype == PDF_FONT_TYPE0 ? 65535u : 255u))
+        return fail_at(e, PDF_ERROR_MALFORMED, f->info.offset, "character code outside font range");
+    if (f->info.subtype == PDF_FONT_TYPE0) {
+        size_t lo = 0, hi = f->cid_len;
+        while (lo < hi) {
+            size_t mid = lo + (hi - lo) / 2;
+            if (f->cid_widths[mid].hi < code) lo = mid + 1; else hi = mid;
+        }
+        int found = lo < f->cid_len && f->cid_widths[lo].lo <= code;
+        *width = found ? f->cid_widths[lo].width : f->default_width;
+        if (source) *source = found ? PDF_FONT_WIDTH_CID_W : PDF_FONT_WIDTH_CID_DW;
+        return 1;
+    }
     pdf_font_width_source from;
     if (code >= f->info.first_char && code <= f->info.last_char) {
         *width = f->widths[code]; from = PDF_FONT_WIDTH_TABLE;
@@ -421,6 +589,34 @@ static uint32_t code_point(const pdf_font *f, unsigned char b) {
 }
 static size_t utf8_size(uint32_t cp) { return cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4; }
 
+static int decoded_character(const pdf_font *f, const unsigned char *data, size_t len,
+                              unsigned char buffer[4], pdf_bytes *utf8, size_t *used,
+                              int *replacement, pdf_error *e) {
+    unsigned code;
+    if (!pdf_font_read_code(f, data, len, &code, used, e)) return 0;
+    const pdf_bytes *mapped = pdf_cmap_lookup(f->unicode, code);
+    *replacement = 0;
+    if (mapped) { *utf8 = *mapped; return 1; }
+    uint32_t cp = f->unicode ? REPLACEMENT : code_point(f, (unsigned char)code);
+    *replacement = cp == REPLACEMENT;
+    size_t at = 0;
+    if (cp < 0x80) buffer[at++] = (unsigned char)cp;
+    else if (cp < 0x800) {
+        buffer[at++] = (unsigned char)(0xC0 | cp >> 6);
+        buffer[at++] = (unsigned char)(0x80 | (cp & 0x3F));
+    } else if (cp < 0x10000) {
+        buffer[at++] = (unsigned char)(0xE0 | cp >> 12);
+        buffer[at++] = (unsigned char)(0x80 | ((cp >> 6) & 0x3F));
+        buffer[at++] = (unsigned char)(0x80 | (cp & 0x3F));
+    } else {
+        buffer[at++] = (unsigned char)(0xF0 | cp >> 18);
+        buffer[at++] = (unsigned char)(0x80 | ((cp >> 12) & 0x3F));
+        buffer[at++] = (unsigned char)(0x80 | ((cp >> 6) & 0x3F));
+        buffer[at++] = (unsigned char)(0x80 | (cp & 0x3F));
+    }
+    *utf8 = (pdf_bytes){buffer, utf8_size(cp)};
+    return 1;
+}
 int pdf_font_decode(const pdf_font *f, const unsigned char *data, size_t len,
                     pdf_font_utf8 *out, pdf_error *e) {
     if (!e || e->code != PDF_ERROR_NONE) return 0;
@@ -430,32 +626,31 @@ int pdf_font_decode(const pdf_font *f, const unsigned char *data, size_t len,
     if (len > f->max_utf8)
         return fail_at(e, PDF_ERROR_RESOURCE_LIMIT, f->info.offset, "decode input exceeds token limit");
     size_t total = 0, replacements = 0;
-    for (size_t i = 0; i < len; i++) {
-        size_t n = utf8_size(code_point(f, data[i]));
-        if (n > f->max_utf8 - total || total > SIZE_MAX - n - 1)
+    for (size_t i = 0; i < len;) {
+        unsigned char buffer[4];
+        pdf_bytes utf8;
+        size_t used;
+        int replacement;
+        if (!decoded_character(f, data + i, len - i, buffer, &utf8, &used, &replacement, e)) return 0;
+        if (utf8.len > f->max_utf8 - total || total > SIZE_MAX - utf8.len - 1)
             return fail_at(e, PDF_ERROR_RESOURCE_LIMIT, f->info.offset, "decoded UTF-8 exceeds token limit");
-        total += n;
+        total += utf8.len;
+        replacements += (size_t)replacement;
+        i += used;
     }
     unsigned char *buffer = malloc(total + 1);
     if (!buffer) return fail_at(e, PDF_ERROR_OUT_OF_MEMORY, f->info.offset, "cannot allocate UTF-8");
     size_t at = 0;
-    for (size_t i = 0; i < len; i++) {
-        uint32_t cp = code_point(f, data[i]);
-        if (cp == REPLACEMENT) replacements++;
-        if (cp < 0x80) buffer[at++] = (unsigned char)cp;
-        else if (cp < 0x800) {
-            buffer[at++] = (unsigned char)(0xC0 | cp >> 6);
-            buffer[at++] = (unsigned char)(0x80 | (cp & 0x3F));
-        } else if (cp < 0x10000) {
-            buffer[at++] = (unsigned char)(0xE0 | cp >> 12);
-            buffer[at++] = (unsigned char)(0x80 | ((cp >> 6) & 0x3F));
-            buffer[at++] = (unsigned char)(0x80 | (cp & 0x3F));
-        } else {
-            buffer[at++] = (unsigned char)(0xF0 | cp >> 18);
-            buffer[at++] = (unsigned char)(0x80 | ((cp >> 12) & 0x3F));
-            buffer[at++] = (unsigned char)(0x80 | ((cp >> 6) & 0x3F));
-            buffer[at++] = (unsigned char)(0x80 | (cp & 0x3F));
+    for (size_t i = 0; i < len;) {
+        unsigned char encoded[4];
+        pdf_bytes utf8;
+        size_t used;
+        int replacement;
+        if (!decoded_character(f, data + i, len - i, encoded, &utf8, &used, &replacement, e)) {
+            free(buffer); return 0;
         }
+        memcpy(buffer + at, utf8.data, utf8.len);
+        at += utf8.len; i += used;
     }
     buffer[at] = 0;
     *out = (pdf_font_utf8){buffer, at, replacements};
@@ -473,15 +668,19 @@ int pdf_font_get_info(const pdf_font *f, pdf_font_info *info) {
     return 1;
 }
 const char *pdf_font_subtype_name(pdf_font_subtype s) {
-    return s == PDF_FONT_TYPE1 ? "Type1" : s == PDF_FONT_TRUETYPE ? "TrueType" : "unknown";
+    return s == PDF_FONT_TYPE1 ? "Type1" : s == PDF_FONT_TRUETYPE ? "TrueType" :
+           s == PDF_FONT_TYPE0 ? "Type0" : "unknown";
 }
 const char *pdf_font_encoding_name(pdf_font_encoding x) {
     return x == PDF_FONT_ENCODING_WIN_ANSI ? "WinAnsiEncoding" :
-           x == PDF_FONT_ENCODING_ASCII_FALLBACK ? "ascii-fallback" : "unknown";
+           x == PDF_FONT_ENCODING_ASCII_FALLBACK ? "ascii-fallback" :
+           x == PDF_FONT_ENCODING_IDENTITY_H ? "Identity-H" :
+           x == PDF_FONT_ENCODING_TO_UNICODE ? "ToUnicode" : "unknown";
 }
 const char *pdf_font_width_source_name(pdf_font_width_source s) {
     return s == PDF_FONT_WIDTH_TABLE ? "widths" : s == PDF_FONT_WIDTH_MISSING ? "missing-width" :
-           s == PDF_FONT_WIDTH_DESCRIPTOR_DEFAULT_ZERO ? "descriptor-default-zero" : "unknown";
+           s == PDF_FONT_WIDTH_DESCRIPTOR_DEFAULT_ZERO ? "descriptor-default-zero" :
+           s == PDF_FONT_WIDTH_CID_W ? "cid-w" : s == PDF_FONT_WIDTH_CID_DW ? "cid-dw" : "unknown";
 }
 const char *pdf_font_missing_name(pdf_font_missing m) {
     return m == PDF_FONT_MISSING_NONE ? "none" : m == PDF_FONT_MISSING_EXPLICIT ? "explicit" :

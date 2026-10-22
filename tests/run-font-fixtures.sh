@@ -35,7 +35,7 @@ for fixture in font-later-failure font-missing-resource font-type3-empty font-di
     status=0
     "$binary" "tests/fixtures/$fixture.pdf" > "$tmp/stdout" 2> "$tmp/stderr" || status=$?
     case "$fixture" in
-        font-missing-resource|geometry-later-failure) test "$status" -eq 3;;
+        font-missing-resource|geometry-later-failure|font-later-failure) test "$status" -eq 3;;
         *) test "$status" -eq 4;;
     esac
     test ! -s "$tmp/stdout"

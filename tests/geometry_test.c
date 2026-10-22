@@ -19,8 +19,10 @@ static void clear_trace(trace *t) {
     for(size_t i=0;i<t->len;i++) { free(t->items[i].bytes); free(t->items[i].font); }
     free(t->items); t->items=NULL; t->len=t->cap=0;
 }
-static int courier600(void *context,pdf_text_bytes font,unsigned char code,double *w,pdf_error *e) {
+static int courier600(void *context,pdf_text_bytes font,pdf_text_bytes bytes,size_t *consumed,double *w,pdf_error *e) {
     trace *t=context;
+    unsigned char code=bytes.data[0];
+    *consumed=1;
     if (t->metrics_calls++==t->metrics_fail_at || font.len!=2 ||
         memcmp(font.data,"F1",2)!=0 || code<32 || code>126) {
         pdf_error_set(e,PDF_ERROR_UNSUPPORTED,0,"test-metrics","unsupported fixture metrics"); return 0;

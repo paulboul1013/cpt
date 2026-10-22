@@ -55,6 +55,9 @@ SRC = \
 	src/matrix.c \
 	src/text_state.c \
 	src/font.c \
+	src/cmap.c \
+	src/extgstate.c \
+	src/xobject.c \
 	src/font_text.c \
 	src/text_items.c \
 	src/reading_order.c
@@ -76,6 +79,9 @@ HDR = \
 	src/matrix.h \
 	src/text_state.h \
 	src/font.h \
+	src/cmap.h \
+	src/extgstate.h \
+	src/xobject.h \
 	src/font_text.h \
 	src/text_items.h \
 	src/reading_order.h
@@ -128,6 +134,11 @@ test: tests/content-lexer-test tests/content-interpreter-test $(TARGET) $(OWNERS
 	sh tests/run-font-fixtures.sh ./tests/font-text-test
 	./tests/text-items-test
 	./tests/reading-order-test
+	./tests/chinese-test
+	./tests/cmap-test
+	./tests/extgstate-test
+	./tests/marked-content-test
+	./tests/drawing-test
 	sh tests/run-cli-tests.sh ./$(TARGET)
 
 asan: tests/content-lexer-test-asan tests/content-interpreter-test-asan $(ASAN_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_ASAN_TARGET) $(OBJECT_ASAN_TARGET) $(LIMITS_ASAN_TARGET) $(READER_ASAN_TARGET) $(INDIRECT_ASAN_TARGET) $(XREF_ASAN_TARGET) $(DOCUMENT_ASAN_TARGET) $(PAGES_ASAN_TARGET) $(CONTENTS_ASAN_TARGET)
@@ -155,6 +166,11 @@ asan: tests/content-lexer-test-asan tests/content-interpreter-test-asan $(ASAN_T
 	sh tests/run-font-fixtures.sh ./tests/font-text-test-asan
 	./tests/text-items-test-asan
 	./tests/reading-order-test-asan
+	./tests/chinese-test-asan
+	./tests/cmap-test-asan
+	./tests/extgstate-test-asan
+	./tests/marked-content-test-asan
+	./tests/drawing-test-asan
 	sh tests/run-cli-tests.sh ./$(ASAN_TARGET)
 
 $(ASAN_TARGET): $(SRC) $(HDR)
@@ -227,7 +243,9 @@ $(CONTENTS_ASAN_TARGET): $(CONTENTS_SRC) $(SRC) $(HDR)
 	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $(CONTENTS_SRC) src/contents.c src/filter.c src/pages.c src/document.c src/xref.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c $(LDLIBS) -o $@
 
 clean:
-	$(RM) tests/matrix-test tests/matrix-test-asan tests/text-state-test tests/text-state-test-asan tests/geometry-test tests/geometry-test-asan tests/font-test tests/font-test-asan tests/font-text-test tests/font-text-test-asan tests/text-items-test tests/text-items-test-asan tests/reading-order-test tests/reading-order-test-asan tests/content-lexer-test tests/content-interpreter-test tests/content-lexer-test-asan tests/content-interpreter-test-asan $(TARGET) $(ASAN_TARGET) $(OWNERSHIP_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_TARGET) $(LEXER_ASAN_TARGET) $(OBJECT_TARGET) $(OBJECT_ASAN_TARGET) $(LIMITS_TARGET) $(LIMITS_ASAN_TARGET) $(READER_TARGET) $(READER_ASAN_TARGET) $(INDIRECT_TARGET) $(INDIRECT_ASAN_TARGET) $(XREF_TARGET) $(XREF_ASAN_TARGET) $(DOCUMENT_TARGET) $(DOCUMENT_ASAN_TARGET) $(PAGES_TARGET) $(PAGES_ASAN_TARGET) $(CONTENTS_TARGET) $(CONTENTS_ASAN_TARGET)
+	$(RM) tests/drawing-test tests/drawing-test-asan
+	$(RM) tests/marked-content-test tests/marked-content-test-asan
+	$(RM) tests/extgstate-test tests/extgstate-test-asan tests/chinese-test tests/chinese-test-asan tests/cmap-test tests/cmap-test-asan tests/matrix-test tests/matrix-test-asan tests/text-state-test tests/text-state-test-asan tests/geometry-test tests/geometry-test-asan tests/font-test tests/font-test-asan tests/font-text-test tests/font-text-test-asan tests/text-items-test tests/text-items-test-asan tests/reading-order-test tests/reading-order-test-asan tests/content-lexer-test tests/content-interpreter-test tests/content-lexer-test-asan tests/content-interpreter-test-asan $(TARGET) $(ASAN_TARGET) $(OWNERSHIP_TARGET) $(OWNERSHIP_ASAN_TARGET) $(ERROR_TARGET) $(ERROR_ASAN_TARGET) $(LEXER_TARGET) $(LEXER_ASAN_TARGET) $(OBJECT_TARGET) $(OBJECT_ASAN_TARGET) $(LIMITS_TARGET) $(LIMITS_ASAN_TARGET) $(READER_TARGET) $(READER_ASAN_TARGET) $(INDIRECT_TARGET) $(INDIRECT_ASAN_TARGET) $(XREF_TARGET) $(XREF_ASAN_TARGET) $(DOCUMENT_TARGET) $(DOCUMENT_ASAN_TARGET) $(PAGES_TARGET) $(PAGES_ASAN_TARGET) $(CONTENTS_TARGET) $(CONTENTS_ASAN_TARGET)
 
 CONTENT_TEST_SRC = src/content_interpreter.c src/content_lexer.c src/lexer.c src/reader.c src/object.c src/error.c src/limits.c
 
@@ -269,7 +287,7 @@ tests/geometry-test-asan: tests/geometry_test.c $(SRC) $(HDR)
 test: tests/geometry-test
 asan: tests/geometry-test-asan
 
-FONT_TEST_SRC = src/font.c src/pages.c src/document.c src/xref.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c
+FONT_TEST_SRC = src/font.c src/cmap.c src/filter.c src/pages.c src/document.c src/xref.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c
 tests/font-test: tests/font_test.c tests/pdf_builder.h $(FONT_TEST_SRC) src/font.h $(HDR)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $< $(FONT_TEST_SRC) $(LDLIBS) -o $@
 tests/font-test-asan: tests/font_test.c tests/pdf_builder.h $(FONT_TEST_SRC) src/font.h $(HDR)
@@ -294,3 +312,39 @@ tests/reading-order-test-asan: tests/reading_order_test.c tests/pdf_builder.h $(
 	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $< $(GEOMETRY_TEST_SRC) $(LDLIBS) -o $@
 test: tests/reading-order-test
 asan: tests/reading-order-test-asan
+
+tests/chinese-test: tests/chinese_test.c tests/pdf_builder.h $(SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $< $(GEOMETRY_TEST_SRC) $(LDLIBS) -o $@
+tests/chinese-test-asan: tests/chinese_test.c tests/pdf_builder.h $(SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $< $(GEOMETRY_TEST_SRC) $(LDLIBS) -o $@
+test: tests/chinese-test
+asan: tests/chinese-test-asan
+
+CMAP_TEST_SRC = src/cmap.c src/lexer.c src/reader.c src/error.c src/limits.c
+tests/cmap-test: tests/cmap_test.c $(CMAP_TEST_SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $< $(CMAP_TEST_SRC) $(LDLIBS) -o $@
+tests/cmap-test-asan: tests/cmap_test.c $(CMAP_TEST_SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $< $(CMAP_TEST_SRC) $(LDLIBS) -o $@
+test: tests/cmap-test
+asan: tests/cmap-test-asan
+
+tests/extgstate-test: tests/extgstate_test.c tests/pdf_builder.h $(SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $< $(GEOMETRY_TEST_SRC) $(LDLIBS) -o $@
+tests/extgstate-test-asan: tests/extgstate_test.c tests/pdf_builder.h $(SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $< $(GEOMETRY_TEST_SRC) $(LDLIBS) -o $@
+test: tests/extgstate-test
+asan: tests/extgstate-test-asan
+
+tests/marked-content-test: tests/marked_content_test.c tests/pdf_builder.h $(SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $< $(GEOMETRY_TEST_SRC) $(LDLIBS) -o $@
+tests/marked-content-test-asan: tests/marked_content_test.c tests/pdf_builder.h $(SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $< $(GEOMETRY_TEST_SRC) $(LDLIBS) -o $@
+test: tests/marked-content-test
+asan: tests/marked-content-test-asan
+
+tests/drawing-test: tests/drawing_test.c tests/pdf_builder.h $(SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $< $(GEOMETRY_TEST_SRC) $(LDLIBS) -o $@
+tests/drawing-test-asan: tests/drawing_test.c tests/pdf_builder.h $(SRC) $(HDR)
+	$(CC) $(CPPFLAGS) $(ASAN_CFLAGS) $(ASAN_LDFLAGS) $< $(GEOMETRY_TEST_SRC) $(LDLIBS) -o $@
+test: tests/drawing-test
+asan: tests/drawing-test-asan

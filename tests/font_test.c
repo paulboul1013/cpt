@@ -21,7 +21,7 @@ static const pdf_font *load(fixture *x, const char *resources, const char *const
     pdf_error_init(e);
     assert(pdf_document_open(&x->doc, path, NULL, e)); /* limits apply to the font context */
     assert(pdf_pages_load(&x->doc, &x->pages, e));
-    x->ctx = pdf_font_context_create(&x->doc, x->pages.items[0].resources, x->off[3], limits, e);
+    x->ctx = pdf_font_context_create(&x->doc, x->pages.items[0].resources, x->off[3], limits, NULL, e);
     assert(x->ctx);
     return pdf_font_context_resolve(x->ctx, (const unsigned char *)"F1", 2, e);
 }
@@ -180,7 +180,7 @@ static void test_name_with_nul(void) {
     test_page page = {"<< /Font << /F#001 5 0 R >> >>", NULL, NULL, NULL};
     const char *path = build_pdf(&page, 1, extras, 1, x.off);
     assert(pdf_document_open(&x.doc, path, NULL, &e) && pdf_pages_load(&x.doc, &x.pages, &e));
-    x.ctx = pdf_font_context_create(&x.doc, x.pages.items[0].resources, x.off[3], NULL, &e);
+    x.ctx = pdf_font_context_create(&x.doc, x.pages.items[0].resources, x.off[3], NULL, NULL, &e);
     const pdf_font *f = pdf_font_context_resolve(x.ctx, (const unsigned char *)"F\0" "1", 3, &e);
     assert(f);
     pdf_font_info info; pdf_font_get_info(f, &info);
@@ -227,14 +227,14 @@ static void test_font_policy_errors(void) {
         {"<< /Type /Font /Subtype (Type1) /BaseFont /A " ABC " >>", M},
         {"<< /Type /Font /Subtype /Type3 /BaseFont /A " ABC " >>", U},
         {"<< /Type /Font /Subtype /MMType1 /BaseFont /A " ABC " >>", U},
-        {"<< /Type /Font /Subtype /Type0 /BaseFont /A " ABC " >>", U},
+        {"<< /Type /Font /Subtype /Type0 /BaseFont /A " ABC " >>", M},
         {"<< /Type /Font /Subtype /CIDFontType2 /BaseFont /A " ABC " >>", U},
         {"<< /Type /Font /Subtype /Type1 " ABC " >>", M},
         {"<< /Type /Font /Subtype /Type1 /BaseFont 3 " ABC " >>", M},
         {"<< /Type /Font /Subtype /Type1 /BaseFont /Symbol " ABC " >>", U},
         {"<< /Type /Font /Subtype /Type1 /BaseFont /ZapfDingbats " ABC " >>", U},
         {"<< /Type /Font /Subtype /TrueType /BaseFont /ABCDEF+Symbol " ABC " >>", U},
-        {FONT(ABC " /ToUnicode << >>"), U},
+        {FONT(ABC " /ToUnicode << >>"), M},
         {FONT(ABC " /Encoding /MacRomanEncoding"), U},
         {FONT(ABC " /Encoding /MacExpertEncoding"), U},
         {FONT(ABC " /Encoding /StandardEncoding"), U},
@@ -398,7 +398,7 @@ static void test_ascii_fallback_and_budget(void) {
     const char *path = build_pdf(&page, 1, win, 1, x.off);
     pdf_error_init(&e);
     assert(pdf_document_open(&x.doc, path, NULL, &e) && pdf_pages_load(&x.doc, &x.pages, &e));
-    x.ctx = pdf_font_context_create(&x.doc, x.pages.items[0].resources, x.off[3], &limits, &e);
+    x.ctx = pdf_font_context_create(&x.doc, x.pages.items[0].resources, x.off[3], &limits, NULL, &e);
     f = pdf_font_context_resolve(x.ctx, (const unsigned char *)"F", 1, &e);
     assert(f);
     pdf_font_utf8 r = {0};
@@ -409,14 +409,14 @@ static void test_ascii_fallback_and_budget(void) {
     pdf_font_context_destroy(x.ctx);
     /* Resource names longer than max_token_size fail before any lookup. */
     pdf_error_init(&e);
-    x.ctx = pdf_font_context_create(&x.doc, x.pages.items[0].resources, x.off[3], &limits, &e);
+    x.ctx = pdf_font_context_create(&x.doc, x.pages.items[0].resources, x.off[3], &limits, NULL, &e);
     assert(!pdf_font_context_resolve(x.ctx, (const unsigned char *)"Longer", 6, &e));
     assert(e.code == PDF_ERROR_RESOURCE_LIMIT);
     pdf_font_context_destroy(x.ctx);
     /* A limit smaller than one encoded scalar must not underflow. */
     limits.max_token_size = 2;
     pdf_error_init(&e);
-    x.ctx = pdf_font_context_create(&x.doc, x.pages.items[0].resources, x.off[3], &limits, &e);
+    x.ctx = pdf_font_context_create(&x.doc, x.pages.items[0].resources, x.off[3], &limits, NULL, &e);
     f = pdf_font_context_resolve(x.ctx, (const unsigned char *)"F", 1, &e);
     assert(f);
     assert(pdf_font_decode(f, (const unsigned char *)"AB", 2, &r, &e) && r.len == 2);
@@ -440,7 +440,7 @@ static void test_same_name_two_pages(void) {
     assert(pdf_document_open(&doc, path, NULL, &e) && pdf_pages_load(&doc, &list, &e));
     const double expected[] = {500, 900};
     for (size_t i = 0; i < 2; i++) {
-        pdf_font_context *c = pdf_font_context_create(&doc, list.items[i].resources, off[3 + 2 * i], NULL, &e);
+        pdf_font_context *c = pdf_font_context_create(&doc, list.items[i].resources, off[3 + 2 * i], NULL, NULL, &e);
         const pdf_font *f = pdf_font_context_resolve(c, (const unsigned char *)"F1", 2, &e);
         assert(f);
         width_is(f, 65, expected[i], PDF_FONT_WIDTH_TABLE);

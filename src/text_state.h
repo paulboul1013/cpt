@@ -22,11 +22,13 @@ typedef struct {
     size_t offset, segment_index, source_order;
 } pdf_text_event;
 
-/* Horizontal single-byte Simple Font seam. All bytes are borrowed for the call.
- * Return finite width in 1000 units. No Unicode mapping or guessed fallback.
+/* Horizontal font seam. All bytes are borrowed for the call. Read the first
+ * character from remaining bytes; return consumed bytes (1..remaining.len)
+ * and finite width in 1000 units. No Unicode mapping or guessed fallback.
+ * Tc applies once per character; Tw only to a single-byte code 0x20.
  * Zero or error aborts. Contexts remain caller-owned throughout state lifetime. */
-typedef int (*pdf_text_metrics)(void *, pdf_text_bytes font, unsigned char code,
-                                double *width_1000, pdf_error *);
+typedef int (*pdf_text_metrics)(void *, pdf_text_bytes font, pdf_text_bytes remaining,
+                                size_t *consumed, double *width_1000, pdf_error *);
 /* Event and all nested pointers valid only for callback. Copy to retain.
  * Zero/error aborts; prior events are not rolled back: stage entire output. */
 typedef int (*pdf_text_consumer)(void *, const pdf_text_event *, pdf_error *);
@@ -39,7 +41,13 @@ pdf_text_state *pdf_text_state_create(const pdf_limits *, pdf_text_metrics, void
                                       pdf_text_consumer, void *, pdf_error *);
 void pdf_text_state_destroy(pdf_text_state *);
 /* Direct M7 visitor: requires M7-validated operands/grammar. Local errors use
- * operation decoded offset; M7 alone translates to file offset. No reentry. */
+ * operation decoded offset; M7 alone translates to file offset. gs and Do are
+ * rejected here because this layer has no document resource resolver.
+ * Validated line styles, paths, painting and clipping leave text state and
+ * CTM unchanged. Source text is retained regardless of clipping visibility.
+ * BDC/EMC are
+ * geometry no-ops; raw events include strings suppressed by M9 ActualText.
+ * No reentry. */
 int pdf_text_state_visit(void *, const pdf_content_operation *, pdf_error *);
 /* Read-only copy; font pointer valid until next visit or destroy. */
 int pdf_text_state_snapshot(const pdf_text_state *, pdf_text_snapshot *);

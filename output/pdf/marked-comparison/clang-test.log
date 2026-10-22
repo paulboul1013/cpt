@@ -1,0 +1,201 @@
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/content_lexer_test.c src/content_interpreter.c src/content_lexer.c src/lexer.c src/reader.c src/object.c src/error.c src/limits.c -lz -lm -o tests/content-lexer-test
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/content_interpreter_test.c src/content_interpreter.c src/content_lexer.c src/lexer.c src/reader.c src/object.c src/error.c src/limits.c -lz -lm -o tests/content-interpreter-test
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  src/main.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c src/xref.c src/document.c src/pages.c src/contents.c src/filter.c src/content_lexer.c src/content_interpreter.c src/matrix.c src/text_state.c src/font.c src/cmap.c src/extgstate.c src/font_text.c src/text_items.c src/reading_order.c -lz -lm -o pdftext
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/ownership_test.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c -lz -lm -o tests/ownership-test
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/error_test.c src/error.c -lz -lm -o tests/error-test
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/lexer_test.c src/reader.c src/lexer.c src/error.c src/limits.c -lz -lm -o tests/lexer-test
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/object_test.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c -lz -lm -o tests/object-test
+make: Warning: File 'tests/limits-test' has modification time 220 s in the future
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/limits_test.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c -lz -lm -o tests/limits-test
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/reader_test.c src/reader.c src/error.c src/limits.c -lz -lm -o tests/reader-test
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/indirect_test.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c -lz -lm -o tests/indirect-test
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/xref_test.c src/xref.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c -lz -lm -o tests/xref-test
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/document_test.c src/document.c src/xref.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c -lz -lm -o tests/document-test
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/pages_test.c src/pages.c src/document.c src/xref.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c -lz -lm -o tests/pages-test
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/contents_test.c src/contents.c src/filter.c src/pages.c src/document.c src/xref.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c -lz -lm -o tests/contents-test
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/matrix_test.c src/matrix.c -lz -lm -o tests/matrix-test
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/text_state_test.c src/text_state.c src/matrix.c src/content_interpreter.c src/content_lexer.c src/lexer.c src/reader.c src/object.c src/error.c src/limits.c -lz -lm -o tests/text-state-test
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/geometry_test.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c src/xref.c src/document.c src/pages.c src/contents.c src/filter.c src/content_lexer.c src/content_interpreter.c src/matrix.c src/text_state.c src/font.c src/cmap.c src/extgstate.c src/font_text.c src/text_items.c src/reading_order.c -lz -lm -o tests/geometry-test
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/font_test.c src/font.c src/cmap.c src/filter.c src/pages.c src/document.c src/xref.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c -lz -lm -o tests/font-test
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/font_text_test.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c src/xref.c src/document.c src/pages.c src/contents.c src/filter.c src/content_lexer.c src/content_interpreter.c src/matrix.c src/text_state.c src/font.c src/cmap.c src/extgstate.c src/font_text.c src/text_items.c src/reading_order.c -lz -lm -o tests/font-text-test
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/text_items_test.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c src/xref.c src/document.c src/pages.c src/contents.c src/filter.c src/content_lexer.c src/content_interpreter.c src/matrix.c src/text_state.c src/font.c src/cmap.c src/extgstate.c src/font_text.c src/text_items.c src/reading_order.c -lz -lm -o tests/text-items-test
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/reading_order_test.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c src/xref.c src/document.c src/pages.c src/contents.c src/filter.c src/content_lexer.c src/content_interpreter.c src/matrix.c src/text_state.c src/font.c src/cmap.c src/extgstate.c src/font_text.c src/text_items.c src/reading_order.c -lz -lm -o tests/reading-order-test
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/chinese_test.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c src/xref.c src/document.c src/pages.c src/contents.c src/filter.c src/content_lexer.c src/content_interpreter.c src/matrix.c src/text_state.c src/font.c src/cmap.c src/extgstate.c src/font_text.c src/text_items.c src/reading_order.c -lz -lm -o tests/chinese-test
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/cmap_test.c src/cmap.c src/lexer.c src/reader.c src/error.c src/limits.c -lz -lm -o tests/cmap-test
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/extgstate_test.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c src/xref.c src/document.c src/pages.c src/contents.c src/filter.c src/content_lexer.c src/content_interpreter.c src/matrix.c src/text_state.c src/font.c src/cmap.c src/extgstate.c src/font_text.c src/text_items.c src/reading_order.c -lz -lm -o tests/extgstate-test
+clang  -std=c11 -Wall -Wextra -Wpedantic -g  tests/marked_content_test.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c src/xref.c src/document.c src/pages.c src/contents.c src/filter.c src/content_lexer.c src/content_interpreter.c src/matrix.c src/text_state.c src/font.c src/cmap.c src/extgstate.c src/font_text.c src/text_items.c src/reading_order.c -lz -lm -o tests/marked-content-test
+./tests/run-fixtures.sh ./pdftext
+[PASS] numbers (success)
+[PASS] names (success)
+[PASS] name-array (success)
+[PASS] array (success)
+[PASS] dictionary (success)
+[PASS] missing-input (io)
+[PASS] unclosed-array-cleanup (malformed)
+[PASS] invalid-byte (malformed)
+[PASS] unclosed-dictionary (malformed)
+[PASS] primitives (success)
+[PASS] nested-duplicate (success)
+[PASS] references (success)
+[PASS] incomplete-reference (malformed)
+[PASS] object-grammar (success)
+[PASS] trailing-object (malformed)
+[PASS] non-name-key (malformed)
+[PASS] missing-dict-value (malformed)
+[PASS] invalid-hex (malformed)
+[PASS] invalid-name-escape (malformed)
+[PASS] unterminated-string (malformed)
+[PASS] overflow-integer (malformed)
+[PASS] overflow-real (malformed)
+[PASS] indirect-basic (success)
+[PASS] indirect-stream (success)
+[PASS] indirect-malformed (malformed)
+[PASS] indirect-unresolved-length (unsupported)
+[PASS] xref-hello (success)
+[PASS] xref-subsections (success)
+[PASS] xref-bad-offset (malformed)
+[PASS] xref-prev (unsupported)
+[PASS] pages-hello (success)
+[PASS] pages-multi (success)
+[PASS] pages-count-mismatch (malformed)
+[PASS] pages-cycle (malformed)
+[PASS] pages-missing-media-box (malformed)
+[PASS] contents-basic (success)
+[PASS] contents-empty (success)
+[PASS] contents-flate (success)
+[PASS] contents-predictor-one (success)
+[PASS] contents-indirect-length (success)
+[PASS] contents-hello (success)
+[PASS] contents-invalid-type (malformed)
+[PASS] contents-not-stream (malformed)
+[PASS] contents-unsupported-filter (unsupported)
+[PASS] contents-filter-array (unsupported)
+[PASS] contents-corrupt-flate (malformed)
+[PASS] contents-predictor (unsupported)
+[PASS] contents-truncated-flate (malformed)
+[PASS] content-raw (success)
+[PASS] content-flate (success)
+[PASS] content-array (success)
+[PASS] content-empty (success)
+[PASS] content-pages (success)
+[PASS] content-unknown (success)
+[PASS] content-unclosed-bt (malformed)
+[PASS] content-nested-bt (malformed)
+[PASS] content-inline-image (unsupported)
+[PASS] content-xobject (unsupported)
+[PASS] content-text-state (success)
+[PASS] content-reference (malformed)
+[PASS] content-tj-type (malformed)
+[PASS] content-later-failure (malformed)
+[PASS] content-truncated-string (malformed)
+[PASS] visual-m7-text (success)
+[PASS] content-clipping (unsupported)
+[PASS] items-winansi (success)
+[PASS] items-pages (success)
+[PASS] items-geometry (success)
+[PASS] items-visual (success)
+[PASS] items-no-text (success)
+[PASS] items-later-failure (malformed)
+[PASS] items-missing-resource (malformed)
+[PASS] items-hello (unsupported)
+[PASS] items-rotate (unsupported)
+[PASS] items-transform (success)
+[PASS] text-reading (success)
+[PASS] text-winansi (success)
+[PASS] text-pages (success)
+[PASS] text-geometry (success)
+[PASS] text-visual (success)
+[PASS] text-flate (success)
+[PASS] text-no-text (success)
+[PASS] text-rotated (unsupported)
+[PASS] text-hello (unsupported)
+[PASS] text-later-failure (malformed)
+[PASS] text-missing-resource (malformed)
+[PASS] text-not-pdf (malformed)
+[PASS] chinese-raw (success)
+[PASS] chinese-flate (success)
+[PASS] chinese-cff (success)
+[PASS] chinese-unicode (success)
+[PASS] chinese-spacing (success)
+[PASS] chinese-odd (malformed)
+[PASS] chinese-bad-surrogate (malformed)
+[PASS] chinese-bad-range (malformed)
+[PASS] chinese-vertical (unsupported)
+[PASS] chinese-bad-widths (malformed)
+[PASS] gs-english (success)
+[PASS] gs-english-control (success)
+[PASS] gs-chinese (success)
+[PASS] gs-chinese-control (success)
+[PASS] gs-bad-alpha (malformed)
+[PASS] gs-bad-alpha-items (malformed)
+[PASS] gs-later-font (unsupported)
+[PASS] gs-later-font-items (unsupported)
+[PASS] gs-later-unknown (unsupported)
+[PASS] gs-later-unknown-items (unsupported)
+[PASS] cs-english (success)
+[PASS] cs-chinese (success)
+[PASS] cs-bad-type (malformed)
+[PASS] cs-bad-type-items (malformed)
+[PASS] cs-bad-arity (malformed)
+[PASS] cs-bad-arity-items (malformed)
+[PASS] cs-later-failure (malformed)
+[PASS] cs-later-failure-items (malformed)
+[PASS] marked-pass (success)
+[PASS] marked-empty (success)
+[PASS] marked-literal (success)
+[PASS] marked-unmapped (success)
+[PASS] marked-all-empty (success)
+[PASS] marked-control (success)
+[PASS] marked-later-unclosed (malformed)
+[PASS] marked-later-unclosed-items (malformed)
+[PASS] marked-later-type (malformed)
+[PASS] marked-later-type-items (malformed)
+[PASS] marked-later-nonempty (unsupported)
+[PASS] marked-later-nonempty-items (unsupported)
+[PASS] marked-later-named (unsupported)
+[PASS] marked-later-named-items (unsupported)
+[PASS] marked-cross-text (malformed)
+[PASS] marked-cross-text-items (malformed)
+[PASS] marked-cross-marked (malformed)
+[PASS] marked-cross-marked-items (malformed)
+fixture runner: 133 fixtures passed
+./tests/ownership-test
+./tests/error-test
+./tests/lexer-test
+./tests/object-test
+./tests/limits-test
+./tests/reader-test
+./tests/indirect-test
+./tests/xref-test
+./tests/document-test
+./tests/pages-test
+./tests/contents-test
+./tests/content-lexer-test
+./tests/matrix-test
+./tests/text-state-test
+./tests/geometry-test
+sh tests/run-geometry-fixtures.sh ./tests/geometry-test
+geometry fixtures: raw/Flate/array, visual trace, and atomic failures passed
+./tests/content-interpreter-test
+./tests/font-test
+font tests passed
+./tests/font-text-test
+font text tests passed
+sh tests/run-font-fixtures.sh ./tests/font-text-test
+font fixtures: no comma-decimal locale installed; locale check skipped
+font fixtures: real adapter geometry, WinAnsi/UTF-8 traces, and atomic failures passed
+./tests/text-items-test
+text item tests passed
+./tests/reading-order-test
+reading order tests passed
+./tests/chinese-test
+Chinese extraction tests passed
+./tests/cmap-test
+CMap tests passed (including 3000 mutated inputs)
+./tests/extgstate-test
+ExtGState tests passed
+./tests/marked-content-test
+marked content tests passed
+sh tests/run-cli-tests.sh ./pdftext
+cli tests: usage, help/version, -o atomic output and dump modes passed
+make: warning:  Clock skew detected.  Your build may be incomplete.

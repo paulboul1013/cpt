@@ -1,0 +1,1 @@
+content: malformed error at byte 145: decoded byte 5: ExtGState byte 496 (extgstate): ExtGState SM/CA/ca must be finite number in 0..1

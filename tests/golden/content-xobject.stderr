@@ -1,1 +1,1 @@
-content: unsupported error at byte 139: decoded byte 6: content operator is not supported
+content: malformed error at byte 139: decoded byte 6: XObject byte 139 (xobject): missing XObject resource or value

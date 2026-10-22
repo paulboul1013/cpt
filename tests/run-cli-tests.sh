@@ -53,11 +53,89 @@ rm "$tmp/dir/out2.txt"
 
 # Failure keeps an existing file untouched and leaves no temp file.
 printf 'keep me\n' > "$tmp/dir/out.txt"
-run o-failure 4 -o "$tmp/dir/out.txt" tests/fixtures/font-later-failure.pdf
+run o-failure 3 -o "$tmp/dir/out.txt" tests/fixtures/font-later-failure.pdf
 [ "$(cat "$tmp/dir/out.txt")" = "keep me" ] || fail "o-failure: existing file modified"
 [ "$(ls "$tmp/dir")" = "out.txt" ] || fail "o-failure: temporary file left behind"
 run o-no-dir 2 -o "$tmp/missing/out.txt" tests/fixtures/font-pages.pdf
 grep -q 'output: io error' "$tmp/err" || fail "o-no-dir: io error message"
+
+# gs errors on later pages discard stdout/items and preserve an existing -o file.
+for kind in font unknown; do
+    run "gs-$kind-text" 4 "tests/fixtures/gs-later-$kind.pdf"
+    [ ! -s "$tmp/out" ] || fail "gs-$kind: partial text"
+    run "gs-$kind-items" 4 --dump-text-items "tests/fixtures/gs-later-$kind.pdf"
+    [ ! -s "$tmp/out" ] || fail "gs-$kind: partial items"
+    run "gs-$kind-output" 4 -o "$tmp/dir/out.txt" "tests/fixtures/gs-later-$kind.pdf"
+    [ ! -s "$tmp/out" ] && [ "$(cat "$tmp/dir/out.txt")" = "keep me" ] || fail "gs-$kind: existing output changed"
+    [ "$(ls -A "$tmp/dir")" = "out.txt" ] || fail "gs-$kind: temporary output left behind"
+done
+# M7 checks gs syntax only. It does not claim the resource is extractable.
+run gs-content-syntax 0 --dump-content tests/fixtures/gs-later-font.pdf
+[ -s "$tmp/out" ] && [ ! -s "$tmp/err" ] || fail "gs dump-content syntax"
+
+# cs/CS syntax failures on a later page preserve atomic output.
+run cs-later-text 3 tests/fixtures/cs-later-failure.pdf
+[ ! -s "$tmp/out" ] || fail "cs: partial text"
+run cs-later-items 3 --dump-text-items tests/fixtures/cs-later-failure.pdf
+[ ! -s "$tmp/out" ] || fail "cs: partial items"
+run cs-later-output 3 -o "$tmp/dir/out.txt" tests/fixtures/cs-later-failure.pdf
+[ ! -s "$tmp/out" ] && [ "$(cat "$tmp/dir/out.txt")" = "keep me" ] || fail "cs: existing output changed"
+[ "$(ls -A "$tmp/dir")" = "out.txt" ] || fail "cs: temporary output left behind"
+run cs-content-syntax 0 --dump-content tests/fixtures/cs-english.pdf
+grep -qx 'PAGE 1 OPS 10 TEXT_SHOWS 2' "$tmp/out" && [ ! -s "$tmp/err" ] || fail "cs: operation count"
+
+# scn/SCN failures on a later page preserve atomic output and existing files.
+run scn-later-text 3 tests/fixtures/scn-later-failure.pdf
+[ ! -s "$tmp/out" ] || fail "scn: partial text"
+run scn-later-items 3 --dump-text-items tests/fixtures/scn-later-failure.pdf
+[ ! -s "$tmp/out" ] || fail "scn: partial items"
+run scn-later-output 3 -o "$tmp/dir/out.txt" tests/fixtures/scn-later-failure.pdf
+[ ! -s "$tmp/out" ] && [ "$(cat "$tmp/dir/out.txt")" = "keep me" ] || fail "scn: existing output changed"
+[ "$(ls -A "$tmp/dir")" = "out.txt" ] || fail "scn: temporary output left behind"
+run scn-content-syntax 0 --dump-content tests/fixtures/scn-english.pdf
+grep -qx 'PAGE 1 OPS 12 TEXT_SHOWS 2' "$tmp/out" && [ ! -s "$tmp/err" ] || fail "scn: operation count"
+
+# Drawing/XObject failures preserve output after a successful first page.
+for kind in missing form; do
+    want=3
+    [ "$kind" = form ] && want=4
+    for mode in text items output; do
+        case "$mode" in
+            text) run "drawing-$kind-$mode" "$want" "tests/fixtures/drawing-later-$kind.pdf" ;;
+            items) run "drawing-$kind-$mode" "$want" --dump-text-items "tests/fixtures/drawing-later-$kind.pdf" ;;
+            output) run "drawing-$kind-$mode" "$want" -o "$tmp/dir/out.txt" "tests/fixtures/drawing-later-$kind.pdf" ;;
+        esac
+        [ ! -s "$tmp/out" ] || fail "drawing-$kind-$mode: partial stdout"
+        [ "$(cat "$tmp/dir/out.txt")" = "keep me" ] || fail "drawing-$kind-$mode: existing output changed"
+        [ "$(ls -A "$tmp/dir")" = "out.txt" ] || fail "drawing-$kind-$mode: temporary output left behind"
+    done
+done
+run drawing-form-syntax 0 --dump-content tests/fixtures/drawing-later-form.pdf
+[ -s "$tmp/out" ] && [ ! -s "$tmp/err" ] || fail "Do syntax must not claim Form extraction"
+
+# Marked-content failures preserve existing output after a successful first page.
+for kind in unclosed type nonempty named; do
+    want=3
+    case "$kind" in nonempty|named) want=4 ;; esac
+    for mode in text items output; do
+        case "$mode" in
+            text) run "marked-$kind-$mode" "$want" "tests/fixtures/marked-later-$kind.pdf" ;;
+            items) run "marked-$kind-$mode" "$want" --dump-text-items "tests/fixtures/marked-later-$kind.pdf" ;;
+            output) run "marked-$kind-$mode" "$want" -o "$tmp/dir/out.txt" "tests/fixtures/marked-later-$kind.pdf" ;;
+        esac
+        [ ! -s "$tmp/out" ] || fail "marked-$kind-$mode: partial stdout"
+        [ "$(cat "$tmp/dir/out.txt")" = "keep me" ] || fail "marked-$kind-$mode: existing output changed"
+        [ "$(ls -A "$tmp/dir")" = "out.txt" ] || fail "marked-$kind-$mode: temporary output left behind"
+    done
+done
+run marked-syntax-policy 0 --dump-content tests/fixtures/marked-later-nonempty.pdf
+grep -qx 'PAGE 2 OPS 2 TEXT_SHOWS 0' "$tmp/out" || fail "marked: M7 must only validate syntax"
+run marked-syntax-count 0 --dump-content tests/fixtures/marked-empty.pdf
+grep -qx 'PAGE 1 OPS 9 TEXT_SHOWS 3' "$tmp/out" || fail "marked: supported operation counts"
+run marked-success 0 -o "$tmp/dir/marked.txt" tests/fixtures/marked-empty.pdf
+cmp -s tests/golden/marked-empty.stdout "$tmp/dir/marked.txt" || fail "marked: successful -o text"
+[ ! -s "$tmp/out" ] && [ ! -s "$tmp/err" ] || fail "marked: unexpected output or warning"
+rm "$tmp/dir/marked.txt"
 
 # No text: empty file (created), message on stderr, exit 0.
 run o-no-text 0 -o "$tmp/dir/empty.txt" tests/fixtures/pages-multi.pdf

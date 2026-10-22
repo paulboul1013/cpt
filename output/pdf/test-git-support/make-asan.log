@@ -1,0 +1,200 @@
+gcc  -std=c11 -Wall -Wextra -Wpedantic -g -fsanitize=address,undefined -fno-omit-frame-pointer  -fsanitize=address,undefined src/main.c src/reader.c src/lexer.c src/parser.c src/object.c src/error.c src/limits.c src/xref.c src/document.c src/pages.c src/contents.c src/filter.c src/content_lexer.c src/content_interpreter.c src/matrix.c src/text_state.c src/font.c src/cmap.c src/extgstate.c src/xobject.c src/font_text.c src/text_items.c src/reading_order.c -lz -lm -o pdftext-asan
+./tests/run-fixtures.sh ./pdftext-asan
+[PASS] numbers (success)
+[PASS] names (success)
+[PASS] name-array (success)
+[PASS] array (success)
+[PASS] dictionary (success)
+[PASS] missing-input (io)
+[PASS] unclosed-array-cleanup (malformed)
+[PASS] invalid-byte (malformed)
+[PASS] unclosed-dictionary (malformed)
+[PASS] primitives (success)
+[PASS] nested-duplicate (success)
+[PASS] references (success)
+[PASS] incomplete-reference (malformed)
+[PASS] object-grammar (success)
+[PASS] trailing-object (malformed)
+[PASS] non-name-key (malformed)
+[PASS] missing-dict-value (malformed)
+[PASS] invalid-hex (malformed)
+[PASS] invalid-name-escape (malformed)
+[PASS] unterminated-string (malformed)
+[PASS] overflow-integer (malformed)
+[PASS] overflow-real (malformed)
+[PASS] indirect-basic (success)
+[PASS] indirect-stream (success)
+[PASS] indirect-malformed (malformed)
+[PASS] indirect-unresolved-length (unsupported)
+[PASS] xref-hello (success)
+[PASS] xref-subsections (success)
+[PASS] xref-bad-offset (malformed)
+[PASS] xref-prev (unsupported)
+[PASS] pages-hello (success)
+[PASS] pages-multi (success)
+[PASS] pages-count-mismatch (malformed)
+[PASS] pages-cycle (malformed)
+[PASS] pages-missing-media-box (malformed)
+[PASS] contents-basic (success)
+[PASS] contents-empty (success)
+[PASS] contents-flate (success)
+[PASS] contents-predictor-one (success)
+[PASS] contents-indirect-length (success)
+[PASS] contents-hello (success)
+[PASS] contents-invalid-type (malformed)
+[PASS] contents-not-stream (malformed)
+[PASS] contents-unsupported-filter (unsupported)
+[PASS] contents-filter-array (unsupported)
+[PASS] contents-corrupt-flate (malformed)
+[PASS] contents-predictor (unsupported)
+[PASS] contents-truncated-flate (malformed)
+[PASS] content-raw (success)
+[PASS] content-flate (success)
+[PASS] content-array (success)
+[PASS] content-empty (success)
+[PASS] content-pages (success)
+[PASS] content-unknown (success)
+[PASS] content-unclosed-bt (malformed)
+[PASS] content-nested-bt (malformed)
+[PASS] content-inline-image (unsupported)
+[PASS] content-xobject (success)
+[PASS] content-xobject-resource (malformed)
+[PASS] content-text-state (success)
+[PASS] content-reference (malformed)
+[PASS] content-tj-type (malformed)
+[PASS] content-later-failure (malformed)
+[PASS] content-truncated-string (malformed)
+[PASS] visual-m7-text (success)
+[PASS] content-clipping (unsupported)
+[PASS] items-winansi (success)
+[PASS] items-pages (success)
+[PASS] items-geometry (success)
+[PASS] items-visual (success)
+[PASS] items-no-text (success)
+[PASS] items-later-failure (malformed)
+[PASS] items-missing-resource (malformed)
+[PASS] items-hello (unsupported)
+[PASS] items-rotate (unsupported)
+[PASS] items-transform (success)
+[PASS] text-reading (success)
+[PASS] text-winansi (success)
+[PASS] text-pages (success)
+[PASS] text-geometry (success)
+[PASS] text-visual (success)
+[PASS] text-flate (success)
+[PASS] text-no-text (success)
+[PASS] text-rotated (unsupported)
+[PASS] text-hello (unsupported)
+[PASS] text-later-failure (malformed)
+[PASS] text-missing-resource (malformed)
+[PASS] text-not-pdf (malformed)
+[PASS] chinese-raw (success)
+[PASS] chinese-flate (success)
+[PASS] chinese-cff (success)
+[PASS] chinese-unicode (success)
+[PASS] chinese-spacing (success)
+[PASS] chinese-odd (malformed)
+[PASS] chinese-bad-surrogate (malformed)
+[PASS] chinese-bad-range (malformed)
+[PASS] chinese-vertical (unsupported)
+[PASS] chinese-bad-widths (malformed)
+[PASS] gs-english (success)
+[PASS] gs-english-control (success)
+[PASS] gs-chinese (success)
+[PASS] gs-chinese-control (success)
+[PASS] gs-bad-alpha (malformed)
+[PASS] gs-bad-alpha-items (malformed)
+[PASS] gs-later-font (unsupported)
+[PASS] gs-later-font-items (unsupported)
+[PASS] gs-later-unknown (unsupported)
+[PASS] gs-later-unknown-items (unsupported)
+[PASS] cs-english (success)
+[PASS] cs-chinese (success)
+[PASS] cs-bad-type (malformed)
+[PASS] cs-bad-type-items (malformed)
+[PASS] cs-bad-arity (malformed)
+[PASS] cs-bad-arity-items (malformed)
+[PASS] cs-later-failure (malformed)
+[PASS] cs-later-failure-items (malformed)
+[PASS] marked-pass (success)
+[PASS] marked-empty (success)
+[PASS] marked-literal (success)
+[PASS] marked-unmapped (success)
+[PASS] marked-all-empty (success)
+[PASS] marked-control (success)
+[PASS] marked-later-unclosed (malformed)
+[PASS] marked-later-unclosed-items (malformed)
+[PASS] marked-later-type (malformed)
+[PASS] marked-later-type-items (malformed)
+[PASS] marked-later-nonempty (unsupported)
+[PASS] marked-later-nonempty-items (unsupported)
+[PASS] marked-later-named (unsupported)
+[PASS] marked-later-named-items (unsupported)
+[PASS] marked-cross-text (malformed)
+[PASS] marked-cross-text-items (malformed)
+[PASS] marked-cross-marked (malformed)
+[PASS] marked-cross-marked-items (malformed)
+[PASS] scn-english (success)
+[PASS] scn-chinese (success)
+[PASS] scn-bad-type (malformed)
+[PASS] scn-bad-type-items (malformed)
+[PASS] scn-bad-arity (malformed)
+[PASS] scn-bad-arity-items (malformed)
+[PASS] scn-later-failure (malformed)
+[PASS] scn-later-failure-items (malformed)
+[PASS] drawing-english (success)
+[PASS] drawing-chinese (success)
+[PASS] drawing-image-only (success)
+[PASS] drawing-bad-dash (malformed)
+[PASS] drawing-bad-dash-items (malformed)
+[PASS] drawing-bad-path (malformed)
+[PASS] drawing-bad-path-items (malformed)
+[PASS] drawing-missing-image (malformed)
+[PASS] drawing-missing-image-items (malformed)
+[PASS] drawing-bad-image (malformed)
+[PASS] drawing-bad-image-items (malformed)
+[PASS] drawing-later-missing (malformed)
+[PASS] drawing-later-missing-items (malformed)
+[PASS] drawing-later-form (unsupported)
+[PASS] drawing-later-form-items (unsupported)
+fixture runner: 157 fixtures passed
+./tests/ownership-test-asan
+./tests/error-test-asan
+./tests/lexer-test-asan
+./tests/object-test-asan
+./tests/limits-test-asan
+./tests/reader-test-asan
+./tests/indirect-test-asan
+./tests/xref-test-asan
+./tests/document-test-asan
+./tests/pages-test-asan
+./tests/contents-test-asan
+./tests/content-lexer-test-asan
+./tests/matrix-test-asan
+./tests/text-state-test-asan
+./tests/geometry-test-asan
+sh tests/run-geometry-fixtures.sh ./tests/geometry-test-asan
+geometry fixtures: raw/Flate/array, visual trace, and atomic failures passed
+./tests/content-interpreter-test-asan
+./tests/font-test-asan
+font tests passed
+./tests/font-text-test-asan
+font text tests passed
+sh tests/run-font-fixtures.sh ./tests/font-text-test-asan
+font fixtures: no comma-decimal locale installed; locale check skipped
+font fixtures: real adapter geometry, WinAnsi/UTF-8 traces, and atomic failures passed
+./tests/text-items-test-asan
+text item tests passed
+./tests/reading-order-test-asan
+reading order tests passed
+./tests/chinese-test-asan
+Chinese extraction tests passed
+./tests/cmap-test-asan
+CMap tests passed (including 3000 mutated inputs)
+./tests/extgstate-test-asan
+ExtGState tests passed
+./tests/marked-content-test-asan
+marked content tests passed
+./tests/drawing-test-asan
+sh tests/run-cli-tests.sh ./pdftext-asan
+cli tests: usage, help/version, -o atomic output and dump modes passed

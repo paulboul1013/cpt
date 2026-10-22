@@ -1,0 +1,39 @@
+{
+  "source": "output/pdf/chinese-comparison/test_git.pdf",
+  "size": 36959295,
+  "sha256": "d87fdaa38f27e0a1f84601a83729506f065be9f2ce0990faee9b43642dd2ef70",
+  "runs": [
+    {
+      "command": [
+        "./pdftext",
+        "output/pdf/chinese-comparison/test_git.pdf"
+      ],
+      "exit": 4,
+      "stdout_bytes": 0,
+      "stderr": "content: unsupported error at byte 3796: decoded byte 149: content operator is not supported\n",
+      "seconds": 0.1
+    },
+    {
+      "command": [
+        "./pdftext",
+        "--dump-text-items",
+        "output/pdf/chinese-comparison/test_git.pdf"
+      ],
+      "exit": 4,
+      "stdout_bytes": 0,
+      "stderr": "content: unsupported error at byte 3796: decoded byte 149: content operator is not supported\n",
+      "seconds": 0.114
+    },
+    {
+      "command": [
+        "./pdftext",
+        "--dump-content",
+        "output/pdf/chinese-comparison/test_git.pdf"
+      ],
+      "exit": 4,
+      "stdout_bytes": 0,
+      "stderr": "content: unsupported error at byte 3796: decoded byte 149: content operator is not supported\n",
+      "seconds": 0.091
+    }
+  ]
+}
